@@ -16,13 +16,13 @@ return new class extends Migration
 
             // Clés étrangères
             $table->foreignId('planning_model_id')->constrained('planning_models')->onDelete('cascade');
-            $table->foreignId('employee_id')->constrained('users');
+            $table->foreignId('employee_id')->constrained('employees');
 
             $table->date('start_date');
             $table->date('end_date')->nullable();
 
             // Statut avec une valeur par défaut
-            $table->enum('status', ['en attente', 'validé', 'suspendu'])->default('en attente'); // ou 
+            $table->enum('status', ['en attente', 'validé', 'suspendu'])->default('en attente');
 
             $table->foreignId('validated_by')->nullable()->constrained('users');
             $table->timestamp('validated_at')->nullable();

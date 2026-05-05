@@ -12,6 +12,7 @@ class CampaignSeeder extends Seeder
      */
     public function run(): void
     {
+        // Créer les 3 campagnes de base
         Campaign::create([
             'name' => 'Campagne Marketing 2026',
             'description' => 'Promotion des nouveaux produits 2026',
@@ -35,5 +36,29 @@ class CampaignSeeder extends Seeder
             'end_date' => '2025-12-31',
             'status' => 'finished',
         ]);
+
+        // Générer 247 campagnes supplémentaires
+        $campaignTypes = [
+            'Marketing', 'Recrutement', 'Ventes', 'Communication', 'Formation', 
+            'Lancement Produit', 'Fidélisation', 'Acquisition', 'Rétention', 'Notoriété'
+        ];
+        
+        $statuses = ['active', 'inactive', 'finished'];
+
+        for ($i = 4; $i <= 250; $i++) {
+            $type = $campaignTypes[array_rand($campaignTypes)];
+            $status = $statuses[array_rand($statuses)];
+            $startDate = now()->subDays(rand(0, 365));
+            $endDate = $status === 'finished' ? $startDate->copy()->addDays(rand(30, 180)) : 
+                      ($status === 'active' ? null : $startDate->copy()->addDays(rand(60, 365)));
+
+            Campaign::create([
+                'name' => "Campagne {$type} {$i}",
+                'description' => "Description de la campagne {$type} numéro {$i} générée automatiquement",
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate ? $endDate->format('Y-m-d') : null,
+                'status' => $status,
+            ]);
+        }
     }
 }

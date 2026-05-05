@@ -10,6 +10,7 @@ class PlanningModelsSeeder extends Seeder
 {
     public function run()
     {
+        // Créer les 3 modèles de base
         DB::table('planning_models')->insert([
             [
                 'name' => 'Semaine 35h',
@@ -57,5 +58,33 @@ class PlanningModelsSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
         ]);
+
+        // Générer 247 planning models supplémentaires avec des heures variées
+        for ($i = 4; $i <= 250; $i++) {
+            $monday = rand(0, 12);
+            $tuesday = rand(0, 12);
+            $wednesday = rand(0, 12);
+            $thursday = rand(0, 12);
+            $friday = rand(0, 12);
+            $saturday = rand(0, 8);
+            $sunday = rand(0, 8);
+            $total = $monday + $tuesday + $wednesday + $thursday + $friday + $saturday + $sunday;
+
+            DB::table('planning_models')->insert([
+                'name' => 'Planning Model ' . $i,
+                'description' => 'Modèle de planning généré automatiquement ' . $i,
+                'monday_hours' => $monday,
+                'tuesday_hours' => $tuesday,
+                'wednesday_hours' => $wednesday,
+                'thursday_hours' => $thursday,
+                'friday_hours' => $friday,
+                'saturday_hours' => $saturday,
+                'sunday_hours' => $sunday,
+                'total_hours' => $total,
+                'created_by' => rand(1, 10),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
     }
 }

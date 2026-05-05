@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class roles extends Model
+class Role extends Model
 {
   //Role associé à plusieurs utilisateurs
     public function users(){
-        return $this->hasMany(user::class);
+        return $this->hasMany(User::class);
     }
 }

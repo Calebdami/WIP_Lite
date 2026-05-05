@@ -12,13 +12,71 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // On récupère le rôle admin
+        // On récupère les rôles
         $adminRole = Role::where('name', 'admin')->first();
+        $cpRole = Role::where('name', 'cp')->first();
+        $supRole = Role::where('name', 'sup')->first();
+        $tcRole = Role::where('name', 'tc')->first();
 
+        // Créer 10 utilisateurs avec des IDs 1-10
         User::create([
             'email' => 'admin@example.com',
-            'password' => Hash::make('password'), // Utilise un mot de passe sécurisé en prod
+            'password' => Hash::make('password'),
             'role_id' => $adminRole->id,
+        ]);
+
+        User::create([
+            'email' => 'manager1@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $cpRole->id,
+        ]);
+
+        User::create([
+            'email' => 'manager2@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $cpRole->id,
+        ]);
+
+        User::create([
+            'email' => 'supervisor1@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $supRole->id,
+        ]);
+
+        User::create([
+            'email' => 'supervisor2@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $supRole->id,
+        ]);
+
+        User::create([
+            'email' => 'tech1@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $tcRole->id,
+        ]);
+
+        User::create([
+            'email' => 'tech2@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $tcRole->id,
+        ]);
+
+        User::create([
+            'email' => 'tech3@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $tcRole->id,
+        ]);
+
+        User::create([
+            'email' => 'tech4@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $tcRole->id,
+        ]);
+
+        User::create([
+            'email' => 'tech5@example.com',
+            'password' => Hash::make('password'),
+            'role_id' => $tcRole->id,
         ]);
     }
 }

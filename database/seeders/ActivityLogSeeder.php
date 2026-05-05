@@ -25,8 +25,8 @@ class ActivityLogSeeder extends Seeder
 
         $actions = ['create', 'update', 'delete'];
 
-        // 20 logs fake
-        for ($i = 0; $i < 20; $i++) {
+        // 250 logs fake
+        for ($i = 0; $i < 250; $i++) {
 
             $user = $users->random();
             $action = $actions[array_rand($actions)];

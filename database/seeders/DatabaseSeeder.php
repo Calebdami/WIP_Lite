@@ -18,6 +18,19 @@ class DatabaseSeeder extends Seeder
     $this->call([
         RoleSeeder::class,
         AdminUserSeeder::class,
+        PositionSeeder::class,
+        EmployeeSeeder::class,
+        CampaignSeeder::class,
+        AssignmentSeeder::class,
+        PlanningModelsSeeder::class,
+        PlanningAssignmentsSeeder::class,
+        TimesheetSeeder::class,
+        TimesheetEntrySeeder::class,
+        ActivityLogSeeder::class,
+        EmployeeHistorySeeder::class,
+        AssignmentHistorySeeder::class,
+        PlanningHistoriesSeeder::class,
+        TimesheetHistorySeeder::class,
     ]);
 }
 }
