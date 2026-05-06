@@ -129,10 +129,10 @@ const navItems = [
                 <div class="relative ml-2 pl-3 border-l border-charcoal-700 flex items-center h-full">
                     <button @click="toggleMenu('user')" class="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-150 hover:bg-charcoal-800">
                         <div class="w-7 h-7 rounded-full bg-gold-gradient flex items-center justify-center text-charcoal-900 font-bold text-xs shadow-gold flex-shrink-0">
-                            {{ user?.name?.charAt(0)?.toUpperCase() }}
+                            {{ (user?.name || user?.email || 'U').charAt(0).toUpperCase() }}
                         </div>
                         <div class="text-left hidden md:block">
-                            <div class="text-white text-xs font-semibold leading-tight">{{ user?.name }}</div>
+                            <div class="text-white text-xs font-semibold leading-tight">{{ user?.name || user?.email || 'Utilisateur' }}</div>
                             <div class="text-charcoal-400 text-[10px] leading-tight">Chef de Plateau</div>
                         </div>
                         <svg class="w-3 h-3 text-charcoal-400 transition-transform duration-200" :class="openMenu === 'user' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">

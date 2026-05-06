@@ -124,6 +124,32 @@ Route::middleware(['auth'])->prefix('tc')->name('tc.')->group(function () {
     Route::get('/my-profile', fn () => Inertia::render('Tc/Profile/Index'))->name('profile');
 });
 
+// ─── API Feuilles de temps ────────────────────────────────────────────────────
+Route::middleware(['auth'])->prefix('api/timesheets')->name('api.timesheets.')->group(function () {
+    // CRUD de base
+    Route::get('/', [App\Http\Controllers\TimesheetController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\TimesheetController::class, 'store'])->name('store');
+    Route::get('/{timesheet}', [App\Http\Controllers\TimesheetController::class, 'show'])->name('show');
+    Route::delete('/{timesheet}', [App\Http\Controllers\TimesheetController::class, 'destroy'])->name('destroy');
+
+    // Workflow de validation
+    Route::post('/{timesheet}/submit', [App\Http\Controllers\TimesheetController::class, 'submit'])->name('submit');
+    Route::post('/{timesheet}/validate', [App\Http\Controllers\TimesheetController::class, 'validate_timesheet'])->name('validate');
+    Route::post('/{timesheet}/reject', [App\Http\Controllers\TimesheetController::class, 'reject'])->name('reject');
+    Route::post('/validate-batch', [App\Http\Controllers\TimesheetController::class, 'validateBatch'])->name('validate-batch');
+
+    // Historique
+    Route::get('/{timesheet}/history', [App\Http\Controllers\TimesheetController::class, 'history'])->name('history');
+
+    // Entrées (saisie des heures)
+    Route::get('/{timesheet}/entries', [App\Http\Controllers\TimesheetEntryController::class, 'show'])->name('entries.show');
+    Route::put('/entries/{entry}', [App\Http\Controllers\TimesheetEntryController::class, 'update'])->name('entries.update');
+    Route::put('/{timesheet}/entries/batch', [App\Http\Controllers\TimesheetEntryController::class, 'batchUpdate'])->name('entries.batch');
+
+    // Consultation TC (mes heures)
+    Route::get('/my/hours', [App\Http\Controllers\TimesheetController::class, 'myHours'])->name('my-hours');
+});
+
 // ─── Profile ──────────────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

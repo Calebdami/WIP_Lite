@@ -206,7 +206,7 @@ const navItems = [
                         class="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-150 hover:bg-charcoal-800"
                     >
                         <div class="w-7 h-7 rounded-full bg-gold-gradient flex items-center justify-center text-charcoal-900 font-bold text-xs shadow-gold flex-shrink-0">
-                            {{ user?.name?.charAt(0)?.toUpperCase() || 'A' }}
+                            {{ (user?.name || user?.email || 'A').charAt(0).toUpperCase() }}
                         </div>
                         <div class="text-left hidden md:block">
                             <div class="text-white text-xs font-semibold leading-tight">{{ user?.name || 'Admin' }}</div>

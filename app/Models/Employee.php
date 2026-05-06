@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Employee extends Model
 {
@@ -26,5 +28,21 @@ class Employee extends Model
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);
+    }
+
+    /**
+     * Feuilles de temps de cet employé.
+     */
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    /**
+     * Feuilles de temps validées par cet employé (en tant que CP).
+     */
+    public function validatedTimesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class, 'validated_by');
     }
 }

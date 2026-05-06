@@ -19,10 +19,10 @@ const user = computed(() => page.props.auth.user);
             <div class="bg-white rounded-xl border border-pearl-200 p-6 shadow-sm mb-6">
                 <div class="flex items-center gap-4 mb-6">
                     <div class="w-16 h-16 rounded-full bg-gold-gradient flex items-center justify-center text-charcoal-900 font-bold text-2xl shadow-gold">
-                        {{ user.name.charAt(0).toUpperCase() }}
+                        {{ (user?.name || user?.email || 'U').charAt(0).toUpperCase() }}
                     </div>
                     <div>
-                        <h2 class="text-xl font-black text-charcoal-700">{{ user.name }}</h2>
+                        <h2 class="text-xl font-black text-charcoal-700">{{ user?.name || user?.email }}</h2>
                         <p class="text-sm text-charcoal-400">Téléconseiller</p>
                     </div>
                 </div>
