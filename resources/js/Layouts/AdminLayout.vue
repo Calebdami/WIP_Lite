@@ -1,9 +1,33 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 
 const page = usePage();
+const toast = useToast();
 const user = computed(() => page.props.auth?.user);
+const flash = computed(() => page.props.flash);
+
+// Watch for flash messages
+watch(flash, (newFlash) => {
+    if (newFlash?.success) {
+        toast.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: newFlash.success,
+            life: 3000
+        });
+    }
+    if (newFlash?.error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: newFlash.error,
+            life: 5000
+        });
+    }
+}, { deep: true, immediate: true });
 
 // Mobile menu
 const mobileMenuOpen = ref(false);
@@ -108,6 +132,7 @@ const navItems = [
 
 <template>
     <div class="min-h-screen bg-pearl-100 font-sans">
+        <Toast />
 
         <!-- ═══════════════════ NAVBAR HORIZONTALE ═══════════════════ -->
         <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-charcoal border-b border-charcoal-700">
