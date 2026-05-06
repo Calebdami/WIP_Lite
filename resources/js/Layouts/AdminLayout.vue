@@ -32,26 +32,25 @@ const navItems = [
         icon: '',
         key: 'personnel',
         children: [
-            { label: 'Employés', href: '#' },
-            { label: 'Comptes & Rôles', href: '#' },
+            { label: 'Employés', href: route('admin.employees.index') },
+            { label: 'Comptes & Rôles', href: route('admin.users.index') },
         ],
     },
     {
         label: 'Campagnes',
         icon: '',
         key: 'campagnes',
-        href: '#',
+        href: route('admin.campaigns.index'),
+        active: route().current('admin.campaigns.index'),
     },
     {
         label: 'Affectations',
         icon: '',
         key: 'affectations',
         children: [
-            { label: 'Structure', href: '#' },
-            { label: 'Plannings', href: '#' },
-            { label: 'Ressources disponibles', href: '#' },
-            { label: 'Suivi & Clôture', href: '#' },
-            { label: 'Historique', href: '#' },
+            { label: 'Structure', href: route('admin.assignments.structure') },
+            { label: 'Ressources disponibles', href: route('admin.assignments.resources') },
+            { label: 'Historique', href: route('admin.assignments.history') },
         ],
     },
     {
@@ -59,7 +58,9 @@ const navItems = [
         icon: '',
         key: 'temps',
         children: [
-            { label: 'Suivi & Clôture', href: '#' },
+            { label: 'Plannings', href: route('admin.assignments.schedules') },
+            { label: 'Validations', href: route('admin.time.tracking') },
+            { label: 'Suivi & Clôture', href: route('admin.time.tracking') },
         ],
     },
     {
@@ -67,9 +68,9 @@ const navItems = [
         icon: '',
         key: 'config',
         children: [
-            { label: 'Entreprise', href: '#' },
-            { label: 'Référentiels', href: '#' },
-            { label: 'Rôles & Permissions', href: '#' },
+            { label: 'Entreprise', href: route('admin.config.company') },
+            { label: 'Référentiels', href: route('admin.config.referentials') },
+            { label: 'Rôles & Permissions', href: route('admin.config.permissions') },
         ],
     },
     {
@@ -77,28 +78,30 @@ const navItems = [
         icon: '',
         key: 'securite',
         children: [
-            { label: 'Audit Logs', href: '#' },
-            { label: 'Sessions actives', href: '#' },
+            { label: 'Audit Logs', href: route('admin.security.logs') },
+            { label: 'Sessions actives', href: route('admin.security.sessions') },
         ],
     },
     {
         label: 'Calendrier',
         icon: '',
-        href: '#',
+        href: route('admin.calendar'),
+        active: route().current('admin.calendar'),
     },
     {
         label: 'Notifications',
         icon: '',
         key: 'notifications',
         children: [
-            { label: 'Modèles', href: '#' },
-            { label: 'Diffusion', href: '#' },
+            { label: 'Modèles', href: route('admin.notifications.templates') },
+            { label: 'Diffusion', href: route('admin.notifications.broadcast') },
         ],
     },
     {
         label: 'Maintenance',
         icon: '',
-        href: '#',
+        href: route('admin.maintenance'),
+        active: route().current('admin.maintenance'),
     },
 ];
 </script>

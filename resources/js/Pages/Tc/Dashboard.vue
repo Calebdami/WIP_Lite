@@ -1,5 +1,5 @@
 <script setup>
-import AdminLayout from '@/Layouts/AdminLayout.vue';
+import TcLayout from '@/Layouts/TcLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -10,7 +10,7 @@ const user = computed(() => page.props.auth?.user);
 
 <template>
     <Head title="Tableau de bord — Technicien" />
-    <AdminLayout>
+    <TcLayout>
         <template #header>
             <div>
                 <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Tableau de bord</h1>
@@ -79,5 +79,5 @@ const user = computed(() => page.props.auth?.user);
                 </button>
             </div>
         </div>
-    </AdminLayout>
+    </TcLayout>
 </template>

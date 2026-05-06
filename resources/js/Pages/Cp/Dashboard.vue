@@ -1,5 +1,5 @@
 <script setup>
-import AdminLayout from '@/Layouts/AdminLayout.vue';
+import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -10,7 +10,7 @@ const user = computed(() => page.props.auth?.user);
 
 <template>
     <Head title="Tableau de bord — Chef de Projet" />
-    <AdminLayout>
+    <CpLayout>
         <template #header>
             <div>
                 <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Tableau de bord</h1>
@@ -57,7 +57,7 @@ const user = computed(() => page.props.auth?.user);
             <p class="text-charcoal-400 text-sm font-medium">Modules Chef de Projet à venir</p>
             <p class="text-charcoal-300 text-xs mt-1">Plannings, campagnes et suivi des affectations</p>
         </div>
-    </AdminLayout>
+    </CpLayout>
 </template>
 
 <style scoped>
