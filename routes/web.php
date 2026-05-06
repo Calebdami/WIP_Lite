@@ -18,7 +18,6 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = auth()->user();
     $roleName = $user->role?->name ?? 'tc';
-
     $redirectRoute = match ($roleName) {
         'admin' => 'admin.dashboard',
         'cp'    => 'cp.dashboard',
@@ -82,6 +81,52 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Maintenance
     Route::get('/maintenance', fn () => Inertia::render('Admin/Maintenance/Index'))->name('maintenance');
+
+    // API Routes for Maintenance
+    Route::prefix('maintenance')->name('maintenance.')->group(function () {
+        // System Health
+        Route::get('/health', [App\Http\Controllers\MaintenanceController::class, 'getSystemHealth']);
+        Route::get('/logs/errors', [App\Http\Controllers\MaintenanceController::class, 'getErrorLogs']);
+
+        // Database Management
+        Route::post('/database/backup', [App\Http\Controllers\MaintenanceController::class, 'createBackup']);
+        Route::get('/database/backups', [App\Http\Controllers\MaintenanceController::class, 'getBackups']);
+        Route::get('/database/backups/{backupId}/download', [App\Http\Controllers\MaintenanceController::class, 'downloadBackup']);
+        Route::post('/database/backups/{backupId}/restore', [App\Http\Controllers\MaintenanceController::class, 'restoreBackup']);
+        Route::post('/database/clean-temp', [App\Http\Controllers\MaintenanceController::class, 'cleanTempTables']);
+        Route::post('/database/reindex', [App\Http\Controllers\MaintenanceController::class, 'reindexTables']);
+        Route::post('/database/remove-orphans', [App\Http\Controllers\MaintenanceController::class, 'removeOrphans']);
+        Route::get('/database/migrations', [App\Http\Controllers\MaintenanceController::class, 'getMigrations']);
+        Route::post('/database/anonymize', [App\Http\Controllers\MaintenanceController::class, 'anonymizeData']);
+
+        // User Control & Security
+        Route::get('/sessions', [App\Http\Controllers\MaintenanceController::class, 'getActiveSessions']);
+        Route::delete('/sessions/{sessionId}', [App\Http\Controllers\MaintenanceController::class, 'forceLogout']);
+        Route::get('/audit-logs', [App\Http\Controllers\MaintenanceController::class, 'getAuditLogs']);
+        Route::get('/maintenance-mode', [App\Http\Controllers\MaintenanceController::class, 'getMaintenanceMode']);
+        Route::post('/maintenance-mode', [App\Http\Controllers\MaintenanceController::class, 'toggleMaintenanceMode']);
+        Route::get('/permissions/check', [App\Http\Controllers\MaintenanceController::class, 'checkCriticalAccess']);
+        Route::get('/2fa/scan', [App\Http\Controllers\MaintenanceController::class, 'scan2FA']);
+
+        // Application Maintenance
+        Route::post('/files/purge-temp', [App\Http\Controllers\MaintenanceController::class, 'purgeTempFiles']);
+        Route::post('/files/purge-reports', [App\Http\Controllers\MaintenanceController::class, 'purgeOldReports']);
+        Route::post('/cache/clear-app', [App\Http\Controllers\MaintenanceController::class, 'clearAppCache']);
+        Route::post('/cache/clear-routes', [App\Http\Controllers\MaintenanceController::class, 'clearRouteCache']);
+        Route::post('/cache/clear-config', [App\Http\Controllers\MaintenanceController::class, 'clearConfigCache']);
+        Route::get('/queue/jobs', [App\Http\Controllers\MaintenanceController::class, 'getQueueJobs']);
+        Route::post('/queue/retry-failed', [App\Http\Controllers\MaintenanceController::class, 'retryFailedJobs']);
+        Route::get('/config/env', [App\Http\Controllers\MaintenanceController::class, 'getEnvVars']);
+        Route::post('/config/env', [App\Http\Controllers\MaintenanceController::class, 'saveEnvVars']);
+
+        // Communication & Support
+        Route::post('/notifications/send', [App\Http\Controllers\MaintenanceController::class, 'sendSystemNotification']);
+        Route::post('/mail/test', [App\Http\Controllers\MaintenanceController::class, 'sendTestMail']);
+
+        // Existing functionalities
+        Route::post('/clear-cache', [App\Http\Controllers\MaintenanceController::class, 'clearCache']);
+        Route::post('/backup-database', [App\Http\Controllers\MaintenanceController::class, 'backupDatabase']);
+    });
 });
 
 // ─── Chef de Projet (CP) ──────────────────────────────────────────────────────
