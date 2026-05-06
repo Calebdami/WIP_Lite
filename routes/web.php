@@ -34,13 +34,18 @@ Route::get('/dashboard', function () {
     return redirect()->route($redirectRoute);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+use App\Http\Controllers\UserController;
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
 
     // Personnel
     Route::get('/employees', fn () => Inertia::render('Admin/Employees/Index'))->name('employees.index');
-    Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Campagnes
     Route::get('/campaigns', fn () => Inertia::render('Admin/Campaigns/Index'))->name('campaigns.index');

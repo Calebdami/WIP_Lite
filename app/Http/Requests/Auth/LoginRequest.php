@@ -42,11 +42,26 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Tentative d'authentification avec les identifiants fournis
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // Récupération de l'utilisateur authentifié
+        $user = Auth::user();
+
+        // Vérification du statut du compte (doit être 'actif')
+        if ($user->status !== 'actif') {
+            // Déconnexion immédiate si le compte est désactivé
+            Auth::logout();
+
+            // Levée d'une exception de validation avec le message personnalisé
+            throw ValidationException::withMessages([
+                'email' => 'Accès interdit, vous avez été désactivé.',
             ]);
         }
 
