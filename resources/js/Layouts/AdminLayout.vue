@@ -59,7 +59,7 @@ const navItems = [
         key: 'temps',
         children: [
             { label: 'Plannings', href: route('admin.assignments.schedules') },
-            { label: 'Validations', href: route('admin.time.tracking') },
+            { label: 'Validation Plannings', href: route('admin.assignments.validation') },
             { label: 'Suivi & Clôture', href: route('admin.time.tracking') },
         ],
     },

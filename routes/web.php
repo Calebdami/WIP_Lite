@@ -51,6 +51,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/schedules', fn () => Inertia::render('Admin/Assignments/Schedules'))->name('schedules');
         Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
+        Route::get('/validation', fn () => Inertia::render('Admin/Assignments/Validation'))->name('validation');
         Route::get('/history', fn () => Inertia::render('Admin/Assignments/History'))->name('history');
     });
 
