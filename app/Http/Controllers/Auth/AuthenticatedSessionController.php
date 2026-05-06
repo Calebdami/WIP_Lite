@@ -26,6 +26,7 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     * Redirects the user to the correct dashboard based on their role.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -33,7 +34,18 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+        $roleName = $user->role?->name ?? 'tc';
+
+        $redirectRoute = match ($roleName) {
+            'admin' => 'admin.dashboard',
+            'cp'    => 'cp.dashboard',
+            'sup'   => 'sup.dashboard',
+            'tc'    => 'tc.dashboard',
+            default => 'dashboard',
+        };
+
+        return redirect()->intended(route($redirectRoute, absolute: false));
     }
 
     /**
@@ -42,11 +54,8 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
-
         return redirect('/');
     }
 }

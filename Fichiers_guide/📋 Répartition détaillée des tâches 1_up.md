@@ -77,7 +77,7 @@ Sous-parties :
 
 ### Livrables
 
-* API Employés
+* API Employés 
 * Interface liste + fiche employé
 * Module de recherche et filtres
 
