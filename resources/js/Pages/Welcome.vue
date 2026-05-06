@@ -111,7 +111,7 @@ defineProps({
                         </svg>
                     </div>
                     <h3 class="text-xl font-bold mb-4">Collaboration d'Équipe</h3>
-                    <p class="text-charcoal-400 text-sm leading-relaxed">Connectez vos administrateurs, superviseurs et techniciens sur une plateforme unique.</p>
+                    <p class="text-charcoal-400 text-sm leading-relaxed">Connectez vos administrateurs, superviseurs et téléconseillers sur une plateforme unique.</p>
                 </div>
             </div>
         </main>

@@ -34,7 +34,7 @@ const user = computed(() => page.props.auth?.user);
             <div class="bg-white rounded-xl border border-pearl-200 p-5 shadow-sm">
                 <p class="text-xs text-charcoal-400 mb-1">Mon équipe</p>
                 <p class="text-3xl font-black text-charcoal-700">24</p>
-                <p class="text-[11px] text-charcoal-400 mt-1">Techniciens actifs</p>
+                <p class="text-[11px] text-charcoal-400 mt-1">Téléconseillers actifs</p>
             </div>
             <div class="bg-white rounded-xl border border-pearl-200 p-5 shadow-sm">
                 <p class="text-xs text-charcoal-400 mb-1">Timesheets à valider</p>

@@ -9,12 +9,12 @@ const user = computed(() => page.props.auth?.user);
 </script>
 
 <template>
-    <Head title="Tableau de bord — Technicien" />
+    <Head title="Tableau de bord — Téléconseiller" />
     <TcLayout>
         <template #header>
             <div>
                 <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Tableau de bord</h1>
-                <p class="text-xs text-charcoal-400 mt-0.5">Espace Technicien</p>
+                <p class="text-xs text-charcoal-400 mt-0.5">Espace Téléconseiller</p>
             </div>
         </template>
 
@@ -23,7 +23,7 @@ const user = computed(() => page.props.auth?.user);
              style="background: linear-gradient(135deg, #6B7280 0%, #374151 100%);">
             <div class="relative z-10">
                 <p class="text-gray-400 text-sm font-medium mb-1">Bienvenue,</p>
-                <h2 class="text-2xl font-black text-white mb-3">{{ user?.name || 'Technicien' }} 👋</h2>
+                <h2 class="text-2xl font-black text-white mb-3">{{ user?.name || 'Téléconseiller' }} 👋</h2>
                 <p class="text-gray-400 text-sm">Consultez vos plannings, saisissez vos feuilles de temps et suivez vos affectations.</p>
             </div>
             <div class="absolute -right-4 -bottom-4 w-28 h-28 rounded-full" style="background: rgba(212,160,23,0.08);"></div>
