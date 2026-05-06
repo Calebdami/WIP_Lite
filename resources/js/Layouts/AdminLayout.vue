@@ -23,13 +23,13 @@ const closeMenus = () => {
 const navItems = [
     {
         label: 'Tableau de bord',
-        icon: '▦',
+        icon: '',
         href: route('admin.dashboard'),
         active: route().current('admin.dashboard'),
     },
     {
         label: 'Personnel',
-        icon: '👤',
+        icon: '',
         key: 'personnel',
         children: [
             { label: 'Employés', href: '#' },
@@ -38,13 +38,13 @@ const navItems = [
     },
     {
         label: 'Campagnes',
-        icon: '📢',
+        icon: '',
         key: 'campagnes',
         href: '#',
     },
     {
         label: 'Affectations',
-        icon: '📋',
+        icon: '',
         key: 'affectations',
         children: [
             { label: 'Structure', href: '#' },
@@ -56,7 +56,7 @@ const navItems = [
     },
     {
         label: 'Temps de travail',
-        icon: '⏱',
+        icon: '',
         key: 'temps',
         children: [
             { label: 'Suivi & Clôture', href: '#' },
@@ -64,7 +64,7 @@ const navItems = [
     },
     {
         label: 'Configuration',
-        icon: '⚙',
+        icon: '',
         key: 'config',
         children: [
             { label: 'Entreprise', href: '#' },
@@ -74,7 +74,7 @@ const navItems = [
     },
     {
         label: 'Sécurité',
-        icon: '🔒',
+        icon: '',
         key: 'securite',
         children: [
             { label: 'Audit Logs', href: '#' },
@@ -83,12 +83,12 @@ const navItems = [
     },
     {
         label: 'Calendrier',
-        icon: '📅',
+        icon: '',
         href: '#',
     },
     {
         label: 'Notifications',
-        icon: '🔔',
+        icon: '',
         key: 'notifications',
         children: [
             { label: 'Modèles', href: '#' },
@@ -97,7 +97,7 @@ const navItems = [
     },
     {
         label: 'Maintenance',
-        icon: '🛠',
+        icon: '',
         href: '#',
     },
 ];
@@ -122,7 +122,7 @@ const navItems = [
                 </Link>
 
                 <!-- Navigation principale -->
-                <div class="flex items-center flex-1 h-full overflow-x-auto scrollbar-hide">
+                <div class="flex items-center flex-1 h-full ml-4">
                     <template v-for="item in navItems" :key="item.label">
 
                         <!-- Lien simple -->

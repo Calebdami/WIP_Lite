@@ -61,7 +61,7 @@ defineProps({
 
                 <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.1]">
                     L'excellence dans la <br />
-                    <span class="text-transparent bg-clip-text bg-gold-gradient">planification</span>
+                    <span class="bg-clip-text ">planification</span>
                 </h1>
 
                 <p class="max-w-2xl mx-auto text-charcoal-400 text-lg md:text-xl leading-relaxed mb-12">
@@ -84,7 +84,7 @@ defineProps({
 
             <!-- Dashboard Preview / Info cards -->
             <div class="max-w-7xl mx-auto mt-32 grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="p-8 rounded-3xl bg-charcoal-900/50 border border-charcoal-800 backdrop-blur-sm">
+                <div class="p-8 rounded-3xl bg-charcoal-900/50 border border-charcoal-800 backdrop-blur-sm translate-y-4">
                     <div class="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center text-gold mb-6">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -104,7 +104,7 @@ defineProps({
                     <p class="text-charcoal-400 text-sm leading-relaxed">Simplifiez la saisie et la validation des feuilles de temps pour une gestion optimale des ressources.</p>
                 </div>
 
-                <div class="p-8 rounded-3xl bg-charcoal-900/50 border border-charcoal-800 backdrop-blur-sm translate-y-8">
+                <div class="p-8 rounded-3xl bg-charcoal-900/50 border border-charcoal-800 backdrop-blur-sm translate-y-4">
                     <div class="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center text-gold mb-6">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
