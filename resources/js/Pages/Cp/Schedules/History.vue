@@ -1,15 +1,12 @@
 <script setup>
-import AdminLayout from '@/Layouts/AdminLayout.vue';
+import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
     history: Object,
     stats: Object,
-    filters: {
-        type: Object,
-        default: () => ({ search: '' })
-    }
+    filters: Object
 });
 
 const search = ref((props.filters || {}).search || '');
@@ -19,7 +16,7 @@ let timeout;
 watch(search, (value) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        router.get(route('admin.assignments.history'), { search: value }, {
+        router.get(route('cp.schedules.history'), { search: value }, {
             preserveState: true,
             replace: true
         });
@@ -43,8 +40,8 @@ const formatStatus = (status) => {
 </script>
 
 <template>
-    <Head title="Historique des Plannings — Admin" />
-    <AdminLayout>
+    <Head title="Historique des Plannings — CP" />
+    <CpLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
@@ -94,17 +91,6 @@ const formatStatus = (status) => {
             </div>
         </div>
 
-        <!-- Explanatory Note -->
-        <div class="bg-pearl-50 border border-pearl-200 rounded-xl p-4 mb-8 flex items-start gap-4">
-            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pearl-400 shadow-sm flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div class="text-[11px] leading-relaxed text-charcoal-500 italic">
-                <span class="font-bold text-charcoal-700 not-italic block mb-1">À propos de la table d'historique :</span>
-                Chaque action effectuée sur une affectation de planning (création, validation, suspension, réactivation) est archivée dans cette table. Cela permet de garantir une traçabilité totale des changements d'état et des interventions des administrateurs ou chefs de plateau sur les ressources de l'entreprise.
-            </div>
-        </div>
-
         <!-- Content -->
         <div class="bg-white rounded-xl border border-pearl-200 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-pearl-100 bg-white">
@@ -127,7 +113,6 @@ const formatStatus = (status) => {
                             <th class="px-6 py-4">Planning</th>
                             <th class="px-6 py-4">Transition Statut</th>
                             <th class="px-6 py-4">Par</th>
-                            <th class="px-6 py-4">Raison</th>
                             <th class="px-6 py-4 text-right">Date & Heure</th>
                         </tr>
                     </thead>
@@ -175,18 +160,13 @@ const formatStatus = (status) => {
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="text-[11px] text-charcoal-500 max-w-xs truncate" :title="h.reason">
-                                    {{ h.reason || 'Aucune raison spécifiée' }}
-                                </div>
-                            </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="text-xs font-bold text-charcoal-700">{{ new Date(h.created_at).toLocaleDateString() }}</div>
                                 <div class="text-[10px] text-charcoal-400">{{ new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</div>
                             </td>
                         </tr>
                         <tr v-if="history.data.length === 0">
-                            <td colspan="6" class="px-6 py-20 text-center">
+                            <td colspan="5" class="px-6 py-20 text-center">
                                 <div class="text-charcoal-300 italic text-sm">Aucun historique trouvé.</div>
                             </td>
                         </tr>
@@ -211,7 +191,7 @@ const formatStatus = (status) => {
             </template>
         </div>
 
-    </AdminLayout>
+    </CpLayout>
 </template>
 
 <style scoped>

@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PlanningModelController;
+use App\Http\Controllers\PlanningAssignmentController;
+use App\Http\Controllers\PlanningHistoryController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -48,11 +51,21 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {
         Route::get('/structure', fn () => Inertia::render('Admin/Assignments/Structure'))->name('structure');
-        Route::get('/schedules', fn () => Inertia::render('Admin/Assignments/Schedules'))->name('schedules');
+        Route::get('/schedules', [PlanningModelController::class, 'index'])->name('schedules');
+        Route::get('/schedules/create', [PlanningModelController::class, 'create'])->name('schedules.create');
+        Route::post('/schedules', [PlanningModelController::class, 'store'])->name('schedules.store');
+        Route::get('/schedules/{planningModel}/edit', [PlanningModelController::class, 'edit'])->name('schedules.edit');
+        Route::patch('/schedules/{planningModel}', [PlanningModelController::class, 'update'])->name('schedules.update');
+        Route::delete('/schedules/{planningModel}', [PlanningModelController::class, 'destroy'])->name('schedules.destroy');
+        
+        Route::get('/schedules/assign', [PlanningAssignmentController::class, 'create'])->name('schedules.assign');
+        Route::post('/schedules/assign', [PlanningAssignmentController::class, 'store'])->name('schedules.assign.store');
         Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
-        Route::get('/validation', fn () => Inertia::render('Admin/Assignments/Validation'))->name('validation');
-        Route::get('/history', fn () => Inertia::render('Admin/Assignments/History'))->name('history');
+        Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
+        Route::patch('/validation/bulk', [PlanningAssignmentController::class, 'bulkUpdateStatus'])->name('validation.bulk');
+        Route::patch('/validation/{assignment}/status', [PlanningAssignmentController::class, 'updateStatus'])->name('validation.status');
+        Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
     });
 
     // Temps de travail
@@ -95,9 +108,17 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 
     // Plannings
     Route::prefix('schedules')->name('schedules.')->group(function () {
-        Route::get('/templates', fn () => Inertia::render('Cp/Schedules/Templates'))->name('templates');
-        Route::get('/assign', fn () => Inertia::render('Cp/Schedules/Assign'))->name('assign');
-        Route::get('/validation', fn () => Inertia::render('Cp/Schedules/Validation'))->name('validation');
+        Route::get('/templates', [PlanningModelController::class, 'index'])->name('templates');
+        Route::get('/templates/create', [PlanningModelController::class, 'create'])->name('templates.create');
+        Route::post('/templates', [PlanningModelController::class, 'store'])->name('templates.store');
+        Route::get('/templates/{planningModel}/edit', [PlanningModelController::class, 'edit'])->name('templates.edit');
+        Route::patch('/templates/{planningModel}', [PlanningModelController::class, 'update'])->name('templates.update');
+        Route::delete('/templates/{planningModel}', [PlanningModelController::class, 'destroy'])->name('templates.destroy');
+
+        Route::get('/assign', [PlanningAssignmentController::class, 'assignTC'])->name('assign');
+        Route::get('/assign-sup', [PlanningAssignmentController::class, 'create'])->name('assign-sup');
+        Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
+        Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
     });
 
     // Saisie & Validation
@@ -112,14 +133,14 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Sup/Dashboard'))->name('dashboard');
     Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
-    Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
+    Route::get('/schedule', [App\Http\Controllers\SupPlanningController::class, 'index'])->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
 });
 
 // ─── Technicien (TC) ──────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('tc')->name('tc.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Tc/Dashboard'))->name('dashboard');
-    Route::get('/my-schedule', fn () => Inertia::render('Tc/Schedule/Index'))->name('schedule');
+    Route::get('/my-schedule', [App\Http\Controllers\TcPlanningController::class, 'index'])->name('schedule');
     Route::get('/my-hours', fn () => Inertia::render('Tc/Hours/Index'))->name('hours');
     Route::get('/my-profile', fn () => Inertia::render('Tc/Profile/Index'))->name('profile');
 });

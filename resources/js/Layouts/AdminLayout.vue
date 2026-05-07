@@ -60,6 +60,7 @@ const navItems = [
         children: [
             { label: 'Plannings', href: route('admin.assignments.schedules') },
             { label: 'Validation Plannings', href: route('admin.assignments.validation') },
+            { label: 'Historique plannings', href: route('admin.assignments.history') },
             { label: 'Suivi & Clôture', href: route('admin.time.tracking') },
         ],
     },
