@@ -58,6 +58,8 @@ const navItems = [
         children: [
             { label: 'Employés', href: route('admin.employees.index') },
             { label: 'Comptes & Rôles', href: route('admin.users.index') },
+            { label: 'Historique des employés', href: route('admin.employees.history') },
+            { label: 'Scoring & Performance', href: route('admin.scoring.index') },
         ],
     },
     {

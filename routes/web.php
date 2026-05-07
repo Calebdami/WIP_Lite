@@ -40,8 +40,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Personnel
     Route::get('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/history', [App\Http\Controllers\Admin\EmployeeController::class, 'history'])->name('employees.history');
     Route::post('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'store'])->name('employees.store');
     Route::put('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'update'])->name('employees.update');
+    Route::get('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'show'])->name('employees.show');
+    
+    // Scoring
+    Route::get('/scoring', [App\Http\Controllers\Admin\ScoringController::class, 'index'])->name('scoring.index');
+    Route::get('/scoring/{employee}', [App\Http\Controllers\Admin\ScoringController::class, 'show'])->name('scoring.show');
+    Route::post('/scoring/tasks', [App\Http\Controllers\Admin\ScoringController::class, 'storeTask'])->name('scoring.tasks.store');
+    Route::patch('/scoring/tasks/{task}/validate', [App\Http\Controllers\Admin\ScoringController::class, 'validateTask'])->name('scoring.tasks.validate');
+    
     Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
 
     // Campagnes
