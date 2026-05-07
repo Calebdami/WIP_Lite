@@ -102,30 +102,8 @@ class EmployeeController extends Controller
             });
         }
 
-        // 2. Evaluations
-        $evalQuery = EmployeeEvaluation::with(['employee', 'evaluator']);
-        if ($search) {
-            $evalQuery->whereHas('employee', function($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('matricule', 'like', "%{$search}%");
-            });
-        }
-
-        // 3. Contracts
-        $contractQuery = EmployeeContract::with(['employee']);
-        if ($search) {
-            $contractQuery->whereHas('employee', function($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('matricule', 'like', "%{$search}%");
-            });
-        }
-
         return Inertia::render('Admin/Employees/History', [
-            'careerHistories' => $careerQuery->latest('created_at')->paginate(15, ['*'], 'career_page')->withQueryString(),
-            'evaluations' => $evalQuery->latest('evaluation_date')->paginate(15, ['*'], 'eval_page')->withQueryString(),
-            'contracts' => $contractQuery->latest('start_date')->paginate(15, ['*'], 'contract_page')->withQueryString(),
+            'careerHistories' => $careerQuery->latest('created_at')->paginate(20)->withQueryString(),
             'filters' => $request->only(['search']),
         ]);
     }
@@ -179,24 +157,6 @@ class EmployeeController extends Controller
             'salary_base' => 'required|numeric|min:0',
             'status' => 'required|in:actif,suspendu,inactif',
         ]);
-
-        // Tracement des changements importants
-        if ($employee->position_id != $validated['position_id'] || 
-            $employee->status != $validated['status'] || 
-            $employee->salary_base != $validated['salary_base']) {
-            
-            EmployeeHistory::create([
-                'employee_id' => $employee->id,
-                'old_position_id' => $employee->position_id,
-                'new_position_id' => $validated['position_id'],
-                'old_status' => $employee->status,
-                'new_status' => $validated['status'],
-                'old_salary' => $employee->salary_base,
-                'new_salary' => $validated['salary_base'],
-                'changed_by' => auth()->id(),
-                'reason' => 'Mise à jour via l\'interface d\'administration',
-            ]);
-        }
 
         $employee->update($validated);
 

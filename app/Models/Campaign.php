@@ -14,10 +14,19 @@ class Campaign extends Model
         'status'
     ];
 
+    /**
+     * Affectations liées à cette campagne.
+     */
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class);
+    }
+
+    /**
+     * Employés travaillant sur cette campagne.
+     */
     public function employees()
     {
-        return $this->belongsToMany(Employee::class)
-            ->withPivot('assigned_at', 'unassigned_at')
-            ->withTimestamps();
+        return $this->hasManyThrough(Employee::class, Assignment::class, 'campaign_id', 'id', 'id', 'employee_id');
     }
 }

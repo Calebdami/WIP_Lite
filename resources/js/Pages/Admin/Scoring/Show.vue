@@ -2,12 +2,15 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const props = defineProps({
     employee: Object,
     tasks: Array,
 });
 
+const confirm = useConfirm();
 const showModal = ref(false);
 
 const form = useForm({
@@ -27,9 +30,18 @@ const submitTask = () => {
 };
 
 const validateTask = (task) => {
-    if (confirm('Voulez-vous valider cette tâche et créditer les points ?')) {
-        router.patch(route('admin.scoring.tasks.validate', task.id));
-    }
+    confirm.require({
+        message: 'Voulez-vous valider cette tâche et créditer les points ?',
+        header: 'Confirmation de validation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Valider',
+        rejectLabel: 'Annuler',
+        acceptClass: 'p-button-success p-button-sm',
+        rejectClass: 'p-button-secondary p-button-sm p-button-text',
+        accept: () => {
+            router.patch(route('admin.scoring.tasks.validate', task.id));
+        }
+    });
 };
 
 const formatDate = (dateString) => {
@@ -44,6 +56,7 @@ const formatDate = (dateString) => {
 
 <template>
     <Head :title="'Scoring — ' + employee.first_name" />
+    <ConfirmDialog />
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
