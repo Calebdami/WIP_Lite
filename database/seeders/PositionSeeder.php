@@ -30,9 +30,9 @@ class PositionSeeder extends Seeder
                 'description' => 'Contrôle la qualité et assiste les techniciens sur le terrain.'
             ],
             [
-                'name' => 'Technicien',
+                'name' => 'Teleconseiller',
                 'code' => 'TC',
-                'description' => 'Exécution des tâches techniques et maintenance.'
+                'description' => 'Effectue des appels sortants pour des enquêtes ou sondages.'
             ],
         ];
 
