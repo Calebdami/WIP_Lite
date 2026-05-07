@@ -5,7 +5,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
-import { useToast } from 'primevue/usetoast';
+
 
 /**
  * Composants PrimeVue
@@ -14,7 +14,6 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
-import Toast from 'primevue/toast';
 
 /**
  * Réception des données du serveur
@@ -25,7 +24,7 @@ const props = defineProps({
     roles: Array
 });
 
-const toast = useToast();
+
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showConfirmModal = ref(false); // État pour la modale de confirmation
@@ -108,7 +107,6 @@ const submitCreate = () => {
         preserveScroll: true,
         onSuccess: () => {
             showCreateModal.value = false;
-            toast.add({ severity: 'success', summary: 'Succès', detail: 'Compte créé avec succès', life: 3000 });
             createForm.reset();
         }
     });
@@ -119,7 +117,6 @@ const submitUpdate = () => {
         preserveScroll: true,
         onSuccess: () => {
             showEditModal.value = false;
-            toast.add({ severity: 'success', summary: 'Succès', detail: 'Rôle mis à jour', life: 3000 });
         }
     });
 };
@@ -134,7 +131,6 @@ const handleToggleStatus = () => {
         preserveScroll: true,
         onSuccess: () => {
             showConfirmModal.value = false;
-            toast.add({ severity: 'success', summary: 'Mis à jour', detail: 'Statut modifié', life: 3000 });
             userToToggle.value = null;
         }
     });
@@ -144,7 +140,7 @@ const handleToggleStatus = () => {
 <template>
     <Head title="Comptes & Rôles" />
     <AdminLayout>
-        <Toast />
+
 
         <template #header>
             <div class="flex justify-between items-center">

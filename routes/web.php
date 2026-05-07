@@ -52,8 +52,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/scoring/tasks', [App\Http\Controllers\Admin\ScoringController::class, 'storeTask'])->name('scoring.tasks.store');
     Route::patch('/scoring/tasks/{task}/validate', [App\Http\Controllers\Admin\ScoringController::class, 'validateTask'])->name('scoring.tasks.validate');
     
-    Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
-    Route::get('/employees', fn () => Inertia::render('Admin/Employees/Index'))->name('employees.index');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');

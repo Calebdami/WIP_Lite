@@ -51,7 +51,7 @@ const navItems = [
         href: route('admin.dashboard'),
         active: route().current('admin.dashboard'),
     },
-    {
+    { 
         label: 'Personnel',
         icon: '',
         key: 'personnel',
