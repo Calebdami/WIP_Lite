@@ -84,6 +84,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Temps de travail
+    Route::prefix('time')->name('time.')->group(function () {
+        Route::get('/tracking', fn () => Inertia::render('Admin/Time/Tracking'))->name('tracking');
+    });
 
     // Configuration
     Route::prefix('config')->name('config.')->group(function () {

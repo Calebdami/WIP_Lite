@@ -19,7 +19,6 @@ const user = computed(() => page.props.auth?.user || {});
         </template>
 
         <!-- Welcome Banner -->
-<<<<<<< HEAD
         <div class="rounded-3xl p-8 mb-8 relative overflow-hidden shadow-premium"
              style="background: linear-gradient(135deg, #111827 0%, #374151 100%);">
             <div class="relative z-10">
@@ -32,18 +31,6 @@ const user = computed(() => page.props.auth?.user || {});
             <!-- Decorative circles -->
             <div class="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-gold-500/10 blur-2xl"></div>
             <div class="absolute right-20 top-0 w-20 h-20 rounded-full bg-white/5 blur-xl"></div>
-=======
-        <div class="rounded-2xl p-6 mb-6 relative overflow-hidden"
-            style="background: linear-gradient(135deg, #6B7280 0%, #374151 100%);">
-            <div class="relative z-10">
-                <p class="text-gray-400 text-sm font-medium mb-1">Bienvenue,</p>
-                <h2 class="text-2xl font-black text-white mb-3">{{ user?.name || 'Téléconseiller' }} 👋</h2>
-                <p class="text-gray-400 text-sm">Consultez vos plannings, saisissez vos feuilles de temps et suivez vos
-                    affectations.</p>
-            </div>
-            <div class="absolute -right-4 -bottom-4 w-28 h-28 rounded-full" style="background: rgba(212,160,23,0.08);">
-            </div>
->>>>>>> origin/feature/Gestion_des_plannings/Manoel
         </div>
 
         <!-- Planning du jour -->
@@ -72,7 +59,8 @@ const user = computed(() => page.props.auth?.user || {});
                 <i class="pi pi-bolt text-gold-500"></i>
             </div>
             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
+                <Link
+                    :href="route('tc.hours')"
                     class="flex items-center gap-3 p-4 rounded-xl border border-pearl-200 hover:border-gold-300 hover:bg-pearl-50 transition-all duration-200 text-left group">
                     <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:shadow-gold transition-all"
                         style="background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%);">
@@ -85,8 +73,9 @@ const user = computed(() => page.props.auth?.user || {});
                         <p class="text-sm font-black text-charcoal-700">Mes heures validées</p>
                         <p class="text-xs text-charcoal-400 mt-0.5">Historique des temps confirmés</p>
                     </div>
-                </button>
-                <button
+                </Link>
+                <Link
+                    :href="route('tc.schedule')"
                     class="flex items-center gap-3 p-4 rounded-xl border border-pearl-200 hover:border-charcoal-400 hover:bg-pearl-50 transition-all duration-200 text-left">
                     <div class="w-9 h-9 rounded-lg bg-pearl-200 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4 text-charcoal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,7 +87,7 @@ const user = computed(() => page.props.auth?.user || {});
                         <p class="text-sm font-black text-charcoal-700">Voir mon planning</p>
                         <p class="text-xs text-charcoal-400 mt-0.5">Planning hebdomadaire</p>
                     </div>
-                </button>
+                </Link>
             </div>
         </div>
     </TcLayout>
