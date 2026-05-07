@@ -226,7 +226,7 @@ const navItems = [
                                 <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
                             <div class="p-2">
-                                <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
+                                <Link :href="route('logout')" method="post" as="button" replace class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
                                     <i class="pi pi-power-off text-sm opacity-60"></i>
                                     Déconnexion
                                 </Link>
