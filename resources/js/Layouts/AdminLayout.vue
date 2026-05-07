@@ -123,11 +123,6 @@ const navItems = [
         href: route('admin.maintenance'),
         active: route().current('admin.maintenance'),
     },
-    {
-        label: 'Mon Profil',
-        href: route('profile.edit'),
-        active: route().current('profile.edit'),
-    },
 ];
 </script>
 

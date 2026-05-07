@@ -2,11 +2,8 @@
 import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
-<<<<<<< HEAD
 import { useToast } from 'primevue/usetoast';
-=======
 import ConfirmDialog from 'primevue/confirmdialog';
->>>>>>> origin/feature/Gestion_de_heures-migration/Armel
 
 const page = usePage();
 const toast = useToast();
@@ -79,21 +76,11 @@ const navItems = [
         href: route('cp.hours'),
         active: route().current('cp.hours'),
     },
-    {
-        label: 'Mon Profil',
-        href: route('profile.edit'),
-        active: route().current('profile.edit'),
-    },
 ];
 </script>
 
 <template>
-<<<<<<< HEAD
-    <div class="min-h-screen bg-pearl-100 font-sans">
-        <Toast />
-=======
     <div class="h-screen flex flex-col bg-pearl-100 font-sans selection:bg-gold-200 selection:text-gold-900">
->>>>>>> origin/feature/Gestion_de_heures-migration/Armel
         <!-- Navbar -->
         <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-premium border-b border-charcoal-800 backdrop-blur-md bg-charcoal-900/95">
             <div class="flex items-center h-16 px-6">
@@ -189,10 +176,6 @@ const navItems = [
                                 <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
                             <div class="p-2">
-                                <Link :href="route('profile.edit')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-charcoal-600 hover:bg-pearl-100 hover:text-gold-600 transition-premium" @click="closeMenus">
-                                    <i class="pi pi-user text-sm opacity-60"></i>
-                                    Profil
-                                </Link>
                                 <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
                                     <i class="pi pi-power-off text-sm opacity-60"></i>
                                     Déconnexion
