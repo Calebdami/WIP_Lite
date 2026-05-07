@@ -59,9 +59,8 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
-        // On désaffecte tous les employés de cette campagne avant de la supprimer
         $campaign->assignments()->update([
-            'status' => 'released',
+            'status' => 'terminated',
             'end_date' => now()
         ]);
 
