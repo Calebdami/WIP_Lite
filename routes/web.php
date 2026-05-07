@@ -150,6 +150,11 @@ Route::middleware(['auth'])->prefix('api/timesheets')->name('api.timesheets.')->
     Route::get('/my/hours', [App\Http\Controllers\TimesheetController::class, 'myHours'])->name('my-hours');
 });
 
+// API Agents (pour les sélections)
+Route::middleware(['auth'])->get('/api/employees', function() {
+    return App\Models\Employee::orderBy('last_name')->get();
+});
+
 // ─── Profile ──────────────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

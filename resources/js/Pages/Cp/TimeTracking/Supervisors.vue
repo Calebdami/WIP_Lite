@@ -10,8 +10,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
-import Calendar from 'primevue/calendar';
+import Select from 'primevue/select';
+import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Tag from 'primevue/tag';
@@ -21,11 +21,19 @@ const toast = useToast();
 const timesheets = ref([]);
 const loading = ref(false);
 
-// Dummy SUP team members
-const supervisors = ref([
-    { id: 4, name: 'David Martin' },
-    { id: 5, name: 'Emma Bernard' },
-]);
+const supervisors = ref([]);
+
+const fetchSupervisors = async () => {
+    try {
+        const response = await axios.get('/api/employees'); 
+        supervisors.value = response.data.map(e => ({
+            id: e.id,
+            name: `${e.first_name} ${e.last_name}`
+        }));
+    } catch (error) {
+        console.error('Erreur sup:', error);
+    }
+};
 
 const fetchTimesheets = async () => {
     loading.value = true;
@@ -41,6 +49,7 @@ const fetchTimesheets = async () => {
 
 onMounted(() => {
     fetchTimesheets();
+    fetchSupervisors();
 });
 
 // Modale de Création
@@ -58,11 +67,19 @@ const openCreateDialog = () => {
 const createTimesheet = async () => {
     if (!newTimesheet.value.employee_id || !newTimesheet.value.period) return;
     
+    const formatDate = (date) => {
+        if (!date) return null;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const start = newTimesheet.value.period[0];
     const end = newTimesheet.value.period[1] || start;
 
-    const startStr = start.toISOString().split('T')[0];
-    const endStr = end.toISOString().split('T')[0];
+    const startStr = formatDate(start);
+    const endStr = formatDate(end);
 
     try {
         await axios.post('/api/timesheets', {
@@ -151,7 +168,9 @@ const getStatusSeverity = (status) => {
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Saisie des Heures SUP</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Enregistrement du temps de travail de vos superviseurs</p>
                 </div>
-                <Button label="Nouvelle Feuille" icon="pi pi-plus" class="p-button-sm p-button-primary" @click="openCreateDialog" />
+                <Button label="Nouvelle Feuille" icon="pi pi-plus" 
+                    class="bg-gold-500 hover:bg-gold-600 text-charcoal-900 px-4 py-2 rounded-lg font-bold text-sm shadow-gold flex items-center gap-2 transition-all" 
+                    @click="openCreateDialog" />
             </div>
         </template>
 
@@ -205,11 +224,11 @@ const getStatusSeverity = (status) => {
             <div class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-2">
                     <label for="employee" class="text-sm font-bold text-charcoal-700">Superviseur</label>
-                    <Dropdown id="employee" v-model="newTimesheet.employee_id" :options="supervisors" optionLabel="name" optionValue="id" placeholder="Sélectionner un superviseur" class="w-full" />
+                    <Select id="employee" v-model="newTimesheet.employee_id" :options="supervisors" optionLabel="name" optionValue="id" placeholder="Sélectionner un superviseur" class="w-full" />
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="period" class="text-sm font-bold text-charcoal-700">Période (Semaine)</label>
-                    <Calendar id="period" v-model="newTimesheet.period" selectionMode="range" :manualInput="false" showIcon placeholder="Début - Fin" class="w-full" />
+                    <DatePicker id="period" v-model="newTimesheet.period" selectionMode="range" :manualInput="false" showIcon placeholder="Début - Fin" class="w-full" />
                 </div>
             </div>
             <template #footer>

@@ -117,7 +117,8 @@ const openDetails = async (ts) => {
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Validation des Heures</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Validation finale des feuilles de temps soumises</p>
                 </div>
-                <Button label="Valider la sélection" icon="pi pi-check-circle" class="p-button-sm p-button-success" 
+                <Button label="Valider la sélection" icon="pi pi-check-circle" 
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-emerald flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
                     @click="validateBatch" :disabled="!selectedTimesheets.length" />
             </div>
         </template>

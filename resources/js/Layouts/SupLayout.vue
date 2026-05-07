@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -125,6 +127,8 @@ const navItems = [
                 <slot />
             </div>
         </main>
+        <Toast />
+        <ConfirmDialog />
     </div>
 </template>
 
