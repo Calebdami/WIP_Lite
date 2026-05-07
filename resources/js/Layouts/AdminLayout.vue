@@ -2,11 +2,8 @@
 import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
-<<<<<<< HEAD
 import { useToast } from 'primevue/usetoast';
-=======
 import ConfirmDialog from 'primevue/confirmdialog';
->>>>>>> origin/feature/Gestion_de_heures-migration/Armel
 
 const page = usePage();
 const toast = useToast();
@@ -141,19 +138,6 @@ const navItems = [
 </script>
 
 <template>
-<<<<<<< HEAD
-    <div class="min-h-screen bg-pearl-100 font-sans">
-        <Toast />
-
-        <!-- ═══════════════════ NAVBAR HORIZONTALE ═══════════════════ -->
-        <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-charcoal border-b border-charcoal-700">
-            <div class="flex items-center h-14 px-4 gap-0">
-
-                <!-- Logo + Titre -->
-                <Link :href="route('admin.dashboard')" class="flex items-center gap-3 min-w-[200px] border-r border-charcoal-700 pr-5 mr-2 h-full" @click="closeMenus">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-gold-gradient shadow-gold">
-                        <span class="text-charcoal-900 font-black text-sm">W</span>
-=======
     <div class="h-screen flex flex-col bg-pearl-100 font-sans selection:bg-gold-200 selection:text-gold-900">
         <!-- Navbar -->
         <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-premium border-b border-charcoal-800 backdrop-blur-md bg-charcoal-900/95">
@@ -162,7 +146,6 @@ const navItems = [
                 <Link :href="route('admin.dashboard')" class="flex items-center gap-4 min-w-[220px] border-r border-charcoal-800 pr-8 mr-4 h-full group" @click="closeMenus">
                     <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gold-gradient shadow-gold-premium group-hover:scale-105 transition-premium">
                         <span class="text-charcoal-900 font-black text-lg">W</span>
->>>>>>> origin/feature/Gestion_de_heures-migration/Armel
                     </div>
                     <div class="flex flex-col leading-tight">
                         <span class="text-white font-black text-base tracking-tight">Administration</span>
