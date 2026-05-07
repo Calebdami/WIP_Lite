@@ -103,6 +103,16 @@ const setPendingContext = (ctx) => {
     activeTab.value = 'available';
 };
 
+// Filtrage des ressources disponibles par position quand un contexte est actif
+const filteredAvailableEmployees = computed(() => {
+    if (!pendingContext.value?.position_code) {
+        return props.availableEmployees.data;
+    }
+    return props.availableEmployees.data.filter(
+        emp => emp.position?.code === pendingContext.value.position_code
+    );
+});
+
 const clearPendingContext = () => {
     pendingContext.value = null;
 };
@@ -303,7 +313,7 @@ const campaignsStructure = computed(() => {
                             </div>
                             <div class="flex items-center gap-2">
                                 <button
-                                    @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: cp.id })"
+                                    @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: cp.id, position_code: 'SUP' })"
                                     class="p-1.5 bg-white border border-gold-200 text-gold-600 rounded-lg hover:bg-gold-50 transition-all shadow-sm"
                                     title="Ajouter un Superviseur">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -339,7 +349,7 @@ const campaignsStructure = computed(() => {
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <button
-                                            @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: sup.id })"
+                                            @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: sup.id, position_code: 'TC' })"
                                             class="p-1 bg-pearl-50 border border-pearl-200 text-charcoal-500 rounded hover:bg-pearl-100 transition-all"
                                             title="Ajouter un TC">
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -396,7 +406,7 @@ const campaignsStructure = computed(() => {
                                     Voudriez-vous en
                                     ajouter ? (Chef de Plateau)</p>
                             </div>
-                            <button @click="setPendingContext({ campaign_id: campaignId })"
+                            <button @click="setPendingContext({ campaign_id: campaignId, position_code: 'CP' })"
                                 class="p-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -514,7 +524,7 @@ const campaignsStructure = computed(() => {
                                     attendent un
                                     chef</p>
                             </div>
-                            <button @click="setPendingContext({ campaign_id: campaignId })"
+                            <button @click="setPendingContext({ campaign_id: campaignId, position_code: 'SUP' })"
                                 class="ml-auto p-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-all shadow-sm">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -547,23 +557,10 @@ const campaignsStructure = computed(() => {
             </div>
         </div>
 
-        <!-- Campaign Pagination -->
-        <div v-if="campaigns.links.length > 3" class="mt-8 flex justify-center">
-            <div class="flex gap-1 bg-white p-1 rounded-xl border border-pearl-200 shadow-sm">
-                <Link v-for="link in campaigns.links" :key="link.label" :href="link.url || '#'" v-html="link.label"
-                    class="px-4 py-2 rounded-lg text-xs font-bold transition-all" :class="{
-                        'bg-gold-gradient text-charcoal-900 shadow-md': link.active,
-                        'text-charcoal-500 hover:bg-pearl-50': !link.active && link.url,
-                        'opacity-30 cursor-not-allowed': !link.url
-                    }" />
-            </div>
-        </div>
-
-
         <!-- 2. TAB: AVAILABLE RESOURCES -->
         <div v-if="activeTab === 'available'">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div v-for="emp in availableEmployees.data" :key="emp.id"
+                <div v-for="emp in filteredAvailableEmployees" :key="emp.id"
                     class="bg-white rounded-2xl border border-pearl-200 p-5 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
                     <div class="flex items-center gap-3 mb-4">
                         <div
@@ -585,7 +582,7 @@ const campaignsStructure = computed(() => {
                         <div class="flex justify-between text-[9px] font-bold">
                             <span class="text-charcoal-400 uppercase">Embauche</span>
                             <span class="text-charcoal-700">{{ new Date(emp.hire_date).toLocaleDateString('fr-FR')
-                            }}</span>
+                                }}</span>
                         </div>
                     </div>
                     <button @click="openAssignModal(emp)"
@@ -707,7 +704,8 @@ const campaignsStructure = computed(() => {
                                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span class="text-[10px] font-bold text-charcoal-700">
-                                    Campagne : {{ props.allCampaigns.find(c => c.id == pendingContext.campaign_id)?.name }}
+                                    Campagne : {{props.allCampaigns.find(c => c.id == pendingContext.campaign_id)?.name
+                                    }}
                                 </span>
                             </div>
                             <div v-if="pendingContext.manager_assignment_id" class="flex items-center gap-2">
@@ -717,8 +715,10 @@ const campaignsStructure = computed(() => {
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                                 <span class="text-[10px] font-bold text-charcoal-700">
-                                    Responsable : {{ props.allManagers.find(m => m.id == pendingContext.manager_assignment_id)?.employee?.first_name }} 
-                                    {{ props.allManagers.find(m => m.id == pendingContext.manager_assignment_id)?.employee?.last_name }}
+                                    Responsable : {{props.allManagers.find(m => m.id ==
+                                        pendingContext.manager_assignment_id)?.employee?.first_name }}
+                                    {{props.allManagers.find(m => m.id ==
+                                        pendingContext.manager_assignment_id)?.employee?.last_name }}
                                 </span>
                             </div>
                         </div>

@@ -61,7 +61,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Campagnes
-    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class);
+    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {

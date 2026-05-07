@@ -66,6 +66,6 @@ class CampaignController extends Controller
 
         $campaign->delete();
 
-        return redirect()->back()->with('success', 'Campagne supprimée et tous les employés ont été désaffectés.');
+        return redirect()->route('admin.campaigns.index')->with('success', 'Campagne supprimée et tous les employés ont été désaffectés.');
     }
 }

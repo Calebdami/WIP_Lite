@@ -119,7 +119,7 @@ class AssignmentController extends Controller
             }
         }
 
-        Assignment::create([
+        $newAssignment = Assignment::create([
             'employee_id' => $validated['employee_id'],
             'campaign_id' => $validated['campaign_id'],
             'position_id' => $validated['position_id'],
@@ -127,6 +127,31 @@ class AssignmentController extends Controller
             'start_date' => $validated['start_date'],
             'status' => 'active',
         ]);
+
+        // --- Auto-rattachement des collaborateurs orphelins ---
+        // Si on affecte un CP → rattacher les SUPs orphelins de cette campagne
+        if ($position->code === 'CP') {
+            $supPositionId = Position::where('code', 'SUP')->value('id');
+            if ($supPositionId) {
+                Assignment::where('campaign_id', $validated['campaign_id'])
+                    ->where('position_id', $supPositionId)
+                    ->where('status', 'active')
+                    ->whereNull('manager_id')
+                    ->update(['manager_id' => $newAssignment->employee_id]);
+            }
+        }
+
+        // Si on affecte un SUP → rattacher les TCs orphelins de cette campagne
+        if ($position->code === 'SUP') {
+            $tcPositionId = Position::where('code', 'TC')->value('id');
+            if ($tcPositionId) {
+                Assignment::where('campaign_id', $validated['campaign_id'])
+                    ->where('position_id', $tcPositionId)
+                    ->where('status', 'active')
+                    ->whereNull('manager_id')
+                    ->update(['manager_id' => $newAssignment->employee_id]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Affectation réussie.');
     }
