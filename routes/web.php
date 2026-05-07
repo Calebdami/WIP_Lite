@@ -117,6 +117,7 @@ Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
     Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
+    Route::get('/my-hours', fn () => Inertia::render('Sup/Hours/Index'))->name('hours');
 });
 
 // ─── Technicien (TC) ──────────────────────────────────────────────────────────

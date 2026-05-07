@@ -173,6 +173,32 @@ const openEditDialog = async (ts) => {
     }
 };
 
+// Calculs d'écarts et alertes en direct
+const totalRealizedHours = computed(() => {
+    return timesheetEntries.value.reduce((acc, entry) => acc + (parseFloat(entry.total_hours) || 0), 0);
+});
+
+const globalDeviation = computed(() => {
+    if (!currentTimesheet.value) return 0;
+    const planned = parseFloat(currentTimesheet.value.total_planned_hours) || 35; // Default 35 if not set
+    return totalRealizedHours.value - planned;
+});
+
+const getEntryAlerts = (entry) => {
+    const alerts = [];
+    if (entry.check_in && entry.check_out) {
+        const [h1, m1] = entry.check_in.split(':').map(Number);
+        const [h2, m2] = entry.check_out.split(':').map(Number);
+        const diff = (h2 * 60 + m2) - (h1 * 60 + m1) - (entry.break_duration || 0);
+        
+        if (diff < 0) alerts.push({ type: 'error', message: 'Horaire incohérent' });
+        if (diff > 600) alerts.push({ type: 'warn', message: 'Amplitude > 10h' });
+    } else if (!entry.absence_type) {
+        // Optionnel : alerte si vide sans motif d'absence
+    }
+    return alerts;
+};
+
 const formatDateDisplay = (dateStr) => {
     if (!dateStr) return '';
     const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : (dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr);
@@ -368,14 +394,23 @@ const getStatusSeverity = (status) => {
 
         <!-- Modale de Saisie des Heures -->
         <Dialog v-model:visible="displayEditDialog" :header="`Saisie des Heures`" :style="{ width: '1000px' }" modal maximizable>
-            <div class="mb-6 grid grid-cols-3 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
+            <div class="mb-6 grid grid-cols-4 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Employé</span>
                     <span class="font-bold text-charcoal-700">{{ currentTimesheet?.employee?.first_name }} {{ currentTimesheet?.employee?.last_name }}</span>
                 </div>
                 <div class="flex flex-col border-x border-pearl-200 px-4">
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Période</span>
-                    <span class="font-bold text-charcoal-700">{{ formatDateDisplay(currentTimesheet?.period_start) }} au {{ formatDateDisplay(currentTimesheet?.period_end) }}</span>
+                    <span class="text-sm font-black text-charcoal-700">{{ formatDateDisplay(currentTimesheet?.period_start) }} au {{ formatDateDisplay(currentTimesheet?.period_end) }}</span>
+                </div>
+                <div class="flex flex-col border-r border-pearl-200 pr-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Analyse des Écarts</span>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-black" :class="globalDeviation < 0 ? 'text-red-600' : 'text-emerald-600'">
+                            {{ globalDeviation > 0 ? '+' : '' }}{{ globalDeviation }}h
+                        </span>
+                        <span class="text-[10px] text-charcoal-400 font-bold uppercase">/ {{ currentTimesheet?.total_planned_hours || 35 }}h prévues</span>
+                    </div>
                 </div>
                 <div class="flex flex-col items-end">
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Statut actuel</span>
@@ -440,6 +475,22 @@ const getStatusSeverity = (status) => {
                 <Column header="Commentaire">
                     <template #body="{ data }">
                         <InputText v-model="data.comment" placeholder="Note interne..." class="w-full p-inputtext-sm" />
+                    </template>
+                </Column>
+                <Column header="Alertes" headerClass="w-40">
+                    <template #body="{ data }">
+                        <div v-if="getEntryAlerts(data).length" class="flex flex-col gap-1">
+                            <div v-for="(alert, idx) in getEntryAlerts(data)" :key="idx" 
+                                 class="flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-bold border"
+                                 :class="alert.type === 'error' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'">
+                                <i :class="`pi pi-${alert.type === 'error' ? 'times-circle' : 'exclamation-triangle'} text-[9px]`"></i>
+                                {{ alert.message }}
+                            </div>
+                        </div>
+                        <span v-else-if="data.check_in && data.check_out" class="text-emerald-600 text-[9px] font-bold flex items-center gap-1">
+                            <i class="pi pi-check text-[9px]"></i> CONFORME
+                        </span>
+                        <span v-else class="text-charcoal-300 text-[9px] italic">-</span>
                     </template>
                 </Column>
             </DataTable>
@@ -524,26 +575,47 @@ const getStatusSeverity = (status) => {
                 </div>
             </div>
             <template #footer>
-                <Button label="Annuler" text severity="secondary" @click="displayBatchDialog = false" />
-                <Button label="Suivant" icon="pi pi-arrow-right" severity="warn" @click="confirmBatchEntry" />
+                <div class="flex flex-col items-center gap-4 w-full pt-4 border-t border-pearl-100">
+                    <p class="text-[10px] text-charcoal-400 font-bold uppercase tracking-widest">Confirmation de la Saisie Rapide</p>
+                    <div class="flex gap-3">
+                        <Button label="Annuler" text severity="secondary" class="rounded-xl px-6" @click="displayBatchDialog = false" />
+                        <Button label="Suivant" icon="pi pi-arrow-right" severity="warn" class="rounded-xl px-8 shadow-gold-premium" @click="confirmBatchEntry" />
+                    </div>
+                </div>
             </template>
         </Dialog>
 
         <!-- Confirmation Saisie Groupée -->
-        <Dialog v-model:visible="displayConfirmBatch" header="Confirmation Finale" :style="{ width: '400px' }" modal>
-            <div class="flex flex-col items-center text-center py-4">
-                <div class="w-16 h-16 rounded-full bg-warn-50 text-warn-500 flex items-center justify-center mb-4">
-                    <i class="pi pi-exclamation-circle text-3xl"></i>
+        <Dialog v-model:visible="displayConfirmBatch" header=" " :style="{ width: '450px' }" modal :closable="false">
+            <div class="flex flex-col items-center text-center py-6 px-4">
+                <div class="w-24 h-24 rounded-full bg-gold-50 text-gold-500 flex items-center justify-center mb-6 shadow-inner">
+                    <i class="pi pi-bolt text-5xl"></i>
                 </div>
-                <h3 class="text-lg font-black text-charcoal-700 mb-2">Êtes-vous sûr ?</h3>
-                <p class="text-sm text-charcoal-500">
-                    Cette action va écraser les horaires de <strong>{{ selectedTimesheets.length }} fiches</strong>. 
-                    Cette opération est irréversible.
+                <h3 class="text-2xl font-black text-charcoal-900 mb-3 tracking-tight">Appliquer à la sélection ?</h3>
+                <p class="text-sm text-charcoal-500 leading-relaxed max-w-[300px]">
+                    Vous allez mettre à jour les horaires de <strong>{{ selectedTimesheets.length }} agents</strong> simultanément.
                 </p>
+                
+                <div class="mt-8 grid grid-cols-3 gap-2 w-full p-4 bg-pearl-50 rounded-2xl border border-pearl-100">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Arrivée</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.check_in }}</span>
+                    </div>
+                    <div class="flex flex-col items-center border-x border-pearl-200">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Départ</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.check_out }}</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Pause</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.break_duration }}m</span>
+                    </div>
+                </div>
             </div>
             <template #footer>
-                <Button label="Retour" text severity="secondary" @click="displayConfirmBatch = false; displayBatchDialog = true" />
-                <Button label="Oui, confirmer la saisie" icon="pi pi-check" severity="danger" @click="applyBatchEntry" :loading="savingEntries" />
+                <div class="flex justify-center gap-3 pb-4 w-full">
+                    <Button label="Annuler" text severity="secondary" class="rounded-xl px-6" @click="displayConfirmBatch = false; displayBatchDialog = true" />
+                    <Button label="Oui, appliquer maintenant" icon="pi pi-check-circle" severity="warn" class="rounded-xl px-8 shadow-gold-premium" @click="applyBatchEntry" :loading="savingEntries" />
+                </div>
             </template>
         </Dialog>
     </SupLayout>

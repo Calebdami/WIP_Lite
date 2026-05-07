@@ -256,23 +256,27 @@ const getStatusSeverity = (status) => {
         </div>
 
         <!-- Modale de Rejet -->
-        <Dialog v-model:visible="displayRejectDialog" header="Rejeter la feuille de temps" :style="{ width: '500px' }" modal>
-            <div class="flex flex-col gap-4 mt-2">
-                <div class="p-4 bg-red-50 border border-red-100 rounded-xl flex gap-3">
-                    <i class="pi pi-exclamation-circle text-red-500 text-xl"></i>
-                    <p class="text-xs text-red-700 leading-relaxed">
-                        Vous allez rejeter la feuille de <strong>{{ rejectingTimesheet?.employee?.first_name }} {{ rejectingTimesheet?.employee?.last_name }}</strong>. 
-                        Elle retournera au statut <span class="font-bold">brouillon</span> pour correction par le superviseur.
-                    </p>
+        <Dialog v-model:visible="displayRejectDialog" header=" " :style="{ width: '500px' }" modal :closable="false">
+            <div class="flex flex-col items-center text-center py-6 px-4">
+                <div class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6 shadow-inner">
+                    <i class="pi pi-times-circle text-4xl"></i>
                 </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Motif du rejet</label>
-                    <Textarea v-model="rejectReason" rows="4" placeholder="Expliquez pourquoi cette feuille est refusée..." class="w-full rounded-xl border-pearl-200" autoResize />
+                <h3 class="text-2xl font-black text-charcoal-900 mb-3 tracking-tight">Rejeter la feuille ?</h3>
+                <p class="text-sm text-charcoal-500 leading-relaxed">
+                    Vous allez renvoyer la fiche de <strong>{{ rejectingTimesheet?.employee?.first_name }} {{ rejectingTimesheet?.employee?.last_name }}</strong> en brouillon.
+                </p>
+
+                <div class="w-full mt-8 flex flex-col gap-3 text-left">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 px-1">Motif du rejet (Obligatoire)</label>
+                    <Textarea v-model="rejectReason" rows="4" placeholder="Expliquez les corrections nécessaires..." 
+                        class="w-full rounded-2xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-4 text-sm" autoResize />
                 </div>
             </div>
             <template #footer>
-                <Button label="Annuler" text severity="secondary" @click="displayRejectDialog = false" />
-                <Button label="Confirmer le rejet" icon="pi pi-times" severity="danger" @click="rejectTimesheet" :disabled="!rejectReason.trim()" />
+                <div class="flex justify-center gap-3 pb-6 w-full">
+                    <Button label="Annuler" text severity="secondary" class="rounded-xl px-6" @click="displayRejectDialog = false" />
+                    <Button label="Confirmer le rejet" icon="pi pi-times" severity="danger" class="rounded-xl px-8 shadow-lg shadow-red-100" @click="rejectTimesheet" :disabled="!rejectReason.trim()" />
+                </div>
             </template>
         </Dialog>
 

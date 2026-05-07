@@ -513,26 +513,47 @@ const getStatusSeverity = (status) => {
                 </div>
             </div>
             <template #footer>
-                <Button label="Annuler" text severity="secondary" @click="displayBatchDialog = false" />
-                <Button label="Suivant" icon="pi pi-arrow-right" severity="warn" @click="confirmBatchEntry" />
+                <div class="flex flex-col items-center gap-4 w-full pt-4 border-t border-pearl-100">
+                    <p class="text-[10px] text-charcoal-400 font-bold uppercase tracking-widest">Confirmation de la Saisie Rapide</p>
+                    <div class="flex gap-3">
+                        <Button label="Annuler" text severity="secondary" class="rounded-xl px-6" @click="displayBatchDialog = false" />
+                        <Button label="Suivant" icon="pi pi-arrow-right" severity="warn" class="rounded-xl px-8 shadow-gold-premium" @click="confirmBatchEntry" />
+                    </div>
+                </div>
             </template>
         </Dialog>
 
         <!-- Confirmation Saisie Groupée -->
-        <Dialog v-model:visible="displayConfirmBatch" header="Confirmation Finale" :style="{ width: '400px' }" modal>
-            <div class="flex flex-col items-center text-center py-4">
-                <div class="w-16 h-16 rounded-full bg-warn-50 text-warn-500 flex items-center justify-center mb-4">
-                    <i class="pi pi-exclamation-circle text-3xl"></i>
+        <Dialog v-model:visible="displayConfirmBatch" header=" " :style="{ width: '450px' }" modal :closable="false">
+            <div class="flex flex-col items-center text-center py-6 px-4">
+                <div class="w-24 h-24 rounded-full bg-gold-50 text-gold-500 flex items-center justify-center mb-6 shadow-inner">
+                    <i class="pi pi-bolt text-5xl"></i>
                 </div>
-                <h3 class="text-lg font-black text-charcoal-700 mb-2">Êtes-vous sûr ?</h3>
-                <p class="text-sm text-charcoal-500">
-                    Cette action va écraser les horaires de <strong>{{ selectedTimesheets.length }} fiches CP</strong>. 
-                    Cette opération est irréversible.
+                <h3 class="text-2xl font-black text-charcoal-900 mb-3 tracking-tight">Appliquer à la sélection ?</h3>
+                <p class="text-sm text-charcoal-500 leading-relaxed max-w-[300px]">
+                    Vous allez mettre à jour les horaires de <strong>{{ selectedTimesheets.length }} fiches CP</strong> simultanément.
                 </p>
+                
+                <div class="mt-8 grid grid-cols-3 gap-2 w-full p-4 bg-pearl-50 rounded-2xl border border-pearl-100">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Arrivée</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.check_in }}</span>
+                    </div>
+                    <div class="flex flex-col items-center border-x border-pearl-200">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Départ</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.check_out }}</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] font-black text-charcoal-400 uppercase">Pause</span>
+                        <span class="font-mono font-bold text-charcoal-700">{{ batchSchedule.break_duration }}m</span>
+                    </div>
+                </div>
             </div>
             <template #footer>
-                <Button label="Retour" text severity="secondary" @click="displayConfirmBatch = false; displayBatchDialog = true" />
-                <Button label="Oui, confirmer la saisie" icon="pi pi-check" severity="danger" @click="applyBatchEntry" :loading="savingEntries" />
+                <div class="flex justify-center gap-3 pb-4 w-full">
+                    <Button label="Annuler" text severity="secondary" class="rounded-xl px-6" @click="displayConfirmBatch = false; displayBatchDialog = true" />
+                    <Button label="Oui, appliquer maintenant" icon="pi pi-check-circle" severity="warn" class="rounded-xl px-8 shadow-gold-premium" @click="applyBatchEntry" :loading="savingEntries" />
+                </div>
             </template>
         </Dialog>
     </AdminLayout>

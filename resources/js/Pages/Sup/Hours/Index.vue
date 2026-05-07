@@ -1,5 +1,5 @@
 <script setup>
-import CpLayout from '@/Layouts/CpLayout.vue';
+import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -53,8 +53,8 @@ const formatDateDisplay = (dateStr) => {
 </script>
 
 <template>
-    <Head title="Mes Heures Validées — Chef de Plateau" />
-    <CpLayout>
+    <Head title="Mes Heures Validées — Superviseur" />
+    <SupLayout>
         <template #header>
             <div>
                 <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Mes Heures Validées</h1>
@@ -164,5 +164,5 @@ const formatDateDisplay = (dateStr) => {
                 <Button label="Fermer" text severity="secondary" @click="displayDetailsDialog = false" />
             </template>
         </Dialog>
-    </CpLayout>
+    </SupLayout>
 </template>
