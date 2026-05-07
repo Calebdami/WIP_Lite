@@ -68,6 +68,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/structure', [App\Http\Controllers\Admin\AssignmentController::class, 'structure'])->name('structure');
         Route::post('/', [App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('store');
         Route::patch('/{assignment}/release', [App\Http\Controllers\Admin\AssignmentController::class, 'release'])->name('release');
+        
+        // Affectation multiple
+        Route::get('/bulk-assign', [App\Http\Controllers\Admin\AssignmentController::class, 'bulkAssign'])->name('bulk-assign');
+        Route::post('/bulk-assign', [App\Http\Controllers\Admin\AssignmentController::class, 'bulkAssignStore'])->name('bulk-assign.store');
+        Route::get('/api/managers', [App\Http\Controllers\Admin\AssignmentController::class, 'getAvailableManagers'])->name('api.managers');
+        
         Route::get('/schedules', [PlanningModelController::class, 'index'])->name('schedules');
         Route::get('/schedules/create', [PlanningModelController::class, 'create'])->name('schedules.create');
         Route::post('/schedules', [PlanningModelController::class, 'store'])->name('schedules.store');
