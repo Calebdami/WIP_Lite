@@ -25,6 +25,7 @@ class EmployeeSeeder extends Seeder
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
             'birth_date' => '1990-05-15',
+            'hire_date' => '2024-01-01',
             'phone' => '0102030405',
             'email' => 'jean.dupont@entreprise.com',
             'address' => '123 Rue de la Paix, Paris',
@@ -33,13 +34,14 @@ class EmployeeSeeder extends Seeder
             'status' => 'actif',
         ]);
 
-        // Génération de 10 employés aléatoires
+        // Génération de 300 employés aléatoires
         for ($i = 2; $i <= 300; $i++) {
             Employee::create([
                 'matricule' => 'EMP-' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'first_name' => fake()->firstName(),
                 'last_name' => fake()->lastName(),
                 'birth_date' => fake()->date('Y-m-d', '2000-01-01'),
+                'hire_date' => fake()->date('Y-m-d', '2024-05-01'),
                 'phone' => fake()->phoneNumber(),
                 'email' => fake()->unique()->companyEmail(),
                 'address' => fake()->address(),

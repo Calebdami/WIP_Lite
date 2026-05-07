@@ -38,17 +38,30 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
 
     // Personnel
-    Route::get('/employees', fn () => Inertia::render('Admin/Employees/Index'))->name('employees.index');
+    Route::get('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/history', [App\Http\Controllers\Admin\EmployeeController::class, 'history'])->name('employees.history');
+    Route::post('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'store'])->name('employees.store');
+    Route::put('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'update'])->name('employees.update');
+    Route::get('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'show'])->name('employees.show');
+    
+    // Scoring
+    Route::get('/scoring', [App\Http\Controllers\Admin\ScoringController::class, 'index'])->name('scoring.index');
+    Route::get('/scoring/{employee}', [App\Http\Controllers\Admin\ScoringController::class, 'show'])->name('scoring.show');
+    Route::post('/scoring/tasks', [App\Http\Controllers\Admin\ScoringController::class, 'storeTask'])->name('scoring.tasks.store');
+    Route::patch('/scoring/tasks/{task}/validate', [App\Http\Controllers\Admin\ScoringController::class, 'validateTask'])->name('scoring.tasks.validate');
+    
     Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
 
     // Campagnes
-    Route::get('/campaigns', fn () => Inertia::render('Admin/Campaigns/Index'))->name('campaigns.index');
+    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class);
 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {
-        Route::get('/structure', fn () => Inertia::render('Admin/Assignments/Structure'))->name('structure');
+        Route::get('/structure', [App\Http\Controllers\Admin\AssignmentController::class, 'structure'])->name('structure');
+        Route::post('/', [App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('store');
+        Route::patch('/{assignment}/release', [App\Http\Controllers\Admin\AssignmentController::class, 'release'])->name('release');
         Route::get('/schedules', fn () => Inertia::render('Admin/Assignments/Schedules'))->name('schedules');
-        Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
+        Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
         Route::get('/validation', fn () => Inertia::render('Admin/Assignments/Validation'))->name('validation');
         Route::get('/history', fn () => Inertia::render('Admin/Assignments/History'))->name('history');
@@ -134,9 +147,7 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Cp/Dashboard'))->name('dashboard');
     
     // Équipes
-    Route::get('/supervisors', fn () => Inertia::render('Cp/Teams/Supervisors'))->name('supervisors');
-    Route::get('/assignments/tc', fn () => Inertia::render('Cp/Teams/AssignmentsTC'))->name('assignments.tc');
-    Route::get('/resources/idle', fn () => Inertia::render('Cp/Teams/ResourcesIdle'))->name('resources.idle');
+    Route::get('/teams', [\App\Http\Controllers\Cp\TeamController::class, 'index'])->name('teams');
 
     // Plannings
     Route::prefix('schedules')->name('schedules.')->group(function () {
@@ -156,7 +167,7 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Sup/Dashboard'))->name('dashboard');
-    Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
+    Route::get('/my-team', [\App\Http\Controllers\Sup\TeamController::class, 'index'])->name('team');
     Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
 });

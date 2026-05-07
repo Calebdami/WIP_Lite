@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeHistory extends Model
 {
@@ -17,7 +18,8 @@ class EmployeeHistory extends Model
 
     protected $fillable = [
         'employee_id', 'old_position_id', 'new_position_id',
-        'old_status', 'new_status', 'changed_by', 'reason'
+        'old_status', 'new_status', 'old_salary', 'new_salary', 
+        'changed_by', 'reason'
     ];
 
     public function employee(): BelongsTo {
