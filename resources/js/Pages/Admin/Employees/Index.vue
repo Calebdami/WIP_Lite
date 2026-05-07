@@ -112,8 +112,9 @@ const getAssignmentBadge = (employee) => {
 };
 
 const getCampaignName = (employee) => {
-    const active = employee.assignments?.find(a => a.status === 'active');
-    return active ? active.campaign?.name : '-';
+    const active = employee?.assignments?.filter(a => a.status === 'active') || [];
+    if (active.length === 0) return '-';
+    return active.map(a => a.campaign?.name).join(', ');
 };
 </script>
 
@@ -470,8 +471,13 @@ const getCampaignName = (employee) => {
                                     <p class="text-sm font-black text-gold-600">{{ selectedEmployee?.salary_base }} €</p>
                                 </div>
                                 <div>
-                                    <p class="text-[9px] text-charcoal-400 uppercase font-bold">Affectation actuelle</p>
-                                    <p class="text-xs font-bold text-charcoal-700">{{ getCampaignName(selectedEmployee) }}</p>
+                                    <p class="text-[9px] text-charcoal-400 uppercase font-bold mb-1">Affectations actuelles</p>
+                                    <div v-if="selectedEmployee?.assignments?.filter(a => a.status === 'active').length > 0" class="flex flex-wrap gap-2">
+                                        <div v-for="assign in selectedEmployee.assignments.filter(a => a.status === 'active')" :key="assign.id" class="px-2 py-1 bg-gold-50 text-gold-700 rounded border border-gold-100 text-[10px] font-bold">
+                                            {{ assign.campaign?.name }}
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-xs font-bold text-charcoal-700">-</p>
                                 </div>
                                 <div>
                                     <p class="text-[9px] text-charcoal-400 uppercase font-bold">Compte Utilisateur</p>

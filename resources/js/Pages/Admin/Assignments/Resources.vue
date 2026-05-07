@@ -12,6 +12,7 @@ const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || '');
 const showReleaseModal = ref(false);
 const selectedAssignment = ref(null);
+const selectedEmployeeName = ref('');
 const releaseCascade = ref(true);
 
 const updateFilters = () => {
@@ -47,6 +48,7 @@ const getStatusLabel = (employee) => {
 
 const openReleaseModal = (emp) => {
     selectedAssignment.value = emp.assignments?.[0];
+    selectedEmployeeName.value = `${emp.first_name} ${emp.last_name}`;
     releaseCascade.value = true;
     showReleaseModal.value = true;
 };
@@ -154,8 +156,8 @@ const confirmRelease = () => {
                         Profil
                     </Link>
                     <Link 
-                        v-if="!emp.assignments?.[0]"
-                        :href="route('admin.assignments.structure')"
+                        v-if="!emp.assignments?.[0] || emp.position?.code === 'CP'"
+                        :href="route('admin.assignments.structure', { assign: emp.id })"
                         class="flex-[2] py-2 bg-charcoal-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest text-center hover:bg-gold-600 transition-colors"
                     >
                         Affecter
@@ -197,7 +199,6 @@ const confirmRelease = () => {
                 />
             </div>
         </div>
-
         <!-- Release Confirmation Modal (Custom style) -->
         <Transition
             enter-active-class="transition duration-200 ease-out"
@@ -208,40 +209,59 @@ const confirmRelease = () => {
             leave-to-class="opacity-0 scale-95"
         >
             <div v-if="showReleaseModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal-900/80 backdrop-blur-sm">
-                <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-pearl-200">
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
-                            <svg class="w-8 h-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                        <h3 class="text-charcoal-800 font-black uppercase tracking-widest text-sm mb-2">Libérer la ressource ?</h3>
-                        <p class="text-charcoal-400 text-xs mb-6 px-4">
-                            Vous êtes sur le point de libérer <strong>{{ selectedAssignment?.employee?.first_name }} {{ selectedAssignment?.employee?.last_name }}</strong> de son affectation actuelle.
+                <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-pearl-100">
+                    <!-- Header -->
+                    <div class="px-8 py-5 bg-rose-50/50 border-b border-rose-100 flex justify-between items-center">
+                        <h2 class="text-base font-black text-rose-600 uppercase tracking-[0.1em] flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            Confirmation de libération
+                        </h2>
+                        <button @click="showReleaseModal = false" class="text-rose-300 hover:text-rose-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="p-8 space-y-8">
+                        <p class="text-charcoal-600 text-sm font-medium leading-relaxed">
+                            Voulez-vous vraiment libérer <strong>{{ selectedEmployeeName }}</strong> ? Cette action mettra fin à son affectation actuelle.
                         </p>
 
                         <!-- Choice for Managers (CP/SUP) -->
-                        <div v-if="['CP', 'SUP'].includes(selectedAssignment?.employee?.position?.code)" class="text-left mb-6 bg-pearl-50 p-4 rounded-xl border border-pearl-100">
-                            <label class="block text-[10px] font-black text-charcoal-500 uppercase tracking-widest mb-3">Options de libération</label>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" v-model="releaseCascade" :value="true" class="w-4 h-4 text-gold-600 focus:ring-gold-500 border-pearl-300">
-                                    <span class="text-xs text-charcoal-600 group-hover:text-charcoal-900">Libérer avec tous les subordonnés <span class="text-[10px] text-charcoal-400 italic block">(Cascade complète)</span></span>
+                        <div v-if="['CP', 'SUP'].includes(selectedAssignment?.position?.code)" class="bg-pearl-50/50 p-6 rounded-2xl border border-pearl-100">
+                            <label class="block text-[11px] font-black text-charcoal-500 uppercase tracking-[0.15em] mb-4">Options de libération</label>
+                            <div class="space-y-4">
+                                <label class="flex items-start gap-4 cursor-pointer group">
+                                    <div class="relative flex items-center h-5">
+                                        <input type="radio" v-model="releaseCascade" :value="true" class="w-5 h-5 text-rose-600 focus:ring-rose-500 border-pearl-300 transition-all">
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-charcoal-700 group-hover:text-charcoal-900 transition-colors">Libérer avec tous les subordonnés</span>
+                                        <span class="text-[11px] text-charcoal-400 italic font-medium">(Cascade complète)</span>
+                                    </div>
                                 </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" v-model="releaseCascade" :value="false" class="w-4 h-4 text-gold-600 focus:ring-gold-500 border-pearl-300">
-                                    <span class="text-xs text-charcoal-600 group-hover:text-charcoal-900">Libérer lui seul <span class="text-[10px] text-charcoal-400 italic block">(Les subordonnés restent en poste)</span></span>
+                                <label class="flex items-start gap-4 cursor-pointer group">
+                                    <div class="relative flex items-center h-5">
+                                        <input type="radio" v-model="releaseCascade" :value="false" class="w-5 h-5 text-rose-600 focus:ring-rose-500 border-pearl-300 transition-all">
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-charcoal-700 group-hover:text-charcoal-900 transition-colors">Libérer lui seul</span>
+                                        <span class="text-[11px] text-charcoal-400 italic font-medium">(Les subordonnés restent en poste)</span>
+                                    </div>
                                 </label>
                             </div>
                         </div>
-                        <div v-else class="mb-6 p-4 bg-emerald-50 text-emerald-700 text-xs rounded-xl border border-emerald-100 italic">
+                        <div v-else class="p-4 bg-emerald-50/50 text-emerald-700 text-[11px] font-bold rounded-xl border border-emerald-100 italic flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Libération directe sans impact sur d'autres ressources.
                         </div>
 
-                        <div class="flex flex-col gap-2">
-                            <button @click="confirmRelease" class="w-full py-2.5 bg-rose-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md">
-                                Confirmer la libération
-                            </button>
-                            <button @click="showReleaseModal = false" class="w-full py-2.5 bg-white text-charcoal-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:text-charcoal-600 transition-all">
+                        <!-- Footer Actions -->
+                        <div class="flex items-center justify-end gap-6 pt-6 border-t border-pearl-100">
+                            <button @click="showReleaseModal = false" class="text-xs font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-all">
                                 Annuler
+                            </button>
+                            <button @click="confirmRelease" class="px-8 py-3.5 bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.1em] hover:bg-rose-700 hover:shadow-xl hover:shadow-rose-500/20 active:scale-95 transition-all shadow-lg shadow-rose-600/10">
+                                Confirmer la libération
                             </button>
                         </div>
                     </div>
