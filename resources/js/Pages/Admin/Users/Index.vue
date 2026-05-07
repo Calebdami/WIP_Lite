@@ -1,44 +1,34 @@
 <script setup>
-/**
- * Importation des outils Inertia et Vue
- */
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 
-
-/**
- * Composants PrimeVue
- */
+// PrimeVue components
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 
-/**
- * Réception des données du serveur
- */
 const props = defineProps({
     users: Object, 
     employeesWithoutAccount: Array,
     roles: Array
 });
 
-
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
-const showConfirmModal = ref(false); // État pour la modale de confirmation
+const showConfirmModal = ref(false);
 const userToEdit = ref(null);
-const userToToggle = ref(null); // Utilisateur ciblé pour le changement de statut
+const userToToggle = ref(null);
 
-// États pour la recherche et les filtres
 const searchQuery = ref('');
 const roleFilter = ref(null);
 const statusFilter = ref(null);
 
-/**
- * Logique de filtrage des utilisateurs
- */
 const filteredUsers = computed(() => {
     return props.users.data.filter(user => {
         const fullName = user.employee 
@@ -55,9 +45,6 @@ const filteredUsers = computed(() => {
     });
 });
 
-/**
- * Formulaires
- */
 const createForm = useForm({
     employee_id: null,
     role_id: null,
@@ -70,9 +57,6 @@ const editForm = useForm({
     role_id: null,
 });
 
-/**
- * Actions
- */
 const openCreate = () => {
     createForm.reset();
     createForm.clearErrors();
@@ -86,9 +70,6 @@ const openEdit = (user) => {
     showEditModal.value = true;
 };
 
-/**
- * Ouvre la modale de confirmation pour le changement de statut
- */
 const confirmToggleStatus = (user) => {
     userToToggle.value = user;
     showConfirmModal.value = true;
@@ -121,9 +102,6 @@ const submitUpdate = () => {
     });
 };
 
-/**
- * Exécute le changement de statut après confirmation
- */
 const handleToggleStatus = () => {
     if (!userToToggle.value) return;
 
@@ -135,109 +113,127 @@ const handleToggleStatus = () => {
         }
     });
 };
+
+const getStatusSeverity = (status) => {
+    return status === 'actif' ? 'success' : 'danger';
+};
 </script>
 
 <template>
     <Head title="Comptes & Rôles" />
     <AdminLayout>
-
-
         <template #header>
             <div class="flex justify-between items-center">
-                <h1 class="text-xl font-bold text-charcoal-700">Comptes & Rôles</h1>
-                <button @click="openCreate" class="bg-gold-gradient text-charcoal-900 px-6 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest shadow-gold transition-transform hover:scale-105">
-                    Créer un compte
-                </button>
+                <div>
+                    <h1 class="text-xl font-bold text-charcoal-700">Comptes & Rôles</h1>
+                    <p class="text-xs text-charcoal-400 mt-0.5">Gestion des accès utilisateurs et des permissions</p>
+                </div>
+                <Button label="Créer un compte" icon="pi pi-user-plus" 
+                    severity="primary" 
+                    @click="openCreate"
+                    class="px-6 py-2.5 shadow-gold-premium font-black text-[10px] uppercase tracking-widest" />
             </div>
         </template>
 
-        <!-- Zone de Recherche et Filtres -->
-        <div class="mt-6 mb-6 flex flex-wrap gap-4 items-end bg-white p-4 rounded-xl border border-pearl-200 shadow-sm">
-            <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+        <!-- Search and Filters Bar -->
+        <div class="mt-6 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-pearl-200 shadow-sm">
+            <div class="flex flex-col gap-1.5">
                 <label class="text-[9px] font-black text-charcoal-400 uppercase tracking-widest">Rechercher</label>
                 <span class="p-input-icon-left w-full">
                     <i class="pi pi-search text-charcoal-300 ml-3" />
-                    <InputText v-model="searchQuery" placeholder="Nom ou email..." class="w-full pl-10 text-xs border-pearl-300 focus:border-gold" />
+                    <InputText v-model="searchQuery" placeholder="Nom ou email..." class="w-full pl-10 text-xs border-pearl-300 focus:border-gold outline-none" />
                 </span>
             </div>
 
-            <div class="flex flex-col gap-1.5 w-48">
+            <div class="flex flex-col gap-1.5">
                 <label class="text-[9px] font-black text-charcoal-400 uppercase tracking-widest">Filtrer par Rôle</label>
                 <Dropdown v-model="roleFilter" :options="roles" optionLabel="name" optionValue="id" placeholder="Tous les rôles" class="w-full text-xs" showClear />
             </div>
 
-            <div class="flex flex-col gap-1.5 w-48">
+            <div class="flex flex-col gap-1.5">
                 <label class="text-[9px] font-black text-charcoal-400 uppercase tracking-widest">Filtrer par Statut</label>
                 <Dropdown v-model="statusFilter" :options="[{label: 'Actif', value: 'actif'}, {label: 'Inactif', value: 'inactif'}]" optionLabel="label" optionValue="value" placeholder="Tous les statuts" class="w-full text-xs" showClear />
             </div>
         </div>
 
-        <!-- Tableau des utilisateurs -->
-        <div class="bg-white rounded-xl border border-pearl-200 shadow-sm overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="bg-pearl-50 border-b border-pearl-200">
-                    <tr>
-                        <th class="px-6 py-4 text-[10px] font-black text-charcoal-400 uppercase tracking-widest">Utilisateur</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-charcoal-400 uppercase tracking-widest">Email</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-charcoal-400 uppercase tracking-widest">Rôle</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-charcoal-400 uppercase tracking-widest text-center">Statut</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-charcoal-400 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-pearl-100">
-                    <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-pearl-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold text-charcoal-700 uppercase">
-                                    <template v-if="user.employee">
-                                        {{ user.employee.first_name }} {{ user.employee.last_name }}
-                                    </template>
-                                    <template v-else>
-                                        {{ user.email.split('@')[0] }}
-                                    </template>
-                                </span>
-                                <span class="text-[9px] text-charcoal-400 font-black tracking-tighter">ID: #{{ user.id }}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-sm font-medium text-charcoal-600">{{ user.email }}</td>
-                        <td class="px-6 py-4">
-                            <span class="bg-pearl-100 text-charcoal-600 px-2 py-1 rounded text-[10px] font-black uppercase border border-pearl-200">
-                                {{ user.role?.name || 'N/A' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span v-if="user.status === 'actif'" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-green-200">ACTIF</span>
-                            <span v-else class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-red-200">INACTIF</span>
-                        </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                            <button @click="openEdit(user)" class="text-charcoal-900 font-black text-[10px] uppercase mr-4 hover:underline">Modifier</button>
-                            <!-- Appel de la confirmation au lieu du changement direct -->
-                            <button @click="confirmToggleStatus(user)" 
-                                    :class="user.status === 'actif' ? 'text-red-500' : 'text-green-600'"
-                                    class="font-black text-[10px] uppercase hover:underline">
-                                {{ user.status === 'actif' ? 'Désactiver' : 'Activer' }}
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- Pagination -->
-            <div v-if="users.links.length > 3" class="px-6 py-4 bg-pearl-50 border-t border-pearl-200 flex justify-center gap-2">
-                <template v-for="(link, k) in users.links" :key="k">
-                    <div v-if="link.url === null" 
-                         class="px-3 py-1 text-[10px] font-black text-charcoal-300 uppercase border border-transparent" 
-                         v-html="link.label" />
-                    <Link v-else 
-                          :href="link.url" 
-                          class="px-3 py-1 text-[10px] font-black uppercase rounded-md border transition-all"
-                          :class="link.active ? 'bg-gold-gradient text-charcoal-900 border-gold shadow-sm' : 'bg-white text-charcoal-500 border-pearl-200 hover:border-gold'"
-                          v-html="link.label" />
+        <!-- Users Table (PrimeVue DataTable) -->
+        <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
+            <DataTable 
+                :value="filteredUsers" 
+                responsiveLayout="scroll" 
+                class="p-datatable-sm"
+                stripedRows
+            >
+                <template #empty>
+                    <div class="text-center p-8 text-charcoal-400 flex flex-col items-center gap-3">
+                        <i class="pi pi-users text-4xl opacity-20"></i>
+                        <p>Aucun utilisateur trouvé.</p>
+                    </div>
                 </template>
+                <Column header="Utilisateur" sortable>
+                    <template #body="{ data }">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-charcoal-700 uppercase">
+                                {{ data.employee ? `${data.employee.first_name} ${data.employee.last_name}` : data.email.split('@')[0] }}
+                            </span>
+                            <span class="text-[9px] text-charcoal-400 font-black tracking-tighter uppercase">ID: #{{ data.id }}</span>
+                        </div>
+                    </template>
+                </Column>
+                <Column field="email" header="Email" sortable>
+                    <template #body="{ data }">
+                        <span class="text-xs font-medium text-charcoal-600">{{ data.email }}</span>
+                    </template>
+                </Column>
+                <Column header="Rôle" sortable field="role.name">
+                    <template #body="{ data }">
+                        <span class="bg-pearl-100 text-charcoal-600 px-2 py-1 rounded text-[9px] font-black uppercase border border-pearl-200">
+                            {{ data.role?.name || 'N/A' }}
+                        </span>
+                    </template>
+                </Column>
+                <Column field="status" header="Statut" class="text-center">
+                    <template #body="{ data }">
+                        <Tag :value="data.status.toUpperCase()" :severity="getStatusSeverity(data.status)" class="text-[9px]" />
+                    </template>
+                </Column>
+                <Column header="Actions" class="text-right">
+                    <template #body="{ data }">
+                        <div class="flex justify-end gap-3">
+                            <button @click="openEdit(data)" class="text-charcoal-900 font-black text-[10px] uppercase hover:underline">Modifier</button>
+                            <button @click="confirmToggleStatus(data)" 
+                                    :class="data.status === 'actif' ? 'text-red-500' : 'text-green-600'"
+                                    class="font-black text-[10px] uppercase hover:underline">
+                                {{ data.status === 'actif' ? 'Désactiver' : 'Activer' }}
+                            </button>
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+
+            <!-- Pagination (if needed, although computed filtering is done client-side here, props.users is paginated) -->
+            <div v-if="users.links.length > 3" class="mt-6 flex items-center justify-between border-t border-pearl-100 pt-6">
+                <div class="text-xs text-charcoal-400 font-medium uppercase tracking-widest">
+                    Page <span class="text-charcoal-700 font-bold">{{ users.current_page }}</span> sur <span class="text-charcoal-700 font-bold">{{ users.last_page }}</span>
+                </div>
+                <div class="flex gap-2">
+                    <Link 
+                        v-for="link in users.links" 
+                        :key="link.label"
+                        :href="link.url || '#'"
+                        v-html="link.label"
+                        class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all border"
+                        :class="{
+                            'bg-gold-gradient text-charcoal-900 border-transparent shadow-gold-sm': link.active,
+                            'bg-white text-charcoal-500 border-pearl-200 hover:border-gold hover:text-gold-600': !link.active && link.url,
+                            'opacity-40 cursor-not-allowed border-pearl-100 text-charcoal-300': !link.url
+                        }"
+                    />
+                </div>
             </div>
         </div>
 
-        <!-- Modale de Confirmation (Désactivation/Activation) -->
+        <!-- Confirm Status Toggle Modal -->
         <Dialog v-model:visible="showConfirmModal" header="CONFIRMATION" :modal="true" :draggable="false" class="w-full max-w-sm mx-4">
             <div class="flex flex-col items-center text-center gap-4 py-4">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center bg-pearl-100">
@@ -252,82 +248,90 @@ const handleToggleStatus = () => {
                     </p>
                 </div>
                 <div class="flex gap-3 w-full mt-4">
-                    <button @click="showConfirmModal = false" class="flex-1 px-4 py-2 text-[10px] font-black uppercase text-charcoal-400 bg-pearl-50 rounded-lg border border-pearl-200 hover:bg-pearl-100 transition-colors">
-                        Annuler
-                    </button>
-                    <button @click="handleToggleStatus" 
-                            :class="userToToggle?.status === 'actif' ? 'bg-red-500' : 'bg-green-600'"
-                            class="flex-1 px-4 py-2 text-[10px] font-black uppercase text-white rounded-lg shadow-sm hover:opacity-90 transition-all">
-                        Confirmer
-                    </button>
+                    <Button label="Annuler" text severity="secondary" @click="showConfirmModal = false" class="flex-1 text-[10px] uppercase font-black" />
+                    <Button :label="userToToggle?.status === 'actif' ? 'Confirmer la désactivation' : 'Confirmer l\'activation'" 
+                        :severity="userToToggle?.status === 'actif' ? 'danger' : 'success'" 
+                        @click="handleToggleStatus" 
+                        class="flex-1 text-[10px] uppercase font-black" />
                 </div>
             </div>
         </Dialog>
 
-        <!-- Modale de Création -->
-        <Dialog v-model:visible="showCreateModal" header="NOUVEAU COMPTE" :modal="true" :draggable="false" class="w-full max-w-md mx-4 shadow-2xl">
+        <!-- Create Account Modal -->
+        <Dialog v-model:visible="showCreateModal" header="NOUVEAU COMPTE" :modal="true" :draggable="false" class="w-full max-w-md mx-4">
             <form @submit.prevent="submitCreate" class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Employé</label>
-                    <Dropdown v-model="createForm.employee_id" :options="employeesWithoutAccount" optionValue="id" placeholder="Choisir..." class="w-full" filter>
+                    <Dropdown v-model="createForm.employee_id" :options="employeesWithoutAccount" optionValue="id" placeholder="Choisir un employé..." class="w-full text-xs" filter>
                         <template #option="slot">{{ slot.option.first_name }} {{ slot.option.last_name }}</template>
                         <template #value="slot">
                             <span v-if="slot.value">{{ employeesWithoutAccount.find(e => e.id === slot.value)?.first_name }} {{ employeesWithoutAccount.find(e => e.id === slot.value)?.last_name }}</span>
-                            <span v-else>Choisir...</span>
+                            <span v-else>Choisir un employé...</span>
                         </template>
                     </Dropdown>
                     <small v-if="createForm.errors.employee_id" class="text-red-500 text-[9px] font-bold">{{ createForm.errors.employee_id }}</small>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Rôle</label>
-                    <Dropdown v-model="createForm.role_id" :options="roles" optionLabel="name" optionValue="id" class="w-full" />
+                    <Dropdown v-model="createForm.role_id" :options="roles" optionLabel="name" optionValue="id" class="w-full text-xs" />
                     <small v-if="createForm.errors.role_id" class="text-red-500 text-[9px] font-bold">{{ createForm.errors.role_id }}</small>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Email</label>
-                    <InputText v-model="createForm.email" class="w-full" />
+                    <InputText v-model="createForm.email" class="w-full text-xs" />
                     <small v-if="createForm.errors.email" class="text-red-500 text-[9px] font-bold">{{ createForm.errors.email }}</small>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Mot de passe</label>
-                    <Password v-model="createForm.password" :feedback="false" toggleMask class="w-full" inputClass="w-full" />
+                    <Password v-model="createForm.password" :feedback="false" toggleMask class="w-full" inputClass="w-full text-xs" />
                     <small v-if="createForm.errors.password" class="text-red-500 text-[9px] font-bold">{{ createForm.errors.password }}</small>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Confirmation</label>
-                    <Password v-model="createForm.password_confirmation" :feedback="false" toggleMask class="w-full" inputClass="w-full" />
+                    <Password v-model="createForm.password_confirmation" :feedback="false" toggleMask class="w-full" inputClass="w-full text-xs" />
                 </div>
                 <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-pearl-100">
-                    <button type="button" @click="showCreateModal = false" class="text-[10px] font-black uppercase text-charcoal-400 hover:text-charcoal-600 transition-colors">Annuler</button>
-                    <button type="submit" :disabled="createForm.processing" class="bg-gold-gradient text-charcoal-900 px-8 py-2.5 rounded-lg font-black text-[10px] uppercase shadow-gold transition-all hover:scale-105 active:scale-95">
-                        {{ createForm.processing ? 'Création...' : 'Créer' }}
-                    </button>
+                    <Button label="Annuler" text severity="secondary" @click="showCreateModal = false" class="text-[10px] uppercase font-black" />
+                    <Button label="Créer le compte" severity="primary" type="submit" :loading="createForm.processing" class="px-8 shadow-gold-premium text-[10px] uppercase font-black" />
                 </div>
             </form>
         </Dialog>
 
-        <!-- Modale de Modification -->
+        <!-- Edit Role Modal -->
         <Dialog v-model:visible="showEditModal" header="MODIFIER LE RÔLE" :modal="true" :draggable="false" class="w-full max-w-sm mx-4">
             <form @submit.prevent="submitUpdate" class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Nouveau Rôle</label>
-                    <Dropdown v-model="editForm.role_id" :options="roles" optionLabel="name" optionValue="id" class="w-full" />
+                    <Dropdown v-model="editForm.role_id" :options="roles" optionLabel="name" optionValue="id" class="w-full text-xs" />
                 </div>
                 <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-pearl-100">
-                    <button type="button" @click="showEditModal = false" class="text-[10px] font-black uppercase text-charcoal-400 hover:text-charcoal-600 transition-colors">Annuler</button>
-                    <button type="submit" :disabled="editForm.processing" class="bg-gold-gradient text-charcoal-900 px-8 py-2.5 rounded-lg font-black text-[10px] uppercase shadow-gold transition-all hover:scale-105">
-                        Enregistrer
-                    </button>
+                    <Button label="Annuler" text severity="secondary" @click="showEditModal = false" class="text-[10px] uppercase font-black" />
+                    <Button label="Enregistrer" severity="primary" type="submit" :loading="editForm.processing" class="px-8 shadow-gold-premium text-[10px] uppercase font-black" />
                 </div>
             </form>
         </Dialog>
-
     </AdminLayout>
 </template>
 
 <style scoped>
-.bg-gold-gradient { background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%); }
-.shadow-gold { box-shadow: 0 4px 14px 0 rgba(212, 160, 23, 0.25); }
-:deep(.p-dropdown), :deep(.p-inputtext), :deep(.p-password-input) { border-color: #E2E8F0; border-radius: 0.5rem; }
-:deep(.p-dropdown-label), :deep(.p-inputtext) { font-size: 0.75rem; }
+.bg-gold-gradient {
+    background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%);
+}
+
+.shadow-gold-premium {
+    box-shadow: 0 10px 20px -10px rgba(212, 160, 23, 0.4);
+}
+
+.shadow-gold-sm {
+    box-shadow: 0 4px 10px -5px rgba(212, 160, 23, 0.5);
+}
+
+.shadow-premium {
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+}
+
+:deep(.p-dropdown), :deep(.p-inputtext), :deep(.p-password-input) {
+    border-color: #E2E8F0;
+    border-radius: 0.75rem;
+}
 </style>

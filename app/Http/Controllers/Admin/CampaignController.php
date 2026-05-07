@@ -59,13 +59,14 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
-        // On pourrait vérifier s'il y a des affectations avant de supprimer
-        if ($campaign->assignments()->count() > 0) {
-            return redirect()->back()->with('error', 'Impossible de supprimer une campagne ayant des affectations actives.');
-        }
+        // On désaffecte tous les employés de cette campagne avant de la supprimer
+        $campaign->assignments()->update([
+            'status' => 'released',
+            'end_date' => now()
+        ]);
 
         $campaign->delete();
 
-        return redirect()->back()->with('success', 'Campagne supprimée avec succès.');
+        return redirect()->back()->with('success', 'Campagne supprimée et tous les employés ont été désaffectés.');
     }
 }
