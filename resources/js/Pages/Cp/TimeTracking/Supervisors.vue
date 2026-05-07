@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -15,13 +16,35 @@ import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Tag from 'primevue/tag';
+import Timeline from 'primevue/timeline';
 
 const toast = useToast();
+const confirm = useConfirm();
 
 const timesheets = ref([]);
 const loading = ref(false);
 
 const supervisors = ref([]);
+
+// Historique
+const displayHistoryDialog = ref(false);
+const historyItems = ref([]);
+const loadingHistory = ref(false);
+const currentTimesheet = ref(null);
+
+const openHistory = async (ts) => {
+    currentTimesheet.value = ts;
+    displayHistoryDialog.value = true;
+    loadingHistory.value = true;
+    try {
+        const response = await axios.get(`/api/timesheets/${ts.id}/history`);
+        historyItems.value = response.data;
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger l\'historique', life: 3000 });
+    } finally {
+        loadingHistory.value = false;
+    }
+};
 
 const fetchSupervisors = async () => {
     try {
@@ -97,9 +120,83 @@ const createTimesheet = async () => {
 
 // Modale d'Édition (Saisie des entrées)
 const displayEditDialog = ref(false);
-const currentTimesheet = ref(null);
 const timesheetEntries = ref([]);
 const savingEntries = ref(false);
+
+const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return '';
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : (dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr);
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+};
+
+const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : (dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr);
+    const timePart = dateStr.includes('T') ? dateStr.split('T')[1].substring(0, 5) : (dateStr.includes(' ') ? dateStr.split(' ')[1].substring(0, 5) : '');
+    const [year, month, day] = datePart.split('-');
+    return `${day}/${month}/${year}${timePart ? ' à ' + timePart : ''}`;
+};
+
+// Saisie Multiple (Quick Fill)
+const quickFill = ref({
+    check_in: '09:00',
+    check_out: '17:00',
+    break_duration: 60
+});
+
+const applyQuickFill = () => {
+    timesheetEntries.value = timesheetEntries.value.map(entry => ({
+        ...entry,
+        check_in: quickFill.value.check_in,
+        check_out: quickFill.value.check_out,
+        break_duration: quickFill.value.break_duration
+    }));
+    toast.add({ severity: 'info', summary: 'Remplissage rapide', detail: 'Horaires appliqués à toute la semaine', life: 2000 });
+};
+
+// Saisie Groupée (Batch Entry)
+const selectedTimesheets = ref([]);
+const displayBatchDialog = ref(false);
+const displayConfirmBatch = ref(false);
+const batchSchedule = ref({
+    check_in: '09:00',
+    check_out: '17:00',
+    break_duration: 60
+});
+
+const confirmBatchEntry = () => {
+    displayBatchDialog.value = false;
+    displayConfirmBatch.value = true;
+};
+
+const applyBatchEntry = async () => {
+    displayConfirmBatch.value = false;
+    savingEntries.value = true;
+    try {
+        const ids = selectedTimesheets.value.map(ts => ts.id);
+        await axios.post('/api/timesheets/batch-update-hours', {
+            timesheet_ids: ids,
+            schedule: batchSchedule.value
+        });
+        
+        toast.add({ 
+            severity: 'success', 
+            summary: 'Saisie Groupée', 
+            detail: `${ids.length} fiches mises à jour avec succès`, 
+            life: 3000 
+        });
+        displayBatchDialog.value = false;
+        selectedTimesheets.value = [];
+        fetchTimesheets();
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la saisie groupée', life: 3000 });
+    } finally {
+        savingEntries.value = false;
+    }
+};
 
 const openEditDialog = async (ts) => {
     currentTimesheet.value = ts;
@@ -128,24 +225,42 @@ const saveEntries = async () => {
     }
 };
 
-const submitTimesheet = async (id) => {
-    try {
-        await axios.post(`/api/timesheets/${id}/submit`);
-        toast.add({ severity: 'success', summary: 'Soumis', detail: 'Feuille soumise pour validation', life: 3000 });
-        fetchTimesheets();
-    } catch (error) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la soumission', life: 3000 });
-    }
+const submitTimesheet = (id) => {
+    confirm.require({
+        message: 'Envoyer cette feuille de temps pour validation ?',
+        header: 'Soumission',
+        icon: 'pi pi-send',
+        acceptProps: { label: 'Envoyer', severity: 'info' },
+        rejectProps: { label: 'Annuler', severity: 'secondary', outlined: true },
+        accept: async () => {
+            try {
+                await axios.post(`/api/timesheets/${id}/submit`);
+                toast.add({ severity: 'success', summary: 'Soumis', detail: 'Feuille soumise pour validation', life: 3000 });
+                fetchTimesheets();
+            } catch (error) {
+                toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la soumission', life: 3000 });
+            }
+        }
+    });
 };
 
-const validateTimesheet = async (id) => {
-    try {
-        await axios.post(`/api/timesheets/${id}/validate`);
-        toast.add({ severity: 'success', summary: 'Validé', detail: 'Feuille validée', life: 3000 });
-        fetchTimesheets();
-    } catch (error) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la validation', life: 3000 });
-    }
+const validateTimesheet = (id) => {
+    confirm.require({
+        message: 'Valider définitivement cette feuille de temps SUP ?',
+        header: 'Validation CP',
+        icon: 'pi pi-check-circle',
+        acceptProps: { label: 'Valider', severity: 'success' },
+        rejectProps: { label: 'Annuler', severity: 'secondary', outlined: true },
+        accept: async () => {
+            try {
+                await axios.post(`/api/timesheets/${id}/validate`);
+                toast.add({ severity: 'success', summary: 'Validé', detail: 'Feuille validée', life: 3000 });
+                fetchTimesheets();
+            } catch (error) {
+                toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la validation', life: 3000 });
+            }
+        }
+    });
 };
 
 const getStatusSeverity = (status) => {
@@ -166,33 +281,60 @@ const getStatusSeverity = (status) => {
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Saisie des Heures SUP</h1>
-                    <p class="text-xs text-charcoal-400 mt-0.5">Enregistrement du temps de travail de vos superviseurs</p>
+                    <p class="text-xs text-charcoal-400 mt-0.5">Enregistrement et suivi du temps de travail de vos superviseurs</p>
                 </div>
                 <Button label="Nouvelle Feuille" icon="pi pi-plus" 
-                    class="bg-gold-500 hover:bg-gold-600 text-charcoal-900 px-4 py-2 rounded-lg font-bold text-sm shadow-gold flex items-center gap-2 transition-all" 
+                    severity="primary"
+                    class="px-5 py-2.5 shadow-gold-premium"
                     @click="openCreateDialog" />
             </div>
         </template>
 
-        <div class="bg-white rounded-xl border border-pearl-200 shadow-sm p-4">
-            <DataTable :value="timesheets" :loading="loading" stripedRows responsiveLayout="scroll" class="p-datatable-sm">
+        <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
+            <div v-if="selectedTimesheets.length" class="mb-4 p-4 bg-pearl-50 border border-pearl-200 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gold-500 flex items-center justify-center text-white shadow-lg shadow-gold-200">
+                        <i class="pi pi-users text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-black text-charcoal-700">{{ selectedTimesheets.length }} fiches sélectionnées</p>
+                        <p class="text-xs text-charcoal-400">Appliquez un horaire identique à tous ces superviseurs</p>
+                    </div>
+                </div>
+                <Button label="Saisie Groupée" icon="pi pi-bolt" severity="warn" class="rounded-lg shadow-md shadow-gold-100" @click="displayBatchDialog = true" />
+            </div>
+
+            <DataTable :value="timesheets" v-model:selection="selectedTimesheets" :loading="loading" stripedRows responsiveLayout="scroll" 
+                paginator :rows="8" class="p-datatable-sm custom-selection-table" dataKey="id">
                 <template #empty>
-                    <div class="text-center p-4 text-charcoal-400">Aucune feuille de temps trouvée.</div>
+                    <div class="text-center p-8 text-charcoal-400 flex flex-col items-center gap-3">
+                        <i class="pi pi-calendar-times text-4xl opacity-20"></i>
+                        <p>Aucune feuille de temps trouvée.</p>
+                    </div>
                 </template>
-                <Column field="id" header="ID" sortable></Column>
+                <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+                <Column field="id" header="ID" sortable headerClass="w-20"></Column>
                 <Column header="Superviseur" sortable>
                     <template #body="{ data }">
-                        <span class="font-bold text-charcoal-700">{{ data.employee?.first_name }} {{ data.employee?.last_name }}</span>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-pearl-100 flex items-center justify-center text-charcoal-700 font-bold text-xs border border-pearl-200">
+                                {{ data.employee?.first_name?.charAt(0) }}{{ data.employee?.last_name?.charAt(0) }}
+                            </div>
+                            <span class="font-bold text-charcoal-700">{{ data.employee?.first_name }} {{ data.employee?.last_name }}</span>
+                        </div>
                     </template>
                 </Column>
                 <Column header="Période" sortable>
                     <template #body="{ data }">
-                        {{ data.period_start }} au {{ data.period_end }}
+                        <div class="flex items-center gap-2 text-charcoal-600">
+                            <i class="pi pi-calendar text-xs"></i>
+                            <span class="text-xs font-medium">{{ formatDateDisplay(data.period_start) }} au {{ formatDateDisplay(data.period_end) }}</span>
+                        </div>
                     </template>
                 </Column>
                 <Column header="Heures" sortable>
                     <template #body="{ data }">
-                        {{ data.total_hours }} h
+                        <span class="font-black text-charcoal-700">{{ data.total_hours }} h</span>
                     </template>
                 </Column>
                 <Column field="status" header="Statut" sortable>
@@ -202,17 +344,17 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Actions">
                     <template #body="{ data }">
-                        <div class="flex gap-2">
-                            <Button icon="pi pi-pencil" class="bg-pearl-100 hover:bg-pearl-200 text-charcoal-700 w-8 h-8 rounded-full flex items-center justify-center border border-pearl-300 transition-colors" 
+                        <div class="flex gap-1">
+                            <Button icon="pi pi-pencil" text severity="secondary" rounded 
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'validé' || data.status === 'soumis'" 
+                                :disabled="data.status === 'validé'" 
                                 title="Saisir les heures" />
-                            <Button v-if="data.status === 'brouillon' || data.status === 'rejeté'" icon="pi pi-send" class="bg-blue-100 hover:bg-blue-200 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center border border-blue-300 transition-colors" 
-                                @click="submitTimesheet(data.id)" 
-                                title="Soumettre" />
-                            <Button v-if="data.status === 'soumis'" icon="pi pi-check-circle" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-8 h-8 rounded-full flex items-center justify-center border border-emerald-300 transition-colors" 
+                            <Button v-if="data.status === 'soumis'" icon="pi pi-check-circle" text severity="success" rounded 
                                 @click="validateTimesheet(data.id)" 
-                                title="Valider" />
+                                title="Valider définitivement" />
+                            <Button icon="pi pi-history" text severity="info" rounded 
+                                @click="openHistory(data)" 
+                                title="Journal de modifications" />
                         </div>
                     </template>
                 </Column>
@@ -220,77 +362,188 @@ const getStatusSeverity = (status) => {
         </div>
 
         <!-- Modale de Création -->
-        <Dialog v-model:visible="displayCreateDialog" header="Créer une Feuille de Temps (SUP)" :style="{ width: '400px' }" modal>
+        <Dialog v-model:visible="displayCreateDialog" header="Nouvelle Feuille (SUP)" :style="{ width: '450px' }" modal>
             <div class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-2">
-                    <label for="employee" class="text-sm font-bold text-charcoal-700">Superviseur</label>
-                    <Select id="employee" v-model="newTimesheet.employee_id" :options="supervisors" optionLabel="name" optionValue="id" placeholder="Sélectionner un superviseur" class="w-full" />
+                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Superviseur</label>
+                    <Select v-model="newTimesheet.employee_id" :options="supervisors" optionLabel="name" optionValue="id" placeholder="Choisir un superviseur" class="w-full rounded-xl border-pearl-200" />
                 </div>
                 <div class="flex flex-col gap-2">
-                    <label for="period" class="text-sm font-bold text-charcoal-700">Période (Semaine)</label>
-                    <DatePicker id="period" v-model="newTimesheet.period" selectionMode="range" :manualInput="false" showIcon placeholder="Début - Fin" class="w-full" />
+                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Période (Semaine)</label>
+                    <DatePicker v-model="newTimesheet.period" selectionMode="range" :manualInput="false" showIcon placeholder="Sélectionnez l'intervalle" class="w-full rounded-xl" />
                 </div>
             </div>
             <template #footer>
-                <Button label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" @click="displayCreateDialog = false" />
-                <Button label="Créer" icon="pi pi-check" class="p-button-primary" @click="createTimesheet" :disabled="!newTimesheet.employee_id || !newTimesheet.period" />
+                <Button label="Annuler" text severity="secondary" @click="displayCreateDialog = false" />
+                <Button label="Générer la feuille" icon="pi pi-plus" severity="primary" @click="createTimesheet" :disabled="!newTimesheet.employee_id || !newTimesheet.period" />
+            </template>
+        </Dialog>
+
+        <!-- Modale de Saisie Groupée -->
+        <Dialog v-model:visible="displayBatchDialog" header="Saisie Groupée (Multi-SUP)" :style="{ width: '500px' }" modal>
+            <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 mb-6">
+                <i class="pi pi-exclamation-triangle text-amber-500 text-xl"></i>
+                <p class="text-xs text-amber-700 leading-relaxed">
+                    Vous allez appliquer cet horaire à <strong>{{ selectedTimesheets.length }} Superviseurs</strong> pour l'ensemble de leur période. 
+                </p>
+            </div>
+            <div class="flex flex-col gap-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure d'arrivée</label>
+                        <InputText v-model="batchSchedule.check_in" placeholder="09:00" class="w-full rounded-xl font-mono" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure de départ</label>
+                        <InputText v-model="batchSchedule.check_out" placeholder="17:00" class="w-full rounded-xl font-mono" />
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Pause (minutes)</label>
+                    <InputNumber v-model="batchSchedule.break_duration" class="w-full rounded-xl" :min="0" :max="120" />
+                </div>
+            </div>
+            <template #footer>
+                <Button label="Annuler" text severity="secondary" @click="displayBatchDialog = false" />
+                <Button label="Suivant" icon="pi pi-arrow-right" severity="warn" @click="confirmBatchEntry" />
+            </template>
+        </Dialog>
+
+        <!-- Confirmation Saisie Groupée -->
+        <Dialog v-model:visible="displayConfirmBatch" header="Confirmation Finale" :style="{ width: '400px' }" modal>
+            <div class="flex flex-col items-center text-center py-4">
+                <div class="w-16 h-16 rounded-full bg-warn-50 text-warn-500 flex items-center justify-center mb-4">
+                    <i class="pi pi-exclamation-circle text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-black text-charcoal-700 mb-2">Êtes-vous sûr ?</h3>
+                <p class="text-sm text-charcoal-500">
+                    Cette action va écraser les horaires de <strong>{{ selectedTimesheets.length }} superviseurs</strong>. 
+                    Cette opération est irréversible.
+                </p>
+            </div>
+            <template #footer>
+                <Button label="Retour" text severity="secondary" @click="displayConfirmBatch = false; displayBatchDialog = true" />
+                <Button label="Oui, confirmer la saisie" icon="pi pi-check" severity="danger" @click="applyBatchEntry" :loading="savingEntries" />
             </template>
         </Dialog>
 
         <!-- Modale de Saisie des Heures -->
-        <Dialog v-model:visible="displayEditDialog" :header="`Saisie des Heures`" :style="{ width: '900px' }" modal maximizable>
-            <div class="mb-4 bg-pearl-50 p-3 rounded-lg flex justify-between items-center border border-pearl-200">
-                <div>
-                    <span class="text-xs text-charcoal-400 block">Superviseur</span>
-                    <span class="font-bold text-charcoal-700">{{ currentTimesheet?.employee?.first_name }} {{ currentTimesheet?.employee?.last_name }}</span>
+        <Dialog v-model:visible="displayEditDialog" header="Saisie de l'Activité Journalière" :style="{ width: '1000px' }" modal maximizable>
+            <div class="mb-6 grid grid-cols-3 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Superviseur</span>
+                    <span class="text-sm font-black text-charcoal-700">{{ currentTimesheet?.employee?.first_name }} {{ currentTimesheet?.employee?.last_name }}</span>
                 </div>
-                <div>
-                    <span class="text-xs text-charcoal-400 block">Période</span>
-                    <span class="font-bold text-charcoal-700">{{ currentTimesheet?.period_start }} au {{ currentTimesheet?.period_end }}</span>
+                <div class="flex flex-col border-x border-pearl-200 px-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Période</span>
+                    <span class="text-sm font-black text-charcoal-700">{{ formatDateDisplay(currentTimesheet?.period_start) }} au {{ formatDateDisplay(currentTimesheet?.period_end) }}</span>
                 </div>
-                <div>
-                    <span class="text-xs text-charcoal-400 block">Statut</span>
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Statut actuel</span>
                     <Tag :value="currentTimesheet?.status?.toUpperCase()" :severity="getStatusSeverity(currentTimesheet?.status)" />
                 </div>
             </div>
 
-            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm" editMode="cell">
+            <!-- Saisie Multiple -->
+            <div class="mb-6 p-4 bg-gold-50/50 border border-gold-100 rounded-2xl flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gold-500 flex items-center justify-center text-white">
+                        <i class="pi pi-bolt text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-black text-gold-700 uppercase tracking-tight">Saisie Rapide</p>
+                        <p class="text-[10px] text-gold-600">Appliquer un horaire type à tous les jours de la semaine</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-white p-2 rounded-xl border border-gold-100 shadow-sm">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black text-charcoal-400 px-1">ARRIVÉE</span>
+                        <InputText v-model="quickFill.check_in" placeholder="09:00" class="p-inputtext-sm w-20 text-center font-mono !border-transparent !bg-pearl-50" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black text-charcoal-400 px-1">DÉPART</span>
+                        <InputText v-model="quickFill.check_out" placeholder="17:00" class="p-inputtext-sm w-20 text-center font-mono !border-transparent !bg-pearl-50" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black text-charcoal-400 px-1">PAUSE (MIN)</span>
+                        <InputNumber v-model="quickFill.break_duration" class="p-inputtext-sm w-16 !border-transparent !bg-pearl-50" />
+                    </div>
+                    <Button label="Appliquer partout" icon="pi pi-check-circle" size="small" severity="warn" class="rounded-lg px-4" @click="applyQuickFill" />
+                </div>
+            </div>
+
+            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm overflow-hidden rounded-xl border border-pearl-100">
                 <Column field="date" header="Date">
                     <template #body="{ data }">
-                        <span class="font-medium">{{ data.date }}</span>
+                        <span class="font-bold text-charcoal-700 text-xs">{{ data.date }}</span>
                     </template>
                 </Column>
                 <Column header="Arrivée">
                     <template #body="{ data }">
-                        <InputText v-model="data.check_in" placeholder="09:00" class="w-full p-inputtext-sm" />
+                        <InputText v-model="data.check_in" placeholder="09:00" class="w-full p-inputtext-sm text-xs font-mono" />
                     </template>
                 </Column>
                 <Column header="Départ">
                     <template #body="{ data }">
-                        <InputText v-model="data.check_out" placeholder="17:00" class="w-full p-inputtext-sm" />
+                        <InputText v-model="data.check_out" placeholder="17:00" class="w-full p-inputtext-sm text-xs font-mono" />
                     </template>
                 </Column>
                 <Column header="Pause (min)">
                     <template #body="{ data }">
-                        <InputNumber v-model="data.break_duration" class="w-full p-inputtext-sm" />
+                        <InputNumber v-model="data.break_duration" class="w-full p-inputtext-sm text-xs" />
                     </template>
                 </Column>
                 <Column header="Absence">
                     <template #body="{ data }">
-                        <InputText v-model="data.absence_type" placeholder="Maladie, etc." class="w-full p-inputtext-sm" />
+                        <InputText v-model="data.absence_type" placeholder="Type..." class="w-full p-inputtext-sm text-xs" />
                     </template>
                 </Column>
                 <Column header="Commentaire">
                     <template #body="{ data }">
-                        <InputText v-model="data.comment" class="w-full p-inputtext-sm" />
+                        <InputText v-model="data.comment" class="w-full p-inputtext-sm text-xs" />
                     </template>
                 </Column>
             </DataTable>
 
             <template #footer>
-                <Button label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" @click="displayEditDialog = false" />
-                <Button label="Enregistrer" icon="pi pi-save" class="p-button-primary" @click="saveEntries" :loading="savingEntries" />
+                <Button label="Abandonner" text severity="secondary" @click="displayEditDialog = false" />
+                <Button label="Sauvegarder les modifications" icon="pi pi-save" severity="primary" @click="saveEntries" :loading="savingEntries" />
             </template>
+        </Dialog>
+
+        <!-- Modale d'Historique -->
+        <Dialog v-model:visible="displayHistoryDialog" header="Journal des modifications" :style="{ width: '600px' }" modal>
+            <div v-if="loadingHistory" class="text-center p-12">
+                <i class="pi pi-spin pi-spinner text-4xl text-gold-500"></i>
+            </div>
+            <div v-else class="p-2">
+                <Timeline :value="historyItems" class="customized-timeline">
+                    <template #content="slotProps">
+                        <div class="flex flex-col mb-6 bg-pearl-50 p-4 rounded-2xl border border-pearl-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Action par</span>
+                                    <span class="text-xs font-bold text-charcoal-700">{{ slotProps.item.author?.name || slotProps.item.author?.first_name || 'Système' }}</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-charcoal-400 bg-white px-2 py-1 rounded-lg border border-pearl-200">
+                                    {{ formatDateTime(slotProps.item.created_at) }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <Tag :value="slotProps.item.new_status?.toUpperCase()" :severity="getStatusSeverity(slotProps.item.new_status)" />
+                                <i v-if="slotProps.item.old_status" class="pi pi-arrow-left text-[10px] text-charcoal-300"></i>
+                                <Tag v-if="slotProps.item.old_status" :value="slotProps.item.old_status?.toUpperCase()" severity="secondary" class="opacity-50" />
+                            </div>
+                            <p v-if="slotProps.item.reason" class="text-xs text-charcoal-600 italic bg-white p-3 rounded-xl border border-pearl-100">
+                                "{{ slotProps.item.reason }}"
+                            </p>
+                        </div>
+                    </template>
+                </Timeline>
+                <div v-if="!historyItems.length" class="text-center p-8 text-charcoal-400 italic">
+                    Aucun historique disponible pour cette feuille.
+                </div>
+            </div>
         </Dialog>
     </CpLayout>
 </template>

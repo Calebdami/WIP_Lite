@@ -17,6 +17,13 @@ class Timesheet extends Model
         'validated_at',
     ];
 
+    protected $appends = [
+        'total_hours',
+        'total_planned_hours',
+        'total_overtime_hours',
+        'hours_deviation',
+    ];
+
     protected $casts = [
         'period_start' => 'date',
         'period_end' => 'date',

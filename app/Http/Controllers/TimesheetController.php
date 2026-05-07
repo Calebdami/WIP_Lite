@@ -194,11 +194,15 @@ class TimesheetController extends Controller
      */
     public function validate_timesheet(Request $request, Timesheet $timesheet): JsonResponse
     {
-        if ($timesheet->status !== 'soumis') {
+        // On autorise la validation si la feuille est 'soumis' OU 'brouillon' (cas de la saisie directe par Admin/CP)
+        if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejeté'])) {
             return response()->json([
-                'message' => 'Seules les feuilles au statut soumis peuvent être validées.'
+                'message' => 'Cette feuille de temps ne peut pas être validée dans son état actuel.'
             ], 422);
         }
+
+        // Note: On a assoupli la vérification pour permettre à l'Admin de valider 
+        // même si le calcul automatique des heures a rencontré un problème.
 
         $validatorId = $this->getAuthEmployeeId($request);
 
@@ -238,7 +242,7 @@ class TimesheetController extends Controller
         foreach ($request->timesheet_ids as $id) {
             $timesheet = Timesheet::find($id);
 
-            if ($timesheet->status !== 'soumis') {
+            if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejeté'])) {
                 $errors[] = "Feuille #{$id} : statut '{$timesheet->status}' non éligible.";
                 continue;
             }
@@ -345,6 +349,54 @@ class TimesheetController extends Controller
             });
 
         return response()->json($timesheets);
+    }
+
+    /**
+     * Mise à jour groupée des heures pour plusieurs feuilles de temps.
+     */
+    public function batchUpdateHours(Request $request): JsonResponse
+    {
+        $request->validate([
+            'timesheet_ids' => 'required|array',
+            'timesheet_ids.*' => 'exists:timesheets,id',
+            'schedule.check_in' => 'required|string',
+            'schedule.check_out' => 'required|string',
+            'schedule.break_duration' => 'required|integer',
+        ]);
+
+        $ids = $request->timesheet_ids;
+        $schedule = $request->schedule;
+        $validatorId = $this->getAuthEmployeeId($request);
+
+        foreach ($ids as $id) {
+            $timesheet = Timesheet::find($id);
+            
+            // On ne modifie pas les feuilles déjà validées
+            if ($timesheet->status === 'validé') continue;
+
+            // Mise à jour de toutes les entrées de cette feuille
+            $timesheet->entries()->update([
+                'check_in' => $schedule['check_in'],
+                'check_out' => $schedule['check_out'],
+                'break_duration' => $schedule['break_duration'],
+                'absence_type' => null, // On réinitialise l'absence si on force des heures
+            ]);
+
+            // Recalcul du total des heures
+            $timesheet->calculateTotalHours();
+
+            // Log dans l'historique
+            TimesheetHistory::create([
+                'timesheet_id' => $timesheet->id,
+                'employee_id' => $timesheet->employee_id,
+                'old_status' => $timesheet->status,
+                'new_status' => $timesheet->status,
+                'changed_by' => $validatorId,
+                'reason' => 'Mise à jour groupée des horaires (Saisie multiple)',
+            ]);
+        }
+
+        return response()->json(['message' => 'Mise à jour groupée effectuée']);
     }
 
     /**

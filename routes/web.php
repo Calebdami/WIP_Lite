@@ -106,6 +106,9 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
         Route::get('/validate-tc', fn () => Inertia::render('Cp/TimeTracking/ValidateTC'))->name('validate-tc');
         Route::get('/discrepancies', fn () => Inertia::render('Cp/TimeTracking/Discrepancies'))->name('discrepancies');
     });
+
+    // Mes Heures (Consultation)
+    Route::get('/my-hours', fn () => Inertia::render('Cp/Hours/Index'))->name('hours');
 });
 
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
@@ -137,6 +140,7 @@ Route::middleware(['auth'])->prefix('api/timesheets')->name('api.timesheets.')->
     Route::post('/{timesheet}/validate', [App\Http\Controllers\TimesheetController::class, 'validate_timesheet'])->name('validate');
     Route::post('/{timesheet}/reject', [App\Http\Controllers\TimesheetController::class, 'reject'])->name('reject');
     Route::post('/validate-batch', [App\Http\Controllers\TimesheetController::class, 'validateBatch'])->name('validate-batch');
+    Route::post('/batch-update-hours', [App\Http\Controllers\TimesheetController::class, 'batchUpdateHours'])->name('batch-update-hours');
 
     // Historique
     Route::get('/{timesheet}/history', [App\Http\Controllers\TimesheetController::class, 'history'])->name('history');

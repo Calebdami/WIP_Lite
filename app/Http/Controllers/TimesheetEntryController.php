@@ -47,10 +47,14 @@ class TimesheetEntryController extends Controller
         $breakDuration = $validated['break_duration'] ?? $entry->break_duration ?? 0;
 
         if ($checkIn && $checkOut) {
-            $start = \Carbon\Carbon::createFromFormat('H:i', $checkIn);
-            $end = \Carbon\Carbon::createFromFormat('H:i', $checkOut);
-            $rawMinutes = $end->diffInMinutes($start);
-            $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
+            try {
+                $start = \Carbon\Carbon::parse($checkIn);
+                $end = \Carbon\Carbon::parse($checkOut);
+                $rawMinutes = $end->diffInMinutes($start);
+                $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
+            } catch (\Exception $e) {
+                // En cas d'erreur de parsing, on garde la valeur actuelle
+            }
         }
 
         // Calcul automatique des heures supplémentaires
@@ -113,10 +117,14 @@ class TimesheetEntryController extends Controller
             // Calcul automatique
             $totalHours = $entry->total_hours;
             if ($checkIn && $checkOut) {
-                $start = \Carbon\Carbon::createFromFormat('H:i', $checkIn);
-                $end = \Carbon\Carbon::createFromFormat('H:i', $checkOut);
-                $rawMinutes = $end->diffInMinutes($start);
-                $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
+                try {
+                    $start = \Carbon\Carbon::parse($checkIn);
+                    $end = \Carbon\Carbon::parse($checkOut);
+                    $rawMinutes = $end->diffInMinutes($start);
+                    $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
+                } catch (\Exception $e) {
+                    // Ignorer les erreurs de format
+                }
             }
 
             $plannedHours = $data['planned_hours'] ?? $entry->planned_hours ?? 0;
