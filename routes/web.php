@@ -36,7 +36,7 @@ Route::get('/dashboard', function () {
 use App\Http\Controllers\UserController;
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
 
     // Personnel
@@ -73,7 +73,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     // Temps de travail
-    Route::get('/time-tracking', fn () => Inertia::render('Admin/Time/Tracking'))->name('time.tracking');
 
     // Configuration
     Route::prefix('config')->name('config.')->group(function () {
@@ -89,7 +88,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     // Calendrier
-    Route::get('/calendar', fn () => Inertia::render('Admin/Calendar/Index'))->name('calendar');
 
     // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -148,7 +146,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 // ─── Chef de Projet (CP) ──────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
+Route::middleware(['auth', 'role:cp'])->prefix('cp')->name('cp.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Cp/Dashboard'))->name('dashboard');
     
     // Équipes
@@ -173,7 +171,7 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 });
 
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
+Route::middleware(['auth', 'role:sup'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Sup/Dashboard'))->name('dashboard');
     Route::get('/my-team', [\App\Http\Controllers\Sup\TeamController::class, 'index'])->name('team');
     Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
@@ -182,7 +180,7 @@ Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
 });
 
 // ─── Technicien (TC) ──────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('tc')->name('tc.')->group(function () {
+Route::middleware(['auth', 'role:tc'])->prefix('tc')->name('tc.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Tc/Dashboard'))->name('dashboard');
     Route::get('/my-schedule', fn () => Inertia::render('Tc/Schedule/Index'))->name('schedule');
     Route::get('/my-hours', fn () => Inertia::render('Tc/Hours/Index'))->name('hours');
@@ -221,11 +219,5 @@ Route::middleware(['auth'])->get('/api/employees', function() {
     return App\Models\Employee::orderBy('last_name')->get();
 });
 
-// ─── Profile ──────────────────────────────────────────────────────────────────
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
 require __DIR__.'/auth.php';

@@ -109,12 +109,6 @@ const navItems = [
         ],
     },
     {
-        label: 'Calendrier',
-        icon: '',
-        href: route('admin.time.tracking'),
-        active: route().current('admin.time.tracking'),
-    },
-    {
         label: 'Notifications',
         icon: '',
         key: 'notifications',
@@ -235,10 +229,6 @@ const navItems = [
                                 <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
                             <div class="p-2">
-                                <Link :href="route('profile.edit')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-charcoal-600 hover:bg-pearl-100 hover:text-gold-600 transition-premium" @click="closeMenus">
-                                    <i class="pi pi-user text-sm opacity-60"></i>
-                                    Mon Profil
-                                </Link>
                                 <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
                                     <i class="pi pi-power-off text-sm opacity-60"></i>
                                     Déconnexion
