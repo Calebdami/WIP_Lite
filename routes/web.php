@@ -102,9 +102,7 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Cp/Dashboard'))->name('dashboard');
     
     // Équipes
-    Route::get('/supervisors', fn () => Inertia::render('Cp/Teams/Supervisors'))->name('supervisors');
-    Route::get('/assignments/tc', fn () => Inertia::render('Cp/Teams/AssignmentsTC'))->name('assignments.tc');
-    Route::get('/resources/idle', fn () => Inertia::render('Cp/Teams/ResourcesIdle'))->name('resources.idle');
+    Route::get('/teams', [\App\Http\Controllers\Cp\TeamController::class, 'index'])->name('teams');
 
     // Plannings
     Route::prefix('schedules')->name('schedules.')->group(function () {
@@ -124,7 +122,7 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Sup/Dashboard'))->name('dashboard');
-    Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
+    Route::get('/my-team', [\App\Http\Controllers\Sup\TeamController::class, 'index'])->name('team');
     Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
 });

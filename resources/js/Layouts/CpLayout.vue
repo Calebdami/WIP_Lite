@@ -49,12 +49,8 @@ const navItems = [
     },
     {
         label: 'Mes Équipes',
-        key: 'teams',
-        children: [
-            { label: 'Gestion des Superviseurs', href: route('cp.supervisors') },
-            { label: 'Affectation des Téléconseillers', href: route('cp.assignments.tc') },
-            { label: 'Ressources Disponibles', href: route('cp.resources.idle') },
-        ],
+        href: route('cp.teams'),
+        active: route().current('cp.teams*'),
     },
     {
         label: 'Plannings',
