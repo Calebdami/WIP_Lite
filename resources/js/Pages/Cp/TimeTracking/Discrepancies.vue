@@ -59,8 +59,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };

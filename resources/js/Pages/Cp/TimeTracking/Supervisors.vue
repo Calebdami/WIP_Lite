@@ -254,7 +254,7 @@ const validateTimesheet = (id) => {
         accept: async () => {
             try {
                 await axios.post(`/api/timesheets/${id}/validate`);
-                toast.add({ severity: 'success', summary: 'Validé', detail: 'Feuille validée', life: 3000 });
+                toast.add({ severity: 'success', summary: 'Valide', detail: 'Feuille validée', life: 3000 });
                 fetchTimesheets();
             } catch (error) {
                 toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la validation', life: 3000 });
@@ -267,8 +267,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -347,7 +347,7 @@ const getStatusSeverity = (status) => {
                         <div class="flex gap-1">
                             <Button icon="pi pi-pencil" text severity="secondary" rounded 
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'validé'" 
+                                :disabled="data.status === 'valide'" 
                                 title="Saisir les heures" />
                             <Button v-if="data.status === 'soumis'" icon="pi pi-check-circle" text severity="success" rounded 
                                 @click="validateTimesheet(data.id)" 

@@ -25,7 +25,7 @@ class TimesheetEntryController extends Controller
         // Vérifier que la feuille est modifiable (brouillon ou rejeté)
         $timesheet = $entry->timesheet;
 
-        if (!in_array($timesheet->status, ['brouillon', 'rejeté'])) {
+        if (!in_array($timesheet->status, ['brouillon', 'rejete'])) {
             return response()->json([
                 'message' => 'Les heures ne peuvent être modifiées que sur une feuille au statut brouillon ou rejeté.'
             ], 403);
@@ -85,7 +85,7 @@ class TimesheetEntryController extends Controller
     public function batchUpdate(Request $request, Timesheet $timesheet): JsonResponse
     {
         // Vérifier que la feuille est modifiable
-        if (!in_array($timesheet->status, ['brouillon', 'rejeté'])) {
+        if (!in_array($timesheet->status, ['brouillon', 'rejete'])) {
             return response()->json([
                 'message' => 'Les heures ne peuvent être modifiées que sur une feuille au statut brouillon ou rejeté.'
             ], 403);

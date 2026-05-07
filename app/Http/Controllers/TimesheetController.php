@@ -26,7 +26,7 @@ class TimesheetController extends Controller
     {
         $request->validate([
             'employee_id' => 'nullable|exists:employees,id',
-            'status'      => 'nullable|in:brouillon,soumis,validé,rejeté',
+            'status'      => 'nullable|in:brouillon,soumis,valide,rejete',
             'period_start' => 'nullable|date',
             'period_end'   => 'nullable|date',
         ]);
@@ -195,7 +195,7 @@ class TimesheetController extends Controller
     public function validate_timesheet(Request $request, Timesheet $timesheet): JsonResponse
     {
         // On autorise la validation si la feuille est 'soumis' OU 'brouillon' (cas de la saisie directe par Admin/CP)
-        if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejeté'])) {
+        if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejete'])) {
             return response()->json([
                 'message' => 'Cette feuille de temps ne peut pas être validée dans son état actuel.'
             ], 422);
@@ -208,7 +208,7 @@ class TimesheetController extends Controller
 
         $oldStatus = $timesheet->status;
         $timesheet->update([
-            'status'       => 'validé',
+            'status'       => 'valide',
             'validated_by' => $validatorId,
             'validated_at' => now(),
         ]);
@@ -217,7 +217,7 @@ class TimesheetController extends Controller
             'timesheet_id' => $timesheet->id,
             'employee_id'  => $timesheet->employee_id,
             'old_status'   => $oldStatus,
-            'new_status'   => 'validé',
+            'new_status'   => 'valide',
             'changed_by'   => $validatorId,
             'reason'       => 'Validation par le Chef de Plateau',
         ]);
@@ -242,14 +242,14 @@ class TimesheetController extends Controller
         foreach ($request->timesheet_ids as $id) {
             $timesheet = Timesheet::find($id);
 
-            if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejeté'])) {
+            if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejete'])) {
                 $errors[] = "Feuille #{$id} : statut '{$timesheet->status}' non éligible.";
                 continue;
             }
 
             $oldStatus = $timesheet->status;
             $timesheet->update([
-                'status'       => 'validé',
+                'status'       => 'valide',
                 'validated_by' => $validatorId,
                 'validated_at' => now(),
             ]);
@@ -258,7 +258,7 @@ class TimesheetController extends Controller
                 'timesheet_id' => $timesheet->id,
                 'employee_id'  => $timesheet->employee_id,
                 'old_status'   => $oldStatus,
-                'new_status'   => 'validé',
+                'new_status'   => 'valide',
                 'changed_by'   => $validatorId,
                 'reason'       => 'Validation en lot par le Chef de Plateau',
             ]);
@@ -288,13 +288,13 @@ class TimesheetController extends Controller
         }
 
         $oldStatus = $timesheet->status;
-        $timesheet->update(['status' => 'rejeté']);
+        $timesheet->update(['status' => 'rejete']);
 
         TimesheetHistory::create([
             'timesheet_id' => $timesheet->id,
             'employee_id'  => $timesheet->employee_id,
             'old_status'   => $oldStatus,
-            'new_status'   => 'rejeté',
+            'new_status'   => 'rejete',
             'changed_by'   => $this->getAuthEmployeeId($request),
             'reason'       => $request->reason,
         ]);
@@ -319,7 +319,7 @@ class TimesheetController extends Controller
 
         $timesheets = Timesheet::with('entries')
             ->where('employee_id', $employeeId)
-            ->where('status', 'validé')
+            ->where('status', 'valide')
             ->where('period_start', '>=', $since)
             ->orderBy('period_start', 'desc')
             ->get()
@@ -375,7 +375,7 @@ class TimesheetController extends Controller
             $timesheet = Timesheet::find($id);
             
             // On ne modifie pas les feuilles déjà validées
-            if ($timesheet->status === 'validé') continue;
+            if ($timesheet->status === 'valide') continue;
 
             // Mise à jour de toutes les entrées de cette feuille
             $timesheet->entries()->update([

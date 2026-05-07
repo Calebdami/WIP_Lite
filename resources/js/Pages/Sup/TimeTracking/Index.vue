@@ -274,8 +274,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -358,13 +358,13 @@ const getStatusSeverity = (status) => {
                                 text
                                 class="hover:bg-pearl-100"
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'validé' || data.status === 'soumis'" />
+                                :disabled="data.status === 'valide' || data.status === 'soumis'" />
                             <Button label="Soumettre" icon="pi pi-send" 
                                 size="small"
                                 severity="info"
                                 text
                                 @click="submitTimesheet(data.id)" 
-                                :disabled="data.status !== 'brouillon' && data.status !== 'rejeté'" />
+                                :disabled="data.status !== 'brouillon' && data.status !== 'rejete'" />
                             <Button icon="pi pi-history" text severity="info" rounded 
                                 @click="openHistory(data)" 
                                 title="Historique" />
@@ -541,8 +541,8 @@ const getStatusSeverity = (status) => {
                         </div>
                     </template>
                     <template #marker="slotProps">
-                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'validé' ? 'bg-emerald-500' : 'bg-charcoal-700'">
-                            <i :class="slotProps.item.new_status === 'validé' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
+                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'valide' ? 'bg-emerald-500' : 'bg-charcoal-700'">
+                            <i :class="slotProps.item.new_status === 'valide' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
                         </span>
                     </template>
                 </Timeline>

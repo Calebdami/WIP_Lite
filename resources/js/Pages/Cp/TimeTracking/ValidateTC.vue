@@ -106,7 +106,7 @@ const rejectTimesheet = () => {
                 await axios.post(`/api/timesheets/${rejectingTimesheet.value.id}/reject`, {
                     reason: rejectReason.value
                 });
-                toast.add({ severity: 'success', summary: 'Rejeté', detail: 'La feuille a été rejetée', life: 3000 });
+                toast.add({ severity: 'success', summary: 'Rejete', detail: 'La feuille a été rejetée', life: 3000 });
                 displayRejectDialog.value = false;
                 fetchSubmittedTimesheets();
             } catch (error) {
@@ -174,8 +174,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -390,8 +390,8 @@ const getStatusSeverity = (status) => {
                         </div>
                     </template>
                     <template #marker="slotProps">
-                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'validé' ? 'bg-emerald-500' : 'bg-charcoal-700'">
-                            <i :class="slotProps.item.new_status === 'validé' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
+                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'valide' ? 'bg-emerald-500' : 'bg-charcoal-700'">
+                            <i :class="slotProps.item.new_status === 'valide' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
                         </span>
                     </template>
                 </Timeline>
