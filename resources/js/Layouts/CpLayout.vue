@@ -105,7 +105,7 @@ const navItems = [
                                 class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
                                 :class="item.active
                                     ? 'text-gold-400 bg-charcoal-800 shadow-inner'
-                                    : 'text-charcoal-400 hover:text-white hover:bg-charcoal-800/50'"
+                                    : 'text-white hover:text-gold-400 hover:bg-charcoal-800/50'"
                                 @click="closeMenus"
                             >
                                 {{ item.label }}
@@ -119,7 +119,7 @@ const navItems = [
                                 class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
                                 :class="openMenu === item.key
                                     ? 'text-gold-400 bg-charcoal-800 shadow-inner'
-                                    : 'text-charcoal-400 hover:text-white hover:bg-charcoal-800/50'"
+                                    : 'text-white hover:text-gold-400 hover:bg-charcoal-800/50'"
                             >
                                 {{ item.label }}
                                 <i class="pi pi-chevron-down text-[10px] transition-premium" :class="openMenu === item.key ? 'rotate-180 text-gold-400' : ''"></i>
