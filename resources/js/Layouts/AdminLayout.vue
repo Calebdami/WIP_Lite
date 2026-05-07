@@ -90,41 +90,7 @@ const navItems = [
             { label: 'Historique plannings', href: route('admin.assignments.history') },
             { label: 'Suivi & Clôture', href: route('admin.time.tracking') },
         ],
-    },
-    {
-        label: 'Configuration',
-        icon: '',
-        key: 'config',
-        children: [
-            { label: 'Entreprise', href: route('admin.config.company') },
-            { label: 'Référentiels', href: route('admin.config.referentials') },
-            { label: 'Rôles & Permissions', href: route('admin.config.permissions') },
-        ],
-    },
-    {
-        label: 'Sécurité',
-        icon: '',
-        key: 'securite',
-        children: [
-            { label: 'Audit Logs', href: route('admin.security.logs') },
-            { label: 'Sessions actives', href: route('admin.security.sessions') },
-        ],
-    },
-    {
-        label: 'Notifications',
-        icon: '',
-        key: 'notifications',
-        children: [
-            { label: 'Modèles', href: route('admin.notifications.templates') },
-            { label: 'Diffusion', href: route('admin.notifications.broadcast') },
-        ],
-    },
-    {
-        label: 'Maintenance',
-        icon: '',
-        href: route('admin.maintenance'),
-        active: route().current('admin.maintenance'),
-    },
+    }
 ];
 </script>
 

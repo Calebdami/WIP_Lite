@@ -4,6 +4,11 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmDialog from 'primevue/confirmdialog';
+import Dialog from 'primevue/dialog';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Slider from 'primevue/slider';
+import Textarea from 'primevue/textarea';
 
 const props = defineProps({
     employee: Object,
@@ -25,21 +30,28 @@ const submitTask = () => {
         onSuccess: () => {
             showModal.value = false;
             form.reset('title', 'points', 'description');
-        },
+        }
     });
 };
 
-const validateTask = (task) => {
-    confirm.require({
-        message: 'Voulez-vous valider cette tâche et créditer les points ?',
-        header: 'Confirmation de validation',
-        icon: 'pi pi-exclamation-triangle',
-        acceptLabel: 'Valider',
-        rejectLabel: 'Annuler',
-        acceptClass: 'p-button-success p-button-sm',
-        rejectClass: 'p-button-secondary p-button-sm p-button-text',
-        accept: () => {
-            router.patch(route('admin.scoring.tasks.validate', task.id));
+const showConfirmModal = ref(false);
+const taskToValidate = ref(null);
+
+const confirmValidation = (task) => {
+    taskToValidate.value = task;
+    showConfirmModal.value = true;
+};
+
+const validateTask = () => {
+    if (!taskToValidate.value) return;
+    
+    router.patch(route('admin.scoring.tasks.validate', taskToValidate.value.id), {}, {
+        onSuccess: () => {
+            showConfirmModal.value = false;
+            taskToValidate.value = null;
+        },
+        onFinish: () => {
+            showConfirmModal.value = false;
         }
     });
 };
@@ -56,7 +68,7 @@ const formatDate = (dateString) => {
 
 <template>
     <Head :title="'Scoring — ' + employee.first_name" />
-    <ConfirmDialog />
+    
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
@@ -71,15 +83,12 @@ const formatDate = (dateString) => {
                         <p class="text-xs text-charcoal-400 mt-0.5">Détail des performances et validation des tâches</p>
                     </div>
                 </div>
-                <button 
+                <Button 
+                    label="Attribuer une tâche" 
+                    icon="pi pi-plus" 
                     @click="showModal = true"
-                    class="px-4 py-2 bg-gold-gradient text-charcoal-900 rounded-lg text-xs font-bold shadow-gold hover:opacity-90 transition-all flex items-center gap-2"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Attribuer une tâche
-                </button>
+                    class="bg-gold-gradient border-none text-charcoal-900 text-xs font-black uppercase tracking-widest shadow-gold-premium px-6 py-2.5"
+                />
             </div>
         </template>
 
@@ -87,25 +96,25 @@ const formatDate = (dateString) => {
             <!-- Sidebar Info -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white rounded-2xl border border-pearl-200 p-6 shadow-sm">
-                    <h3 class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest mb-4 border-b border-pearl-100 pb-2">Informations Générales</h3>
+                    <h3 class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest mb-4 border-b border-pearl-100 pb-2 italic">Informations Générales</h3>
                     <div class="space-y-4">
                         <div>
-                            <p class="text-[9px] text-charcoal-400 uppercase font-bold">Matricule</p>
-                            <p class="text-sm font-bold text-charcoal-700">{{ employee.matricule }}</p>
+                            <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-tighter">Matricule Employé</p>
+                            <p class="text-sm font-black text-gold-600">{{ employee.matricule }}</p>
                         </div>
                         <div>
-                            <p class="text-[9px] text-charcoal-400 uppercase font-bold">Poste</p>
-                            <p class="text-sm font-medium text-charcoal-700">{{ employee.position?.name }}</p>
+                            <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-tighter">Poste Occupé</p>
+                            <p class="text-sm font-bold text-charcoal-700 uppercase tracking-tight">{{ employee.position?.name }}</p>
                         </div>
-                        <div class="pt-4 mt-4 border-t border-pearl-100">
+                        <div class="pt-4 mt-4 border-t border-pearl-100 bg-pearl-50/30 rounded-xl p-4">
                             <div class="flex justify-between items-end">
                                 <div>
-                                    <p class="text-[9px] text-charcoal-400 uppercase font-bold">Score Total Validé</p>
-                                    <p class="text-3xl font-black text-gold-600">{{ tasks.filter(t => t.status === 'validated').reduce((acc, t) => acc + t.points, 0) }}</p>
+                                    <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-tighter">Score Total</p>
+                                    <p class="text-4xl font-black text-gold-700">{{ tasks.filter(t => t.status === 'validated').reduce((acc, t) => acc + t.points, 0) }}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-[9px] text-charcoal-400 uppercase font-bold">Tâches Validées</p>
-                                    <p class="text-sm font-bold text-charcoal-700">{{ tasks.filter(t => t.status === 'validated').length }} / {{ tasks.length }}</p>
+                                    <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-tighter">Missions Validées</p>
+                                    <p class="text-sm font-black text-charcoal-700">{{ tasks.filter(t => t.status === 'validated').length }} / {{ tasks.length }}</p>
                                 </div>
                             </div>
                         </div>
@@ -115,45 +124,50 @@ const formatDate = (dateString) => {
 
             <!-- Tasks List -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-2xl border border-pearl-200 overflow-hidden shadow-sm">
+                <div class="bg-white rounded-2xl border border-pearl-200 overflow-hidden shadow-premium">
                     <div class="px-6 py-4 border-b border-pearl-100 bg-pearl-50/50 flex justify-between items-center">
-                        <h3 class="text-[10px] font-bold text-charcoal-700 uppercase tracking-widest">Journal des Tâches</h3>
+                        <h3 class="text-[10px] font-black text-charcoal-700 uppercase tracking-[0.2em]">Journal des Missions</h3>
+                        <span class="text-[9px] font-bold text-charcoal-400 uppercase">Audit en temps réel</span>
                     </div>
                     <div class="divide-y divide-pearl-100">
-                        <div v-for="task in tasks" :key="task.id" class="p-6 hover:bg-pearl-50/50 transition-colors">
+                        <div v-for="task in tasks" :key="task.id" class="p-6 hover:bg-pearl-50/30 transition-all duration-300 group">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <h4 class="text-sm font-bold text-charcoal-800">{{ task.title }}</h4>
-                                        <span :class="task.status === 'validated' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'" class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter">
-                                            {{ task.status === 'validated' ? 'Validé' : 'En attente' }}
-                                        </span>
+                                    <div class="flex items-center gap-3 mb-1.5">
+                                        <h4 class="text-sm font-black text-charcoal-800 uppercase tracking-tight">{{ task.title }}</h4>
+                                        <Tag 
+                                            :value="task.status === 'validated' ? 'Validé' : 'En attente'" 
+                                            :severity="task.status === 'validated' ? 'success' : 'warn'" 
+                                            class="text-[8px] font-black uppercase tracking-tighter px-2"
+                                        />
                                     </div>
-                                    <p class="text-xs text-charcoal-500 line-clamp-2 leading-relaxed mb-3">{{ task.description || 'Aucune description' }}</p>
-                                    <div class="flex items-center gap-4 text-[10px] text-charcoal-400 font-medium">
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            Créée le: {{ formatDate(task.created_at) }}
+                                    <p class="text-xs text-charcoal-500 line-clamp-2 leading-relaxed mb-4 font-medium">{{ task.description || 'Aucune description détaillée pour cette mission.' }}</p>
+                                    <div class="flex items-center gap-5 text-[9px] text-charcoal-400 font-black uppercase tracking-widest">
+                                        <div class="flex items-center gap-1.5">
+                                            <i class="pi pi-calendar text-[10px] text-gold-500"></i>
+                                            {{ formatDate(task.created_at) }}
                                         </div>
-                                        <div v-if="task.validated_at" class="flex items-center gap-1 text-emerald-600">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                            Validée le: {{ formatDate(task.validated_at) }}
+                                        <div v-if="task.validated_at" class="flex items-center gap-1.5 text-emerald-600">
+                                            <i class="pi pi-check-circle text-[10px]"></i>
+                                            Validée le {{ formatDate(task.validated_at) }}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-right flex flex-col items-end gap-3 pl-4">
-                                    <div class="text-xl font-black text-gold-600 leading-none">+{{ task.points }} <span class="text-[10px] uppercase">pts</span></div>
-                                    <button 
+                                <div class="text-right flex flex-col items-end gap-4 pl-6">
+                                    <div class="text-2xl font-black text-gold-600 leading-none tracking-tighter">+{{ task.points }} <span class="text-[9px] uppercase font-bold opacity-70">pts</span></div>
+                                    <Button 
                                         v-if="task.status === 'pending'"
-                                        @click="validateTask(task)"
-                                        class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition-colors uppercase tracking-widest"
-                                    >
-                                        Valider
-                                    </button>
+                                        label="Valider" 
+                                        icon="pi pi-check" 
+                                        size="small"
+                                        @click="confirmValidation(task)"
+                                        class="p-button-success p-button-outlined text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-lg transition-premium"
+                                    />
                                 </div>
                             </div>
                         </div>
-                        <div v-if="tasks.length === 0" class="p-12 text-center text-charcoal-400 italic text-sm">
+                        <div v-if="tasks.length === 0" class="p-16 text-center text-charcoal-400 italic text-sm bg-pearl-50/20">
+                            <i class="pi pi-inbox text-4xl block mb-4 opacity-20"></i>
                             Aucune tâche attribuée pour le moment.
                         </div>
                     </div>
@@ -161,49 +175,156 @@ const formatDate = (dateString) => {
             </div>
         </div>
 
-        <!-- Add Task Modal -->
-        <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
+        <!-- Add Task Modal (PrimeVue Dialog) -->
+        <Dialog 
+            v-model:visible="showModal" 
+            :modal="true" 
+            :draggable="false"
+            class="p-dialog-premium"
+            :style="{ width: '500px' }"
+            :closable="true"
+            dismissableMask
         >
-            <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal-900/80 backdrop-blur-sm">
-                <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-pearl-200">
-                    <div class="px-6 py-4 bg-pearl-50 border-b border-pearl-200 flex justify-between items-center">
-                        <h2 class="text-sm font-black text-charcoal-700 uppercase tracking-widest">Attribuer une tâche</h2>
-                        <button @click="showModal = false" class="text-charcoal-400 hover:text-charcoal-600">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-                    <form @submit.prevent="submitTask" class="p-6 space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-charcoal-400 uppercase tracking-widest mb-1">Titre de la tâche</label>
-                            <input v-model="form.title" type="text" class="w-full border border-pearl-200 rounded-lg p-2 text-xs focus:ring-gold-500 focus:border-gold-500" required>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-charcoal-400 uppercase tracking-widest mb-1">Points attribués</label>
-                            <input v-model="form.points" type="number" class="w-full border border-pearl-200 rounded-lg p-2 text-xs focus:ring-gold-500 focus:border-gold-500" required>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-charcoal-400 uppercase tracking-widest mb-1">Description (optionnel)</label>
-                            <textarea v-model="form.description" class="w-full border border-pearl-200 rounded-lg p-2 text-xs focus:ring-gold-500 focus:border-gold-500" rows="3"></textarea>
-                        </div>
-                        <div class="pt-4 flex justify-end gap-3">
-                            <button type="button" @click="showModal = false" class="px-4 py-2 text-xs font-bold text-charcoal-400 hover:text-charcoal-600">Annuler</button>
-                            <button type="submit" :disabled="form.processing" class="px-6 py-2 bg-gold-gradient text-charcoal-900 rounded-lg text-xs font-bold shadow-gold hover:opacity-90 disabled:opacity-50">Attribuer</button>
-                        </div>
-                    </form>
+            <template #header>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-gold-600 uppercase tracking-[0.3em] mb-1">Scoring Management</span>
+                    <h2 class="text-base font-black text-charcoal-800 uppercase tracking-tight">Attribuer une nouvelle mission</h2>
                 </div>
+            </template>
+
+            <form @submit.prevent="submitTask" class="space-y-6 pt-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Intitulé de la mission</label>
+                    <InputText 
+                        v-model="form.title" 
+                        placeholder="Ex: Performance mensuelle accrue"
+                        class="w-full text-xs border-pearl-200 focus:border-gold-500 rounded-xl p-3 bg-pearl-50/50" 
+                        required 
+                    />
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Points de récompense</label>
+                        <span class="text-xs font-black text-gold-600">{{ form.points }} PTS</span>
+                    </div>
+                    <div class="px-2">
+                        <Slider v-model="form.points" :min="1" :max="100" class="w-full" />
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Consignes et Objectifs</label>
+                    <Textarea 
+                        v-model="form.description" 
+                        rows="4" 
+                        class="w-full text-xs border-pearl-200 focus:border-gold-500 rounded-xl p-3 bg-pearl-50/50 resize-none" 
+                        placeholder="Détaillez ici les critères de réussite..."
+                    />
+                </div>
+
+                <div class="pt-6 flex justify-end gap-3 border-t border-pearl-100">
+                    <Button 
+                        type="button" 
+                        label="Abandonner" 
+                        text 
+                        class="text-xs font-bold text-charcoal-400 uppercase tracking-widest hover:text-charcoal-600" 
+                        @click="showModal = false" 
+                    />
+                    <Button 
+                        type="submit" 
+                        label="Confirmer l'attribution" 
+                        icon="pi pi-send"
+                        :loading="form.processing"
+                        class="bg-gold-gradient border-none text-charcoal-900 text-xs font-black uppercase tracking-widest shadow-gold-premium px-6 py-2.5 rounded-xl" 
+                    />
+                </div>
+            </form>
+        </Dialog>
+        <!-- Confirm Validation Modal -->
+        <Dialog 
+            v-model:visible="showConfirmModal" 
+            :modal="true" 
+            :draggable="false"
+            class="p-dialog-premium"
+            :style="{ width: '400px' }"
+            :closable="false"
+        >
+            <template #header>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                        <i class="pi pi-exclamation-triangle text-lg"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Confirmation</span>
+                        <h2 class="text-sm font-black text-charcoal-800 uppercase">Valider la mission</h2>
+                    </div>
+                </div>
+            </template>
+
+            <div class="py-4">
+                <p class="text-xs text-charcoal-500 leading-relaxed">
+                    Êtes-vous sûr de vouloir valider la mission <span class="font-bold text-charcoal-700">"{{ taskToValidate?.title }}"</span> ? 
+                    Cette action créditera immédiatement <span class="font-black text-gold-600">{{ taskToValidate?.points }} points</span> sur le compte de l'employé.
+                </p>
             </div>
-        </Transition>
+
+            <template #footer>
+                <div class="flex justify-end gap-3 pt-2">
+                    <Button label="Annuler" text class="text-xs font-bold text-charcoal-400 uppercase" @click="showConfirmModal = false" />
+                    <Button label="Confirmer la validation" icon="pi pi-check" class="p-button-success text-xs font-black uppercase tracking-widest px-6" @click="validateTask" />
+                </div>
+            </template>
+        </Dialog>
     </AdminLayout>
 </template>
+
+<style>
+/* Global PrimeVue Overrides to match App Style */
+.p-dialog-premium {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+.p-dialog-premium .p-dialog-header {
+    background: #ffffff !important;
+    padding: 2rem 2rem 1.5rem 2rem !important;
+}
+.p-dialog-premium .p-dialog-content {
+    background: #ffffff !important;
+    padding: 0 2rem 2rem 2rem !important;
+}
+.p-dialog-premium .p-dialog-footer {
+    padding: 0 2rem 2rem 2rem !important;
+}
+.p-slider .p-slider-handle {
+    background: #ffffff !important;
+    border: 3px solid #D4A017 !important;
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    margin-top: -0.6rem !important;
+}
+.p-slider .p-slider-range {
+    background: linear-gradient(90deg, #D4A017, #8B6914) !important;
+}
+.p-toast .p-toast-message {
+    border-radius: 16px !important;
+    backdrop-filter: blur(10px) !important;
+}
+</style>
 
 <style scoped>
 .bg-gold-gradient {
     background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%);
+}
+.shadow-gold-premium {
+    box-shadow: 0 10px 25px -5px rgba(212, 160, 23, 0.4);
+}
+.shadow-premium {
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+}
+.transition-premium {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
