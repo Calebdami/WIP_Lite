@@ -37,9 +37,7 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    /**
-     * Un utilisateur est lié à un employé
-     */
+    // Un utilisateur est lié à un employé
     public function employee()
     {
         return $this->hasOne(Employee::class);

@@ -42,4 +42,20 @@ class Employee extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    /**
+     * Feuilles de temps de cet employé.
+     */
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    /**
+     * Feuilles de temps validées par cet employé (en tant que CP).
+     */
+    public function validatedTimesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class, 'validated_by');
+    }
 }

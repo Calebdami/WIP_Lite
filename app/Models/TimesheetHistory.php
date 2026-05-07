@@ -3,10 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimesheetHistory extends Model
 {
-    public $timestamps = false; // important
+    // La table utilise un nom non standard (pas "timesheet_histories")
+    protected $table = 'timesheet_historys';
+
+    // Un historique ne se modifie pas : pas de updated_at
+    public $timestamps = false;
 
     protected $fillable = [
         'timesheet_id',
@@ -22,22 +27,30 @@ class TimesheetHistory extends Model
         'created_at' => 'datetime',
     ];
 
+    // ──────────────────────────────────────
     // Relations
+    // ──────────────────────────────────────
 
-    public function timesheet()
-    // Relation vers la feuille de temps à laquelle cet historique appartient
+    /**
+     * Feuille de temps concernée.
+     */
+    public function timesheet(): BelongsTo
     {
         return $this->belongsTo(Timesheet::class);
     }
 
-    public function employee()
-    // Relation vers l'employé qui possède la feuille de temps
+    /**
+     * Employé propriétaire de la feuille de temps.
+     */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
-    public function author()
-    // Relation vers l'employé qui a effectué le changement
+    /**
+     * Auteur du changement de statut (superviseur ou CP).
+     */
+    public function author(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'changed_by');
     }

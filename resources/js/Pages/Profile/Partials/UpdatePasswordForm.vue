@@ -1,10 +1,9 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
@@ -35,22 +34,21 @@ const updatePassword = () => {
 
 <template>
     <section>
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Update Password
+        <header class="mb-6">
+            <h2 class="text-xl font-black text-charcoal-900 uppercase tracking-tight">
+                Sécurité du Compte
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay
-                secure.
+            <p class="mt-1 text-sm text-charcoal-500 font-medium">
+                Assurez-vous que votre compte utilise un mot de passe long et complexe pour rester sécurisé.
             </p>
         </header>
 
         <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
+                <label for="current_password" class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 px-1">Mot de passe actuel</label>
 
-                <TextInput
+                <InputText
                     id="current_password"
                     ref="currentPasswordInput"
                     v-model="form.current_password"
@@ -66,9 +64,9 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="New Password" />
+                <label for="password" class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 px-1">Nouveau mot de passe</label>
 
-                <TextInput
+                <InputText
                     id="password"
                     ref="passwordInput"
                     v-model="form.password"
@@ -81,12 +79,9 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
+                <label for="password_confirmation" class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 px-1">Confirmer le mot de passe</label>
 
-                <TextInput
+                <InputText
                     id="password_confirmation"
                     v-model="form.password_confirmation"
                     type="password"
@@ -100,8 +95,8 @@ const updatePassword = () => {
                 />
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+            <div class="flex items-center gap-4 pt-4">
+                <Button type="submit" label="Mettre à jour le mot de passe" severity="warn" class="rounded-xl px-8 shadow-gold-premium" :loading="form.processing" />
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -111,9 +106,10 @@ const updatePassword = () => {
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                        class="text-sm font-bold text-emerald-600 flex items-center gap-2"
                     >
-                        Saved.
+                        <i class="pi pi-check-circle"></i>
+                        Mot de passe modifié avec succès.
                     </p>
                 </Transition>
             </div>

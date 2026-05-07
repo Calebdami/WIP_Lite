@@ -1,5 +1,5 @@
 <script setup>
-import TcLayout from '@/Layouts/TcLayout.vue';
+import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -53,8 +53,8 @@ const formatDateDisplay = (dateStr) => {
 </script>
 
 <template>
-    <Head title="Mes Heures Validées — Téléconseiller" />
-    <TcLayout>
+    <Head title="Mes Heures Validées — Superviseur" />
+    <SupLayout>
         <template #header>
             <div>
                 <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Mes Heures Validées</h1>
@@ -112,7 +112,7 @@ const formatDateDisplay = (dateStr) => {
         </div>
 
         <!-- Modale de Détails -->
-        <Dialog v-model:visible="displayDetailsDialog" header="Récapitulatif Hebdomadaire" :style="{ width: '850px' }" modal>
+        <Dialog v-model:visible="displayDetailsDialog" header="Récapitulatif Hebdomadaire" :style="{ width: '1000px' }" modal>
             <div v-if="currentTimesheetDetails">
                 <div class="mb-6 grid grid-cols-2 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
@@ -147,6 +147,24 @@ const formatDateDisplay = (dateStr) => {
                             <span v-else class="text-charcoal-300">-</span>
                         </template>
                     </Column>
+                    <Column header="Mgmt" title="Management">
+                        <template #body="{ data }">
+                            <span v-if="data.management_hours > 0" class="text-xs font-bold text-gold-600">{{ data.management_hours }}h</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
+                    <Column header="Astr." title="Astreinte">
+                        <template #body="{ data }">
+                            <span v-if="data.on_call_hours > 0" class="text-xs font-bold text-indigo-600">{{ data.on_call_hours }}h</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
+                    <Column header="Réu." title="Réunion/Formation">
+                        <template #body="{ data }">
+                            <span v-if="data.training_hours > 0" class="text-xs font-bold text-emerald-600">{{ data.training_hours }}h</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
                     <Column field="total_hours" header="Total">
                         <template #body="{ data }">
                             <span class="font-bold text-charcoal-700">{{ data.total_hours }}h</span>
@@ -164,5 +182,5 @@ const formatDateDisplay = (dateStr) => {
                 <Button label="Fermer" text severity="secondary" @click="displayDetailsDialog = false" />
             </template>
         </Dialog>
-    </TcLayout>
+    </SupLayout>
 </template>
