@@ -30,14 +30,9 @@ const navItems = [
         active: route().current('tc.schedule'),
     },
     {
-        label: 'Mes Heures Validées',
+        label: 'Mes Heures',
         href: route('tc.hours'),
         active: route().current('tc.hours'),
-    },
-    {
-        label: 'Mon Profil',
-        href: route('tc.profile'),
-        active: route().current('tc.profile'),
     },
 ];
 </script>

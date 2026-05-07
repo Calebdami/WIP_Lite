@@ -393,42 +393,50 @@ const getStatusSeverity = (status) => {
                         <p class="text-[10px] text-gold-600">Appliquer un horaire type à tous les jours de la semaine</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 bg-white p-2 rounded-xl border border-gold-100 shadow-sm">
+                <div class="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gold-100 shadow-sm ml-auto">
                     <div class="flex flex-col gap-1">
                         <span class="text-[9px] font-black text-charcoal-400 px-1">ARRIVÉE</span>
-                        <InputText v-model="quickFill.check_in" placeholder="09:00" class="p-inputtext-sm w-20 text-center font-mono !border-transparent !bg-pearl-50" />
+                        <InputText v-model="quickFill.check_in" placeholder="09:00" class="p-inputtext-sm w-24 text-center font-mono !bg-pearl-50/50" />
                     </div>
                     <div class="flex flex-col gap-1">
                         <span class="text-[9px] font-black text-charcoal-400 px-1">DÉPART</span>
-                        <InputText v-model="quickFill.check_out" placeholder="17:00" class="p-inputtext-sm w-20 text-center font-mono !border-transparent !bg-pearl-50" />
+                        <InputText v-model="quickFill.check_out" placeholder="17:00" class="p-inputtext-sm w-24 text-center font-mono !bg-pearl-50/50" />
                     </div>
                     <div class="flex flex-col gap-1">
                         <span class="text-[9px] font-black text-charcoal-400 px-1">PAUSE (MIN)</span>
-                        <InputNumber v-model="quickFill.break_duration" class="p-inputtext-sm w-16 !border-transparent !bg-pearl-50" />
+                        <InputNumber v-model="quickFill.break_duration" class="p-inputtext-sm w-20 !bg-pearl-50/50" />
                     </div>
-                    <Button label="Appliquer partout" icon="pi pi-check-circle" size="small" severity="warn" class="rounded-lg px-4" @click="applyQuickFill" />
+                    <Button label="Appliquer partout" icon="pi pi-bolt" size="small" severity="warn" class="rounded-xl px-6 h-10 shadow-gold-premium" @click="applyQuickFill" />
                 </div>
             </div>
 
-            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm overflow-hidden rounded-xl border border-pearl-100">
-                <Column field="date" header="Date">
+            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm entry-form-table">
+                <Column field="date" header="Date" headerClass="w-40">
                     <template #body="{ data }">
-                        <span class="font-bold text-charcoal-700 text-xs">{{ data.date }}</span>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-charcoal-700 text-sm">{{ data.date }}</span>
+                            <span class="text-[9px] text-charcoal-400 font-bold uppercase tracking-tighter">Journée de travail</span>
+                        </div>
                     </template>
                 </Column>
-                <Column header="Arrivée">
+                <Column header="Arrivée" headerClass="w-28">
                     <template #body="{ data }">
-                        <InputText v-model="data.check_in" placeholder="09:00" class="w-full p-inputtext-sm text-xs font-mono" />
+                        <InputText v-model="data.check_in" placeholder="09:00" class="w-full text-center font-mono text-sm" />
                     </template>
                 </Column>
-                <Column header="Départ">
+                <Column header="Départ" headerClass="w-28">
                     <template #body="{ data }">
-                        <InputText v-model="data.check_out" placeholder="17:00" class="w-full p-inputtext-sm text-xs font-mono" />
+                        <InputText v-model="data.check_out" placeholder="17:00" class="w-full text-center font-mono text-sm" />
                     </template>
                 </Column>
-                <Column header="Pause (min)">
+                <Column header="Pause (min)" headerClass="w-28">
                     <template #body="{ data }">
-                        <InputNumber v-model="data.break_duration" class="w-full p-inputtext-sm text-xs" />
+                        <InputNumber v-model="data.break_duration" class="w-full text-center" :min="0" :max="120" />
+                    </template>
+                </Column>
+                <Column header="Absence / Motif" headerClass="w-44">
+                    <template #body="{ data }">
+                        <InputText v-model="data.absence_type" placeholder="Type..." class="w-full p-inputtext-sm text-xs" />
                     </template>
                 </Column>
                 <Column header="Commentaire">
@@ -439,8 +447,13 @@ const getStatusSeverity = (status) => {
             </DataTable>
 
             <template #footer>
-                <Button label="Annuler" text severity="secondary" @click="displayEditDialog = false" />
-                <Button label="Enregistrer les modifications" icon="pi pi-save" severity="primary" @click="saveEntries" :loading="savingEntries" />
+                <div class="flex justify-between items-center w-full pt-4 border-t border-pearl-100">
+                    <p class="text-xs text-charcoal-400 italic font-medium">Toutes les modifications sont enregistrées localement avant validation.</p>
+                    <div class="flex gap-3">
+                        <Button label="Abandonner" text severity="secondary" class="rounded-xl px-6" @click="displayEditDialog = false" />
+                        <Button label="Enregistrer la Saisie" icon="pi pi-save" severity="primary" class="rounded-xl px-8 shadow-premium" @click="saveEntries" :loading="savingEntries" />
+                    </div>
+                </div>
             </template>
         </Dialog>
 
