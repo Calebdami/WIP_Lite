@@ -16,6 +16,9 @@ class TimesheetEntry extends Model
         'total_hours',
         'planned_hours',
         'overtime_hours',
+        'management_hours',
+        'on_call_hours',
+        'training_hours',
         'absence_type',
         'comment',
     ];
@@ -28,6 +31,9 @@ class TimesheetEntry extends Model
         'total_hours' => 'decimal:2',
         'planned_hours' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
+        'management_hours' => 'decimal:2',
+        'on_call_hours' => 'decimal:2',
+        'training_hours' => 'decimal:2',
     ];
 
     // ──────────────────────────────────────

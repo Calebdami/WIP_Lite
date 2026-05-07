@@ -112,7 +112,7 @@ const formatDateDisplay = (dateStr) => {
         </div>
 
         <!-- Modale de Détails -->
-        <Dialog v-model:visible="displayDetailsDialog" header="Récapitulatif Hebdomadaire" :style="{ width: '850px' }" modal>
+        <Dialog v-model:visible="displayDetailsDialog" header="Récapitulatif Hebdomadaire" :style="{ width: '1000px' }" modal>
             <div v-if="currentTimesheetDetails">
                 <div class="mb-6 grid grid-cols-2 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
@@ -144,6 +144,24 @@ const formatDateDisplay = (dateStr) => {
                     <Column header="Pause">
                         <template #body="{ data }">
                             <span v-if="data.break_duration > 0" class="text-xs text-charcoal-500">{{ data.break_duration }} min</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
+                    <Column header="Mgmt" title="Management">
+                        <template #body="{ data }">
+                            <span v-if="data.management_hours > 0" class="text-xs font-bold text-gold-600">{{ data.management_hours }}h</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
+                    <Column header="Astr." title="Astreinte">
+                        <template #body="{ data }">
+                            <span v-if="data.on_call_hours > 0" class="text-xs font-bold text-indigo-600">{{ data.on_call_hours }}h</span>
+                            <span v-else class="text-charcoal-300">-</span>
+                        </template>
+                    </Column>
+                    <Column header="Réu." title="Réunion/Formation">
+                        <template #body="{ data }">
+                            <span v-if="data.training_hours > 0" class="text-xs font-bold text-emerald-600">{{ data.training_hours }}h</span>
                             <span v-else class="text-charcoal-300">-</span>
                         </template>
                     </Column>

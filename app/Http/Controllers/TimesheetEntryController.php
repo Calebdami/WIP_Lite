@@ -34,10 +34,13 @@ class TimesheetEntryController extends Controller
         $validated = $request->validate([
             'check_in'       => 'nullable|date_format:H:i',
             'check_out'      => 'nullable|date_format:H:i|after:check_in',
-            'break_duration' => 'nullable|integer|min:0|max:480',
-            'planned_hours'  => 'nullable|numeric|min:0|max:24',
-            'absence_type'   => 'nullable|string|max:100',
-            'comment'        => 'nullable|string|max:1000',
+            'break_duration'   => 'nullable|integer|min:0|max:480',
+            'planned_hours'    => 'nullable|numeric|min:0|max:24',
+            'management_hours' => 'nullable|numeric|min:0|max:24',
+            'on_call_hours'    => 'nullable|numeric|min:0|max:24',
+            'training_hours'   => 'nullable|numeric|min:0|max:24',
+            'absence_type'     => 'nullable|string|max:100',
+            'comment'          => 'nullable|string|max:1000',
         ]);
 
         // Calcul automatique du total d'heures si check_in et check_out fournis
@@ -94,9 +97,12 @@ class TimesheetEntryController extends Controller
             'entries.*.check_in'       => 'nullable|date_format:H:i',
             'entries.*.check_out'      => 'nullable|date_format:H:i',
             'entries.*.break_duration' => 'nullable|integer|min:0|max:480',
-            'entries.*.planned_hours'  => 'nullable|numeric|min:0|max:24',
-            'entries.*.absence_type'   => 'nullable|string|max:100',
-            'entries.*.comment'        => 'nullable|string|max:1000',
+            'entries.*.planned_hours'    => 'nullable|numeric|min:0|max:24',
+            'entries.*.management_hours' => 'nullable|numeric|min:0|max:24',
+            'entries.*.on_call_hours'    => 'nullable|numeric|min:0|max:24',
+            'entries.*.training_hours'   => 'nullable|numeric|min:0|max:24',
+            'entries.*.absence_type'     => 'nullable|string|max:100',
+            'entries.*.comment'          => 'nullable|string|max:1000',
         ]);
 
         $updatedEntries = [];
@@ -143,8 +149,11 @@ class TimesheetEntryController extends Controller
                 'planned_hours'  => $plannedHours,
                 'total_hours'    => $totalHours,
                 'overtime_hours' => $overtimeHours,
-                'absence_type'   => $data['absence_type'] ?? $entry->absence_type,
-                'comment'        => $data['comment'] ?? $entry->comment,
+                'management_hours' => $data['management_hours'] ?? $entry->management_hours ?? 0,
+                'on_call_hours'    => $data['on_call_hours'] ?? $entry->on_call_hours ?? 0,
+                'training_hours'   => $data['training_hours'] ?? $entry->training_hours ?? 0,
+                'absence_type'     => $data['absence_type'] ?? $entry->absence_type,
+                'comment'          => $data['comment'] ?? $entry->comment,
             ]);
 
             $updatedEntries[] = $entry->fresh();
@@ -177,9 +186,12 @@ class TimesheetEntryController extends Controller
                     'planned_hours'  => (float) $entry->planned_hours,
                     'overtime_hours' => (float) $entry->overtime_hours,
                     'deviation'      => $entry->deviation,
-                    'absence_type'   => $entry->absence_type,
-                    'is_absence'     => $entry->is_absence,
-                    'comment'        => $entry->comment,
+                    'management_hours' => (float) $entry->management_hours,
+                    'on_call_hours'    => (float) $entry->on_call_hours,
+                    'training_hours'   => (float) $entry->training_hours,
+                    'absence_type'     => $entry->absence_type,
+                    'is_absence'       => $entry->is_absence,
+                    'comment'          => $entry->comment,
                     // Alertes / anomalies
                     'alerts'         => $this->detectAlerts($entry),
                 ];

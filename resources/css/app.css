@@ -90,3 +90,33 @@
 .p-dialog {
     @apply rounded-3xl shadow-premium border border-pearl-100 bg-white overflow-hidden !important;
 }
+
+/* Premium Confirmation Dialog */
+.p-confirm-dialog .p-dialog-content {
+    padding: 2.5rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.p-confirm-dialog .p-confirm-dialog-icon {
+    @apply text-5xl mb-6 p-6 rounded-full bg-amber-50 text-gold-500 !important;
+}
+
+.p-confirm-dialog .p-confirm-dialog-message {
+    @apply font-black text-charcoal-900 text-xl leading-relaxed !important;
+}
+
+.p-confirm-dialog .p-dialog-footer {
+    @apply flex justify-center gap-4 px-10 pb-10 border-none !important;
+}
+
+/* Premium Forms & Inputs */
+.p-inputtext, .p-inputnumber-input, .p-select, .p-datepicker-input {
+    @apply bg-pearl-50 border-pearl-200 rounded-xl px-4 py-3 text-sm transition-all duration-200 !important;
+}
+
+.p-inputtext:focus, .p-inputnumber-input:focus, .p-select:focus, .p-datepicker-input:focus {
+    @apply border-gold-500 ring-4 ring-gold-500/15 bg-white !important;
+}

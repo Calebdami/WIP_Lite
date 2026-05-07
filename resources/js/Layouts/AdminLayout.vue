@@ -104,6 +104,11 @@ const navItems = [
         href: route('admin.maintenance'),
         active: route().current('admin.maintenance'),
     },
+    {
+        label: 'Mon Profil',
+        href: route('profile.edit'),
+        active: route().current('profile.edit'),
+    },
 ];
 </script>
 
@@ -246,64 +251,6 @@ const navItems = [
 
 .bg-gold-gradient {
     background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%);
-}
-
-/* Style Global Premium pour les Modales de Confirmation */
-:deep(.p-confirm-dialog .p-dialog-content) {
-    padding: 2.5rem !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-:deep(.p-confirm-dialog .p-confirm-dialog-icon) {
-    font-size: 3.5rem !important;
-    margin-bottom: 1.5rem !important;
-    padding: 1.5rem;
-    border-radius: 9999px;
-    background-color: #fefce8; /* gold-50 */
-    color: #d4af37 !important; /* gold-500 */
-}
-
-:deep(.p-confirm-dialog .p-confirm-dialog-message) {
-    font-weight: 800;
-    color: #1a1a1a;
-    font-size: 1.25rem;
-    line-height: 1.4;
-}
-
-:deep(.p-confirm-dialog .p-dialog-footer) {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    padding: 0 2.5rem 2.5rem 2.5rem !important;
-    border: none !important;
-}
-
-:deep(.p-confirm-dialog .p-button) {
-    border-radius: 12px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    font-size: 0.75rem !important;
-}
-
-/* Style Global Premium pour les Formulaires */
-:deep(.p-inputtext), :deep(.p-inputnumber-input) {
-    background-color: #f8fafc !important; /* pearl-50 */
-    border: 1px solid #e2e8f0 !important; /* pearl-200 */
-    border-radius: 12px !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.875rem !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.p-inputtext:focus), :deep(.p-inputnumber-input:focus) {
-    border-color: #d4af37 !important;
-    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15) !important;
-    background-color: #ffffff !important;
 }
 
 :deep(label.text-xs), :deep(label.text-\[10px\]) {

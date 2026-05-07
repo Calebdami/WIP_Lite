@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -33,6 +34,11 @@ const navItems = [
         label: 'Mes Heures',
         href: route('tc.hours'),
         active: route().current('tc.hours'),
+    },
+    {
+        label: 'Mon Profil',
+        href: route('profile.edit'),
+        active: route().current('profile.edit'),
     },
 ];
 </script>
@@ -126,6 +132,7 @@ const navItems = [
             </div>
         </main>
         <Toast position="top-right" />
+        <ConfirmDialog />
     </div>
 </template>
 

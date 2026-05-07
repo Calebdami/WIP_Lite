@@ -281,24 +281,30 @@ const getStatusSeverity = (status) => {
         </Dialog>
 
         <!-- Modale de Détails -->
-        <Dialog v-model:visible="displayDetailsDialog" header="Détails de l'activité journalière" :style="{ width: '1000px' }" modal maximizable>
-            <div v-if="loadingDetails" class="text-center p-12">
-                <i class="pi pi-spin pi-spinner text-4xl text-gold-500"></i>
-                <p class="mt-4 text-charcoal-400">Chargement des données...</p>
+        <Dialog v-model:visible="displayDetailsDialog" header="Analyse Détaillée de l'Activité" :style="{ width: '1100px' }" modal maximizable>
+            <div v-if="loadingDetails" class="text-center py-20">
+                <i class="pi pi-spin pi-spinner text-5xl text-gold-500 mb-4"></i>
+                <p class="text-charcoal-400 font-medium tracking-wide">Chargement de l'historique détaillé...</p>
             </div>
             <div v-else-if="currentTimesheetDetails">
-                <div class="mb-6 grid grid-cols-3 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
+                <div class="mb-6 grid grid-cols-4 gap-4 bg-pearl-50 p-5 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Total Réalisé</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Total Réalisé</span>
                         <span class="text-2xl font-black text-charcoal-700">{{ currentTimesheetDetails.timesheet.total_hours }}h</span>
                     </div>
                     <div class="flex flex-col border-x border-pearl-200 px-4">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Période</span>
-                        <span class="text-sm font-black text-charcoal-700">{{ formatDateDisplay(viewingTimesheet?.period_start) }} au {{ formatDateDisplay(viewingTimesheet?.period_end) }}</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Prévu Planning</span>
+                        <span class="text-2xl font-black text-charcoal-400">{{ currentTimesheetDetails.timesheet.planned_hours }}h</span>
+                    </div>
+                    <div class="flex flex-col border-r border-pearl-200 pr-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Écart Analysé</span>
+                        <span class="text-2xl font-black" :class="currentTimesheetDetails.timesheet.deviation < 0 ? 'text-red-600' : (currentTimesheetDetails.timesheet.deviation > 0 ? 'text-amber-600' : 'text-emerald-600')">
+                            {{ currentTimesheetDetails.timesheet.deviation > 0 ? '+' : '' }}{{ currentTimesheetDetails.timesheet.deviation }}h
+                        </span>
                     </div>
                     <div class="flex flex-col items-end">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Écart Global</span>
-                        <span class="text-2xl font-black text-red-600">{{ currentTimesheetDetails.timesheet.deviation }}h</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-2">Décision Requise</span>
+                        <Tag :value="currentTimesheetDetails.timesheet.status.toUpperCase()" :severity="getStatusSeverity(currentTimesheetDetails.timesheet.status)" />
                     </div>
                 </div>
 

@@ -366,7 +366,7 @@ const getStatusSeverity = (status) => {
         </Dialog>
 
         <!-- Modale de Saisie des Heures -->
-        <Dialog v-model:visible="displayEditDialog" header="Saisie des Heures CP" :style="{ width: '900px' }" modal maximizable>
+        <Dialog v-model:visible="displayEditDialog" header="Saisie des Heures (Activité Détaillée)" :style="{ width: '1200px' }" modal maximizable>
             <div v-if="currentTimesheet" class="mb-6 grid grid-cols-3 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Chef de Plateau</span>
@@ -429,12 +429,27 @@ const getStatusSeverity = (status) => {
                         <InputText v-model="data.check_out" placeholder="17:00" class="w-full text-center font-mono text-sm" />
                     </template>
                 </Column>
-                <Column header="Pause (min)" headerClass="w-28">
+                <Column header="Pause (min)" headerClass="w-24">
                     <template #body="{ data }">
                         <InputNumber v-model="data.break_duration" class="w-full text-center" :min="0" :max="120" />
                     </template>
                 </Column>
-                <Column header="Absence / Motif" headerClass="w-44">
+                <Column header="Mgmt (h)" headerClass="w-24">
+                    <template #body="{ data }">
+                        <InputNumber v-model="data.management_hours" class="w-full text-center font-bold" :min="0" :max="24" :minFractionDigits="1" />
+                    </template>
+                </Column>
+                <Column header="Astr. (h)" headerClass="w-24">
+                    <template #body="{ data }">
+                        <InputNumber v-model="data.on_call_hours" class="w-full text-center font-bold" :min="0" :max="24" :minFractionDigits="1" />
+                    </template>
+                </Column>
+                <Column header="Réu/Form (h)" headerClass="w-28">
+                    <template #body="{ data }">
+                        <InputNumber v-model="data.training_hours" class="w-full text-center font-bold" :min="0" :max="24" :minFractionDigits="1" />
+                    </template>
+                </Column>
+                <Column header="Absence / Motif" headerClass="w-36">
                     <template #body="{ data }">
                         <InputText v-model="data.absence_type" placeholder="Type..." class="w-full p-inputtext-sm text-xs" />
                     </template>

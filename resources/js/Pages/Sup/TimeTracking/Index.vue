@@ -393,7 +393,7 @@ const getStatusSeverity = (status) => {
         </Dialog>
 
         <!-- Modale de Saisie des Heures -->
-        <Dialog v-model:visible="displayEditDialog" :header="`Saisie des Heures`" :style="{ width: '1000px' }" modal maximizable>
+        <Dialog v-model:visible="displayEditDialog" header="Saisie de l'Activité Journalière (TC)" :style="{ width: '1000px' }" modal maximizable>
             <div class="mb-6 grid grid-cols-4 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Employé</span>
