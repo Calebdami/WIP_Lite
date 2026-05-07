@@ -54,13 +54,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
 
     // Campagnes
-    Route::get('/campaigns', fn () => Inertia::render('Admin/Campaigns/Index'))->name('campaigns.index');
+    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class);
 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {
-        Route::get('/structure', fn () => Inertia::render('Admin/Assignments/Structure'))->name('structure');
+        Route::get('/structure', [App\Http\Controllers\Admin\AssignmentController::class, 'structure'])->name('structure');
+        Route::post('/', [App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('store');
+        Route::patch('/{assignment}/release', [App\Http\Controllers\Admin\AssignmentController::class, 'release'])->name('release');
         Route::get('/schedules', fn () => Inertia::render('Admin/Assignments/Schedules'))->name('schedules');
-        Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
+        Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
         Route::get('/validation', fn () => Inertia::render('Admin/Assignments/Validation'))->name('validation');
         Route::get('/history', fn () => Inertia::render('Admin/Assignments/History'))->name('history');
