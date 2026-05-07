@@ -1,9 +1,26 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useToast } from 'primevue/usetoast';
 
 const page = usePage();
+const toast = useToast();
 const user = computed(() => page.props.auth?.user);
+
+// Surveillance des messages Flash d'Inertia
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        toast.add({ severity: 'success', summary: 'Succès', detail: flash.success, life: 3000 });
+    }
+    if (flash?.error) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: flash.error, life: 5000 });
+    }
+    if (flash?.warning) {
+        toast.add({ severity: 'warn', summary: 'Attention', detail: flash.warning, life: 4000 });
+    }
+}, { deep: true, immediate: true });
 
 // Dropdown state
 const openMenu = ref(null);
@@ -125,6 +142,10 @@ const navItems = [
                 <slot />
             </div>
         </main>
+
+        <!-- PrimeVue Components -->
+        <Toast />
+        <ConfirmDialog />
     </div>
 </template>
 

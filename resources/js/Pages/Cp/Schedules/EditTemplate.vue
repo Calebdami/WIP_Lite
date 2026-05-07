@@ -1,7 +1,12 @@
 <script setup>
 import CpLayout from '@/Layouts/CpLayout.vue';
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+
+const confirm = useConfirm();
+const toast = useToast();
 
 const props = defineProps({
     model: Object
@@ -39,7 +44,39 @@ const averageHoursPerDay = computed(() => {
 });
 
 const submit = () => {
-    form.patch(route('cp.schedules.templates.update', props.model.id));
+    confirm.require({
+        message: 'Voulez-vous vraiment enregistrer ces modifications ?',
+        header: 'Confirmation d\'enregistrement',
+        icon: 'pi pi-save',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Enregistrer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-primary',
+        accept: () => {
+            form.patch(route('cp.schedules.templates.update', props.model.id));
+        }
+    });
+};
+
+const cancel = () => {
+    if (form.isDirty) {
+        confirm.require({
+            message: 'Vous avez des modifications non enregistrées. Voulez-vous vraiment quitter ?',
+            header: 'Confirmation d\'annulation',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Rester',
+            acceptLabel: 'Quitter',
+            rejectClass: 'p-button-secondary p-button-outlined',
+            acceptClass: 'p-button-danger',
+            accept: () => {
+                toast.add({ severity: 'info', summary: 'Annulé', detail: 'Modification annulée', life: 3000 });
+                router.get(route('cp.schedules.templates'));
+            }
+        });
+    } else {
+        toast.add({ severity: 'info', summary: 'Annulé', detail: 'Modification annulée', life: 3000 });
+        router.get(route('cp.schedules.templates'));
+    }
 };
 
 const days = [
@@ -63,9 +100,9 @@ const days = [
                     <p class="text-xs text-charcoal-400 mt-0.5">Mise à jour des paramètres du modèle</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <Link :href="route('cp.schedules.templates')" class="px-4 py-2 bg-white border border-pearl-200 rounded-lg text-xs font-bold text-charcoal-600 hover:bg-pearl-50 transition-all">
+                    <button @click="cancel" class="px-4 py-2 bg-white border border-pearl-200 rounded-lg text-xs font-bold text-charcoal-600 hover:bg-pearl-50 transition-all">
                         Annuler
-                    </Link>
+                    </button>
                     <button 
                         @click="submit"
                         :disabled="form.processing || !form.name"

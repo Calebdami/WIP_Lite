@@ -12,15 +12,21 @@ use Inertia\Inertia;
 class TcPlanningController extends Controller
 {
     /**
-     * Affiche le planning complet du téléconseiller connecté.
+     * Affiche le tableau de bord personnel du Téléconseiller (TC).
+     * Permet au TC de visualiser :
+     * 1. Son planning actuel (validé ou en attente).
+     * 2. Le détail des heures de son modèle de planning.
+     * 3. L'historique des validations/changements sur son planning actuel.
+     * 4. Ses informations de rattachement (Superviseur, Campagne).
      */
     public function index()
     {
         $user = Auth::user();
         
-        // 1. Informations du Téléconseiller (currentTelemarketer)
+        // 1. Identification et informations de base du Téléconseiller
         $employee = Employee::where('user_id', $user->id)
             ->with(['assignments' => function($q) {
+                // On récupère la campagne active et le superviseur direct
                 $q->where('status', 'active')->with(['campaign', 'manager']);
             }])
             ->first();
@@ -42,7 +48,7 @@ class TcPlanningController extends Controller
             'campaign' => $activeAssignment?->campaign?->name ?? 'Non assigné',
         ];
 
-        // 2. Planning Actif (En attente ou Validé)
+        // 2. Récupération du planning actif (celui qui régit la semaine actuelle)
         $activePlanning = PlanningAssignment::where('employee_id', $employee->id)
             ->whereIn('status', ['validé', 'en attente'])
             ->where(function($q) {
@@ -53,7 +59,8 @@ class TcPlanningController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        // 3. Historique du planning actuel
+        // 3. Extraction de la chronologie des évènements pour le planning actuel
+        // Permet au TC de voir qui a validé son planning et quand.
         $planningHistory = [];
         if ($activePlanning) {
             $planningHistory = DB::table('planning_histories')
@@ -64,9 +71,9 @@ class TcPlanningController extends Controller
                 ->get();
         }
 
-        // 4. Plannings précédents
+        // 4. Archive des anciens plannings (ceux qui sont terminés)
         $pastPlannings = PlanningAssignment::where('employee_id', $employee->id)
-            ->where('status', 'terminé') // On suppose un statut 'terminé' pour l'historique
+            ->where('status', 'terminé')
             ->with('planningModel')
             ->orderBy('end_date', 'desc')
             ->get();
@@ -77,7 +84,7 @@ class TcPlanningController extends Controller
             'planningModel' => $activePlanning?->planningModel,
             'planningHistory' => $planningHistory,
             'pastPlannings' => $pastPlannings,
-            'employee' => $currentTelemarketer, // Alias pour compatibilité si besoin
+            'employee' => $currentTelemarketer, // Alias pour compatibilité
         ]);
     }
 }

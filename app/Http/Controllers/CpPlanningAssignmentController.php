@@ -14,15 +14,17 @@ use Inertia\Inertia;
 class CpPlanningAssignmentController extends Controller
 {
     /**
-     * Affiche la page d'affectation de plannings aux TC
-     * pour le Chef de Plateau connecté.
+     * Affiche l'interface d'affectation massive de plannings pour les Téléconseillers (TC).
+     * Cette interface est spécifiquement conçue pour le Chef de Plateau (CP)
+     * afin de gérer les horaires des équipes opérationnelles.
      */
     public function createTC()
     {
-        // Récupérer tous les TC (téléconseillers)
+        // Récupération de tous les employés ayant la fonction 'TC'
         $tcs = Employee::whereHas('position', function ($q) {
             $q->where('code', 'TC');
         })
+        // On charge les affectations actives pour connaître la campagne et le superviseur actuel
         ->with(['assignments' => function ($q) {
             $q->where('status', 'actif')->with(['campaign', 'manager']);
         }])
@@ -30,7 +32,7 @@ class CpPlanningAssignmentController extends Controller
         ->map(function ($emp) {
             $activeAssignment = $emp->assignments->first();
 
-            // Vérifier si ce TC a déjà un planning actif/validé en cours
+            // Vérification de l'existence d'un planning déjà validé pour éviter les doublons
             $hasActivePlanning = PlanningAssignment::where('employee_id', $emp->id)
                 ->where('status', 'validé')
                 ->where(function ($q) {
@@ -39,12 +41,12 @@ class CpPlanningAssignmentController extends Controller
                 })
                 ->exists();
 
-            // Récupérer le nom du superviseur
+            // Résolution du nom du superviseur direct du TC
             $supervisorName = null;
             if ($activeAssignment && $activeAssignment->supervisor) {
                 $supervisorName = $activeAssignment->supervisor->first_name . ' ' . $activeAssignment->supervisor->last_name;
             } elseif ($activeAssignment) {
-                // Essayer via manager_id
+                // Fallback via le manager_id de l'affectation
                 $manager = Employee::find($activeAssignment->manager_id ?? null);
                 $supervisorName = $manager ? $manager->first_name . ' ' . $manager->last_name : null;
             }
@@ -59,6 +61,7 @@ class CpPlanningAssignmentController extends Controller
             ];
         });
 
+        // Récupération de la liste des modèles de planning disponibles
         $models = PlanningModel::orderBy('name', 'asc')->get()->map(function ($model) {
             return [
                 'id'          => $model->id,
@@ -75,7 +78,8 @@ class CpPlanningAssignmentController extends Controller
     }
 
     /**
-     * Enregistre les affectations de planning pour plusieurs TC.
+     * Traite l'affectation groupée (bulk) d'un même modèle à plusieurs TC.
+     * Utilise une transaction DB pour garantir l'intégrité de l'opération massive.
      */
     public function storeTCBulk(Request $request)
     {
@@ -89,6 +93,7 @@ class CpPlanningAssignmentController extends Controller
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['employee_ids'] as $employeeId) {
+                // Chaque affectation est créée avec le statut initial 'en attente' pour validation ultérieure
                 PlanningAssignment::create([
                     'employee_id'       => $employeeId,
                     'planning_model_id' => $validated['planning_model_id'],

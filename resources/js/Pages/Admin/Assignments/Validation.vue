@@ -2,6 +2,9 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
 
 const props = defineProps({
     assignments: Object,
@@ -42,29 +45,57 @@ const toggleSelectAll = () => {
 };
 
 const updateStatus = (id, status, reason = '') => {
-    router.patch(route('admin.assignments.validation.status', id), {
-        status,
-        reason
-    }, {
-        onSuccess: () => {
-            selectedIds.value = selectedIds.value.filter(sid => sid !== id);
-        }
-    });
+    const isCritical = status === 'suspendu';
+    
+    const action = () => {
+        router.patch(route('admin.assignments.validation.status', id), {
+            status,
+            reason
+        }, {
+            onSuccess: () => {
+                selectedIds.value = selectedIds.value.filter(sid => sid !== id);
+            }
+        });
+    };
+
+    if (isCritical) {
+        confirm.require({
+            message: 'Êtes-vous sûr de vouloir suspendre ce planning ?',
+            header: 'Confirmation de suspension',
+            icon: 'pi pi-exclamation-circle',
+            rejectLabel: 'Annuler',
+            acceptLabel: 'Suspendre',
+            rejectClass: 'p-button-secondary p-button-outlined',
+            acceptClass: 'p-button-danger',
+            accept: action
+        });
+    } else {
+        action();
+    }
 };
 
 const bulkUpdate = (status) => {
     if (selectedIds.value.length === 0) return;
     
-    if (confirm(`Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`)) {
-        router.patch(route('admin.assignments.validation.bulk'), {
-            ids: selectedIds.value,
-            status: status
-        }, {
-            onSuccess: () => {
-                selectedIds.value = [];
-            }
-        });
-    }
+    confirm.require({
+        message: `Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`,
+        header: 'Action groupée',
+        icon: 'pi pi-info-circle',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Confirmer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: status === 'validé' ? 'p-button-success' : 'p-button-primary',
+        accept: () => {
+            router.patch(route('admin.assignments.validation.bulk'), {
+                ids: selectedIds.value,
+                status: status
+            }, {
+                onSuccess: () => {
+                    selectedIds.value = [];
+                }
+            });
+        }
+    });
 };
 
 const formatPeriod = (start, end) => {

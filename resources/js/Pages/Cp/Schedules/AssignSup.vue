@@ -2,6 +2,9 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
 
 const props = defineProps({
     supervisors: Array,
@@ -82,9 +85,18 @@ const selectedModel = computed(() => {
 });
 
 const submit = () => {
-    // Note: the store route might need to be CP specific too if we want different redirect, 
-    // but the controller currently handles it by checking role.
-    form.post(route('cp.schedules.assign.store')); 
+    confirm.require({
+        message: `Voulez-vous vraiment affecter le modèle "${selectedModel.value.name}" à ${selectedSupervisor.value.name} ?`,
+        header: 'Confirmation d\'affectation',
+        icon: 'pi pi-calendar-plus',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Confirmer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-primary',
+        accept: () => {
+            form.post(route('cp.schedules.assign.store'));
+        }
+    });
 };
 </script>
 

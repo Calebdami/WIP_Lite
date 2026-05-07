@@ -14,25 +14,30 @@ use Inertia\Inertia;
 
 class PlanningAssignmentController extends Controller
 {
+    /**
+     * Affiche l'écran d'affectation de planning pour les Superviseurs (SUP).
+     * Gère le filtrage des superviseurs gérables en fonction du rôle de l'utilisateur connecté (Admin vs CP).
+     */
     public function create()
     {
         $user = Auth::user();
         $isCp = $user->role->name === 'cp';
         $cpEmployeeId = $isCp ? Employee::where('user_id', $user->id)->first()?->id : null;
 
+        // Requête de base : récupérer les employés avec la fonction SUP et une campagne active
         $supervisorsQuery = Employee::whereHas('position', function($q) {
             $q->where('code', 'SUP');
         })->whereHas('assignments', function($q) {
-            // Doit avoir une campagne active
             $q->where('status', 'active')->whereNotNull('campaign_id');
         })->whereExists(function ($query) {
-            // Doit avoir au moins un subordonné actif
+            // Un superviseur doit avoir au moins un TC actif dans son équipe pour être éligible à un planning
             $query->select(DB::raw(1))
                 ->from('assignments')
                 ->whereColumn('assignments.manager_id', 'employees.id')
                 ->where('assignments.status', 'active');
         });
 
+        // Si c'est un CP, il ne voit que les superviseurs sous sa responsabilité directe
         if ($isCp && $cpEmployeeId) {
             $supervisorsQuery->whereHas('assignments', function($q) use ($cpEmployeeId) {
                 $q->where('manager_id', $cpEmployeeId)->where('status', 'active');
@@ -45,6 +50,7 @@ class PlanningAssignmentController extends Controller
             $activeAssignment = $emp->assignments->first();
             $teamCount = Assignment::where('manager_id', $emp->id)->where('status', 'active')->count();
 
+            // Vérifie si le superviseur possède déjà un planning validé et en cours
             $hasActivePlanning = PlanningAssignment::where('employee_id', $emp->id)
                 ->where('status', 'validé')
                 ->where(function($q) {
@@ -73,6 +79,10 @@ class PlanningAssignmentController extends Controller
         ]);
     }
 
+    /**
+     * Affiche l'écran d'affectation massive pour les Téléconseillers (TC).
+     * Réservé aux CP (Chef de Plateau) pour gérer les équipes de leurs superviseurs.
+     */
     public function assignTC()
     {
         $user = Auth::user();
@@ -82,14 +92,14 @@ class PlanningAssignmentController extends Controller
         $tcsQuery = Employee::whereHas('position', function($q) {
             $q->where('code', 'TC');
         })->whereHas('assignments', function($q) {
-            // Doit avoir un superviseur ET une campagne active
+            // Le TC doit avoir un superviseur assigné et une campagne active
             $q->where('status', 'active')
               ->whereNotNull('manager_id')
               ->whereNotNull('campaign_id');
         });
 
         if ($isCp && $cpEmployeeId) {
-            // Un CP ne voit que les TC gérés par ses Superviseurs
+            // Un CP ne voit que les TC gérés par les Superviseurs qui sont eux-mêmes gérés par ce CP
             $managedSupIds = Assignment::where('manager_id', $cpEmployeeId)
                 ->where('status', 'active')
                 ->pluck('employee_id');
@@ -132,12 +142,16 @@ class PlanningAssignmentController extends Controller
         ]);
     }
 
+    /**
+     * Enregistre une ou plusieurs affectations de planning.
+     * Utilise une transaction pour garantir que l'historique est créé pour chaque affectation.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'planning_model_id' => 'required|exists:planning_models,id',
-            'employee_id' => 'nullable|exists:employees,id',
-            'employee_ids' => 'nullable|array',
+            'employee_id' => 'nullable|exists:employees,id', // Pour affectation simple
+            'employee_ids' => 'nullable|array',              // Pour affectation massive
             'employee_ids.*' => 'exists:employees,id',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -157,7 +171,7 @@ class PlanningAssignmentController extends Controller
                     'status' => 'en attente'
                 ]);
 
-                // Création de l'entrée d'historique initiale
+                // Journalisation de l'action dans l'historique de planning
                 PlanningHistorys::create([
                     'planning_assignment_id' => $assignment->id,
                     'old_status' => null,
@@ -173,6 +187,10 @@ class PlanningAssignmentController extends Controller
         return redirect()->route($route)->with('success', 'Planning(s) affecté(s) avec succès.');
     }
 
+    /**
+     * Affiche l'écran de validation des plannings en attente.
+     * Filtre les données en fonction du périmètre de l'utilisateur (Admin = Tout, CP = Ses équipes).
+     */
     public function validationIndex(Request $request)
     {
         $user = Auth::user();
@@ -182,7 +200,7 @@ class PlanningAssignmentController extends Controller
         $query = PlanningAssignment::with(['employee.position', 'planningModel', 'validator']);
 
         if ($isCp && $cpEmployeeId) {
-            // Identifier tout le périmètre du CP (ses SUPs et les TCs de ses SUPs)
+            // Un CP ne peut valider que pour son propre périmètre (ses SUPs et les TCs rattachés à ses SUPs)
             $managedSupIds = Assignment::where('manager_id', $cpEmployeeId)
                 ->where('status', 'active')
                 ->pluck('employee_id');
@@ -196,6 +214,7 @@ class PlanningAssignmentController extends Controller
             $query->whereIn('employee_id', $allManagedIds);
         }
 
+        // Filtre de recherche par nom d'employé ou nom du modèle
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -208,13 +227,14 @@ class PlanningAssignmentController extends Controller
             });
         }
 
+        // Filtre par statut (en attente, validé, suspendu)
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
         $assignments = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        // Calcul des stats filtrées si CP
+        // Calcul des statistiques pour les cartes du tableau de bord
         $statsQuery = PlanningAssignment::query();
         if ($isCp && isset($allManagedIds)) {
             $statsQuery->whereIn('employee_id', $allManagedIds);
@@ -235,6 +255,9 @@ class PlanningAssignmentController extends Controller
         ]);
     }
 
+    /**
+     * Met à jour le statut d'une affectation individuelle (Valider/Refuser/Suspendre).
+     */
     public function updateStatus(Request $request, PlanningAssignment $assignment)
     {
         $request->validate([
@@ -249,6 +272,9 @@ class PlanningAssignmentController extends Controller
         return back()->with('success', 'Statut mis à jour avec succès');
     }
 
+    /**
+     * Met à jour massivement le statut de plusieurs affectations sélectionnées.
+     */
     public function bulkUpdateStatus(Request $request)
     {
         $request->validate([
@@ -268,6 +294,10 @@ class PlanningAssignmentController extends Controller
         return back()->with('success', 'Statuts mis à jour avec succès');
     }
 
+    /**
+     * Logique interne de mise à jour du statut et de création d'historique.
+     * Gère les métadonnées de validation (qui a validé et quand).
+     */
     private function processStatusUpdate($assignment, $status, $reason)
     {
         $oldStatus = $assignment->status;
@@ -276,23 +306,24 @@ class PlanningAssignmentController extends Controller
             'status' => $status,
         ];
 
+        // Si le statut passe à 'validé', on enregistre l'utilisateur et le timestamp actuel
         if ($status === 'validé') {
             $updateData['validated_by'] = Auth::id();
             $updateData['validated_at'] = now();
             $reason = $reason ?? 'Validation du planning';
-        } elseif ($status === 'suspendu') {
+        } 
+        // Si suspendu, on retire les métadonnées de validation
+        elseif ($status === 'suspendu') {
             $updateData['validated_by'] = null;
             $updateData['validated_at'] = null;
             $reason = $reason ?? 'Suspension du planning';
         } elseif ($status === 'en attente' && $oldStatus === 'suspendu') {
             $reason = $reason ?? 'Réactivation du planning';
-        } elseif ($status === 'en attente' && $oldStatus === 'en attente') {
-             // Cas où on clique sur réactiver alors que c'était déjà en attente (peu probable mais bon)
-             $reason = $reason ?? 'Mise à jour du planning';
         }
 
         $assignment->update($updateData);
 
+        // Enregistrement obligatoire dans l'historique pour l'audit
         PlanningHistorys::create([
             'planning_assignment_id' => $assignment->id,
             'old_status' => $oldStatus,

@@ -2,6 +2,9 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
 
 const props = defineProps({
     supervisors: Array,
@@ -81,7 +84,18 @@ const selectedModel = computed(() => {
 });
 
 const submit = () => {
-    form.post(route('admin.assignments.schedules.assign.store'));
+    confirm.require({
+        message: `Voulez-vous vraiment affecter le modèle "${selectedModel.value.name}" à ${selectedSupervisor.value.name} ?`,
+        header: 'Confirmation d\'affectation',
+        icon: 'pi pi-calendar-plus',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Confirmer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-primary',
+        accept: () => {
+            form.post(route('admin.assignments.schedules.assign.store'));
+        }
+    });
 };
 </script>
 

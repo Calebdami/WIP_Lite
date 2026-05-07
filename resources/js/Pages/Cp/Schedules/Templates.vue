@@ -2,6 +2,9 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
 
 const props = defineProps({
     models: Object,
@@ -81,9 +84,18 @@ const formatLatestDate = (date) => {
 };
 
 const deleteModel = (model) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le modèle "${model.name}" ?`)) {
-        router.delete(route('cp.schedules.templates.destroy', model.id));
-    }
+    confirm.require({
+        message: `Êtes-vous sûr de vouloir supprimer le modèle "${model.name}" ?`,
+        header: 'Confirmation de suppression',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Supprimer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            router.delete(route('cp.schedules.templates.destroy', model.id));
+        }
+    });
 };
 </script>
 

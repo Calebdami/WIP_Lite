@@ -2,6 +2,9 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
 
 const props = defineProps({
     teleconsultants: Array,
@@ -112,9 +115,16 @@ const toggleTC = (tcId) => {
 };
 
 const submit = () => {
-    form.post(route('admin.assignments.schedules.assign.store'), {
-        onSuccess: () => {
-            // Success
+    confirm.require({
+        message: `Voulez-vous vraiment affecter le modèle "${selectedModel.value.name}" à ${form.employee_ids.length} téléconseiller(s) ?`,
+        header: 'Confirmation d\'affectation massive',
+        icon: 'pi pi-users',
+        rejectLabel: 'Annuler',
+        acceptLabel: 'Confirmer',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        acceptClass: 'p-button-primary',
+        accept: () => {
+            form.post(route('admin.assignments.schedules.assign.store'));
         }
     });
 };

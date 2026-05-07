@@ -10,9 +10,14 @@ use Inertia\Inertia;
 
 class PlanningModelController extends Controller
 {
+    /**
+     * Affiche la liste des modèles de planning (bibliothèque).
+     * Gère la recherche, le comptage des affectations actives et la pagination.
+     */
     public function index(Request $request)
     {
         $query = PlanningModel::with('creator')
+            // Compte uniquement les affectations validées et non expirées
             ->withCount(['assignments' => function ($query) {
                 $query->where('status', 'validé')
                       ->where(function ($q) {
@@ -20,8 +25,10 @@ class PlanningModelController extends Controller
                             ->orWhere('end_date', '>=', today());
                       });
             }])
+            // Récupère la date de la dernière affectation créée pour ce modèle
             ->withMax('assignments as latest_assignment_date', 'created_at');
 
+        // Filtre de recherche par nom ou description
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -35,6 +42,7 @@ class PlanningModelController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        // Détermination de la vue en fonction du rôle (Admin ou CP)
         $view = Auth::user()->role->name === 'cp' ? 'Cp/Schedules/Templates' : 'Admin/Assignments/Schedules';
 
         return Inertia::render($view, [
@@ -43,12 +51,18 @@ class PlanningModelController extends Controller
         ]);
     }
 
+    /**
+     * Affiche le formulaire de création d'un nouveau modèle.
+     */
     public function create()
     {
         $view = Auth::user()->role->name === 'cp' ? 'Cp/Schedules/CreateTemplate' : 'Admin/Assignments/CreateTemplate';
         return Inertia::render($view);
     }
 
+    /**
+     * Enregistre un nouveau modèle de planning dans la base de données.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -64,7 +78,7 @@ class PlanningModelController extends Controller
             'sunday_hours' => 'numeric|min:0|max:24',
         ]);
 
-        // Calcul automatique du total
+        // Calcul automatique du total d'heures hebdomadaires
         $totalHours = array_sum([
             $request->monday_hours, $request->tuesday_hours, $request->wednesday_hours,
             $request->thursday_hours, $request->friday_hours, $request->saturday_hours, $request->sunday_hours
@@ -79,6 +93,9 @@ class PlanningModelController extends Controller
         return redirect()->route($route)->with('success', 'Modèle de planning créé avec succès.');
     }
 
+    /**
+     * Affiche le formulaire d'édition d'un modèle existant.
+     */
     public function edit(PlanningModel $planningModel)
     {
         $view = Auth::user()->role->name === 'cp' ? 'Cp/Schedules/EditTemplate' : 'Admin/Assignments/EditTemplate';
@@ -87,6 +104,9 @@ class PlanningModelController extends Controller
         ]);
     }
 
+    /**
+     * Met à jour un modèle de planning existant.
+     */
     public function update(Request $request, PlanningModel $planningModel)
     {
         $validated = $request->validate([
@@ -102,6 +122,7 @@ class PlanningModelController extends Controller
             'sunday_hours' => 'numeric|min:0|max:24',
         ]);
 
+        // Recalcul du total d'heures
         $totalHours = array_sum([
             $validated['monday_hours'], $validated['tuesday_hours'], $validated['wednesday_hours'],
             $validated['thursday_hours'], $validated['friday_hours'], $validated['saturday_hours'], $validated['sunday_hours']
@@ -115,6 +136,10 @@ class PlanningModelController extends Controller
         return redirect()->route($route)->with('success', 'Modèle de planning mis à jour avec succès.');
     }
 
+    /**
+     * Supprime un modèle de planning.
+     * Sécurité : empêche la suppression si le modèle est utilisé par des employés.
+     */
     public function destroy(PlanningModel $planningModel)
     {
         if ($planningModel->assignments()->exists()) {
@@ -127,6 +152,9 @@ class PlanningModelController extends Controller
         return redirect()->route($route)->with('success', 'Modèle de planning supprimé avec succès.');
     }
 
+    /**
+     * API : Récupère les détails d'un modèle en JSON (utile pour les previews frontend).
+     */
     public function show(PlanningModel $planningModel)
     {
         return response()->json($planningModel->load('assignments'));

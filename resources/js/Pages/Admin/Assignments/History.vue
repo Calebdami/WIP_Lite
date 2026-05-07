@@ -6,24 +6,35 @@ import { ref, watch } from 'vue';
 const props = defineProps({
     history: Object,
     stats: Object,
+    planningModels: Array,
     filters: {
         type: Object,
-        default: () => ({ search: '' })
+        default: () => ({ search: '', status: 'all', model_id: 'all' })
     }
 });
 
-const search = ref((props.filters || {}).search || '');
+const search = ref(props.filters.search || '');
+const status = ref(props.filters.status || 'all');
+const model_id = ref(props.filters.model_id || 'all');
 
-// Debounce pour la recherche
+// Debounce pour la recherche et les filtres
 let timeout;
-watch(search, (value) => {
+const updateFilters = () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        router.get(route('admin.assignments.history'), { search: value }, {
+        router.get(route('admin.assignments.history'), { 
+            search: search.value,
+            status: status.value,
+            model_id: model_id.value
+        }, {
             preserveState: true,
             replace: true
         });
     }, 300);
+};
+
+watch([search, status, model_id], () => {
+    updateFilters();
 });
 
 const getStatusClass = (status) => {
@@ -107,8 +118,8 @@ const formatStatus = (status) => {
 
         <!-- Content -->
         <div class="bg-white rounded-xl border border-pearl-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-pearl-100 bg-white">
-                <div class="relative max-w-md">
+            <div class="p-4 border-b border-pearl-100 bg-white flex flex-col md:flex-row md:items-center gap-4">
+                <div class="relative flex-1 max-w-md">
                     <input 
                         v-model="search"
                         type="text" 
@@ -116,6 +127,26 @@ const formatStatus = (status) => {
                         class="w-full bg-pearl-50 border border-pearl-200 rounded-lg pl-10 pr-4 py-2 text-sm text-charcoal-700 focus:border-gold-400 outline-none transition-all"
                     />
                     <svg class="w-4 h-4 text-charcoal-300 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <select 
+                        v-model="status"
+                        class="bg-pearl-50 border border-pearl-200 rounded-lg px-4 py-2 text-xs font-bold text-charcoal-600 focus:border-gold-400 outline-none transition-all"
+                    >
+                        <option value="all">Tous les statuts</option>
+                        <option value="en attente">En attente</option>
+                        <option value="validé">Validé</option>
+                        <option value="suspendu">Suspendu</option>
+                    </select>
+
+                    <select 
+                        v-model="model_id"
+                        class="bg-pearl-50 border border-pearl-200 rounded-lg px-4 py-2 text-xs font-bold text-charcoal-600 focus:border-gold-400 outline-none transition-all max-w-[200px]"
+                    >
+                        <option value="all">Tous les modèles</option>
+                        <option v-for="m in planningModels" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    </select>
                 </div>
             </div>
 
