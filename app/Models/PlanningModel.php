@@ -12,6 +12,7 @@ class PlanningModel extends Model
     protected $fillable = [
         'name',
         'description',
+        'hours_summary',
         'monday_hours',
         'tuesday_hours',
         'wednesday_hours',

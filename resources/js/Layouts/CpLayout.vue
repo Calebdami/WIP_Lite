@@ -58,8 +58,8 @@ const navItems = [
         key: 'plannings',
         children: [
             { label: 'Modèles de Planning', href: route('cp.schedules.templates') },
-            { label: 'Affectation de Plannings', href: route('cp.schedules.assign') },
             { label: 'Validation des Plannings', href: route('cp.schedules.validation') },
+            { label: 'Historique des Plannings', href: route('cp.schedules.history') },
         ],
     },
     {

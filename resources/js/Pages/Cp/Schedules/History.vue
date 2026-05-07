@@ -1,55 +1,12 @@
 <script setup>
-import AdminLayout from '@/Layouts/AdminLayout.vue';
-<<<<<<< HEAD
-import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
-
-// PrimeVue components
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
-import InputText from 'primevue/inputtext';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-
-const assignmentHistory = ref([
-    { id: 101, employee: 'Jean Dupont', old_team: 'Campagne Alpha', new_team: 'Campagne Gamma', type: 'Mutation', date: '2026-05-01', changed_by: 'Sophie Petit' },
-    { id: 102, employee: 'Luc Leroy', old_team: '-', new_team: 'Campagne Alpha', type: 'Recrutement', date: '2026-05-02', changed_by: 'Admin' },
-    { id: 103, employee: 'Marie Martin', old_team: 'Campagne Beta', new_team: 'Campagne Beta', type: 'Promotion', date: '2026-05-04', changed_by: 'Sophie Petit' },
-]);
-
-const filters = ref({
-    global: { value: null, matchMode: 'contains' }
-});
-
-const getTypeSeverity = (type) => {
-    switch (type) {
-        case 'Mutation': return 'info';
-        case 'Recrutement': return 'success';
-        case 'Promotion': return 'warn';
-        case 'Départ': return 'danger';
-        default: return 'secondary';
-    }
-};
-
-const formatDateDisplay = (dateStr) => {
-    if (!dateStr) return '';
-    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : (dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr);
-    const parts = datePart.split('-');
-    if (parts.length !== 3) return dateStr;
-    const [year, month, day] = parts;
-    return `${day}/${month}/${year}`;
-=======
+import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
     history: Object,
     stats: Object,
-    filters: {
-        type: Object,
-        default: () => ({ search: '' })
-    }
+    filters: Object
 });
 
 const search = ref((props.filters || {}).search || '');
@@ -59,7 +16,7 @@ let timeout;
 watch(search, (value) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        router.get(route('admin.assignments.history'), { search: value }, {
+        router.get(route('cp.schedules.history'), { search: value }, {
             preserveState: true,
             replace: true
         });
@@ -79,63 +36,15 @@ const getStatusClass = (status) => {
 const formatStatus = (status) => {
     if (!status) return 'Création';
     return status.charAt(0).toUpperCase() + status.slice(1);
->>>>>>> origin/feature/Gestion_des_plannings/Manoel
 };
 </script>
 
 <template>
-    <Head title="Historique des Plannings — Admin" />
-    <AdminLayout>
+    <Head title="Historique des Plannings — CP" />
+    <CpLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
-<<<<<<< HEAD
-                    <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Historique des Affectations</h1>
-                    <p class="text-xs text-charcoal-400 mt-0.5">Archive des mouvements et changements d'équipes</p>
-                </div>
-                <IconField iconPosition="left">
-                    <InputIcon class="pi pi-search" />
-                    <InputText v-model="filters['global'].value" placeholder="Rechercher un mouvement..." class="rounded-xl border-pearl-200 text-xs w-72" />
-                </IconField>
-            </div>
-        </template>
-
-        <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
-            <DataTable :value="assignmentHistory" :filters="filters" paginator :rows="8" stripedRows responsiveLayout="scroll" class="p-datatable-sm">
-                <template #empty>
-                    <div class="text-center p-8 text-charcoal-400">Aucun historique d'affectation trouvé.</div>
-                </template>
-                <Column field="date" header="Date" sortable>
-                    <template #body="{ data }">
-                        <span class="font-mono text-xs font-bold text-charcoal-600">{{ formatDateDisplay(data.date) }}</span>
-                    </template>
-                </Column>
-                <Column field="employee" header="Employé" sortable>
-                    <template #body="{ data }">
-                        <span class="font-bold text-charcoal-700">{{ data.employee }}</span>
-                    </template>
-                </Column>
-                <Column field="type" header="Type de Mouvement" sortable>
-                    <template #body="{ data }">
-                        <Tag :value="data.type" :severity="getTypeSeverity(data.type)" />
-                    </template>
-                </Column>
-                <Column header="Mouvement">
-                    <template #body="{ data }">
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="text-charcoal-400 italic">{{ data.old_team }}</span>
-                            <i class="pi pi-arrow-right text-[10px] text-gold-500"></i>
-                            <span class="font-bold text-charcoal-700">{{ data.new_team }}</span>
-                        </div>
-                    </template>
-                </Column>
-                <Column field="changed_by" header="Validé par" sortable>
-                    <template #body="{ data }">
-                        <span class="text-xs font-medium text-charcoal-500">{{ data.changed_by }}</span>
-                    </template>
-                </Column>
-            </DataTable>
-=======
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Historique des Plannings</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Suivi chronologique des changements d'états et affectations</p>
                 </div>
@@ -180,18 +89,6 @@ const formatStatus = (status) => {
                     <div class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">Suspensions</div>
                 </div>
             </div>
->>>>>>> origin/feature/Gestion_des_plannings/Manoel
-        </div>
-
-        <!-- Explanatory Note -->
-        <div class="bg-pearl-50 border border-pearl-200 rounded-xl p-4 mb-8 flex items-start gap-4">
-            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pearl-400 shadow-sm flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div class="text-[11px] leading-relaxed text-charcoal-500 italic">
-                <span class="font-bold text-charcoal-700 not-italic block mb-1">À propos de la table d'historique :</span>
-                Chaque action effectuée sur une affectation de planning (création, validation, suspension, réactivation) est archivée dans cette table. Cela permet de garantir une traçabilité totale des changements d'état et des interventions des administrateurs ou chefs de plateau sur les ressources de l'entreprise.
-            </div>
         </div>
 
         <!-- Content -->
@@ -216,7 +113,6 @@ const formatStatus = (status) => {
                             <th class="px-6 py-4">Planning</th>
                             <th class="px-6 py-4">Transition Statut</th>
                             <th class="px-6 py-4">Par</th>
-                            <th class="px-6 py-4">Raison</th>
                             <th class="px-6 py-4 text-right">Date & Heure</th>
                         </tr>
                     </thead>
@@ -264,18 +160,13 @@ const formatStatus = (status) => {
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="text-[11px] text-charcoal-500 max-w-xs truncate" :title="h.reason">
-                                    {{ h.reason || 'Aucune raison spécifiée' }}
-                                </div>
-                            </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="text-xs font-bold text-charcoal-700">{{ new Date(h.created_at).toLocaleDateString() }}</div>
                                 <div class="text-[10px] text-charcoal-400">{{ new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</div>
                             </td>
                         </tr>
                         <tr v-if="history.data.length === 0">
-                            <td colspan="6" class="px-6 py-20 text-center">
+                            <td colspan="5" class="px-6 py-20 text-center">
                                 <div class="text-charcoal-300 italic text-sm">Aucun historique trouvé.</div>
                             </td>
                         </tr>
@@ -300,7 +191,7 @@ const formatStatus = (status) => {
             </template>
         </div>
 
-    </AdminLayout>
+    </CpLayout>
 </template>
 
 <style scoped>

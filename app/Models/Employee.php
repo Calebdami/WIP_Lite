@@ -32,6 +32,7 @@ class Employee extends Model
 
     /**
      * Relation avec les affectations
+     * Liste des affectations (Campagnes/Teams)
      */
     public function assignments(): HasMany
     {

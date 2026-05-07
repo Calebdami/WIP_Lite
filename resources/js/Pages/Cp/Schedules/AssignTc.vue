@@ -5,10 +5,14 @@ import { ref, computed } from 'vue';
 
 const props = defineProps({
     teleconsultants: Array,
-    models: Array
+    models: Array,
+    campaigns: Array,
+    supervisorsList: Array
 });
 
 const searchQuery = ref('');
+const selectedCampaign = ref('all');
+const selectedSupervisorFilter = ref('all');
 const searchQueryModel = ref('');
 
 // Pagination TC
@@ -28,6 +32,17 @@ const form = useForm({
 
 const filteredTCs = computed(() => {
     let list = props.teleconsultants;
+    
+    // Filtre par campagne
+    if (selectedCampaign.value !== 'all') {
+        list = list.filter(tc => tc.campaign === selectedCampaign.value);
+    }
+    
+    // Filtre par superviseur
+    if (selectedSupervisorFilter.value !== 'all') {
+        list = list.filter(tc => tc.supervisor === selectedSupervisorFilter.value);
+    }
+    
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         list = list.filter(tc => 
@@ -148,14 +163,30 @@ const submit = () => {
                             >
                                 {{ form.employee_ids.length === filteredTCs.filter(tc => !tc.has_active_planning).length ? 'Tout désélectionner' : 'Tout sélectionner' }}
                             </button>
-                            <div class="relative">
-                                <input 
-                                    v-model="searchQuery"
-                                    type="text" 
-                                    placeholder="Nom, campagne, superviseur..."
-                                    class="w-48 bg-pearl-50 border border-pearl-200 rounded-lg px-3 py-1.5 pl-8 text-[11px] text-charcoal-700 outline-none focus:border-gold-400 transition-all"
-                                />
-                                <svg class="w-3.5 h-3.5 text-charcoal-300 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <div class="flex items-center gap-2">
+                                <select 
+                                    v-model="selectedCampaign"
+                                    class="bg-pearl-50 border border-pearl-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-charcoal-700 outline-none focus:border-gold-400 transition-all"
+                                >
+                                    <option value="all">Toutes les campagnes</option>
+                                    <option v-for="c in campaigns" :key="c" :value="c">{{ c }}</option>
+                                </select>
+                                <select 
+                                    v-model="selectedSupervisorFilter"
+                                    class="bg-pearl-50 border border-pearl-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-charcoal-700 outline-none focus:border-gold-400 transition-all"
+                                >
+                                    <option value="all">Tous les superviseurs</option>
+                                    <option v-for="s in supervisorsList" :key="s" :value="s">{{ s }}</option>
+                                </select>
+                                <div class="relative">
+                                    <input 
+                                        v-model="searchQuery"
+                                        type="text" 
+                                        placeholder="Rechercher..."
+                                        class="w-32 bg-pearl-50 border border-pearl-200 rounded-lg px-3 py-1.5 pl-8 text-[11px] text-charcoal-700 outline-none focus:border-gold-400 transition-all"
+                                    />
+                                    <svg class="w-3.5 h-3.5 text-charcoal-300 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
