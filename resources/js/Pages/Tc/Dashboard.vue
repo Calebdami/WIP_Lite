@@ -38,7 +38,7 @@ const weekProgress = computed(() => {
              style="background: linear-gradient(135deg, #111827 0%, #374151 100%);">
             <div class="relative z-10">
                 <p class="text-gold-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80">Ma Session Active</p>
-                <h2 class="text-3xl font-black text-white mb-3">Hello, {{ user?.name || user?.email?.split('@')[0] }} 👋</h2>
+                <h2 class="text-3xl font-black text-white mb-3">Hello, {{ user?.name || user?.email?.split('@')[0] }}</h2>
                 <p class="text-charcoal-400 text-sm max-w-md leading-relaxed">
                     Consultez vos plannings et suivez vos heures de travail validées en toute simplicité.
                 </p>

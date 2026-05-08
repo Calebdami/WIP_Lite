@@ -31,7 +31,7 @@ const user = computed(() => page.props.auth?.user);
              style="background: linear-gradient(135deg, #111827 0%, #374151 100%);">
             <div class="relative z-10">
                 <p class="text-gold-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80">Chef de Plateau</p>
-                <h2 class="text-3xl font-black text-white mb-3">Hello, {{ user?.name || 'CP' }} 👋</h2>
+                <h2 class="text-3xl font-black text-white mb-3">Hello, {{ user?.name || 'CP' }}</h2>
                 <p class="text-charcoal-400 text-sm max-w-md leading-relaxed">
                     Validez les heures de vos agents, gérez vos superviseurs et suivez la performance du plateau en temps réel.
                 </p>
