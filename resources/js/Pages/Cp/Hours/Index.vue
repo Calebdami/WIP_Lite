@@ -17,6 +17,7 @@ import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
+import Timeline from 'primevue/timeline';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -32,6 +33,10 @@ const displayEditDialog = ref(false);
 const currentTimesheet = ref(null);
 const timesheetEntries = ref([]);
 const savingEntries = ref(false);
+
+const displayHistoryDialog = ref(false);
+const historyItems = ref([]);
+const loadingHistory = ref(false);
 
 const fetchMyHours = async () => {
     loading.value = true;
@@ -139,6 +144,39 @@ const validateTimesheet = (id) => {
 };
 
 const isEditable = (status) => ['brouillon', 'rejete'].includes(status);
+
+const openHistory = async (ts) => {
+    currentTimesheet.value = ts;
+    displayHistoryDialog.value = true;
+    loadingHistory.value = true;
+    try {
+        const response = await axios.get(`/api/timesheets/${ts.id}/history`);
+        historyItems.value = response.data;
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger l\'historique', life: 3000 });
+    } finally {
+        loadingHistory.value = false;
+    }
+};
+
+const getStatusSeverity = (status) => {
+    switch (status) {
+        case 'brouillon': return 'secondary';
+        case 'soumis': return 'info';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
+        default: return 'info';
+    }
+};
+
+const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : (dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr);
+    const timePart = dateStr.includes('T') ? dateStr.split('T')[1].substring(0, 5) : (dateStr.includes(' ') ? dateStr.split(' ')[1].substring(0, 5) : '');
+    const [year, month, day] = datePart.split('-');
+    return `${day}/${month}/${year}${timePart ? ' à ' + timePart : ''}`;
+};
+
 </script>
 
 <template>
@@ -196,6 +234,7 @@ const isEditable = (status) => ['brouillon', 'rejete'].includes(status);
                         <div class="flex flex-wrap gap-2">
                             <Button icon="pi pi-eye" text severity="secondary" rounded @click="openEditDialog(data)" title="Voir / Modifier" />
                             <Button v-if="isEditable(data.status) || data.status === 'soumis'" icon="pi pi-check-circle" text severity="success" rounded @click="validateTimesheet(data.id)" title="Valider" />
+                            <Button icon="pi pi-history" text severity="info" rounded @click="openHistory(data)" title="Historique" />
                         </div>
                     </template>
                 </Column>
@@ -289,5 +328,61 @@ const isEditable = (status) => ['brouillon', 'rejete'].includes(status);
                 </div>
             </template>
         </Dialog>
+
+        <!-- Modale d'Historique -->
+        <Dialog v-model:visible="displayHistoryDialog" header="Journal des modifications" :style="{ width: '600px' }" modal>
+            <div v-if="loadingHistory" class="text-center p-12">
+                <i class="pi pi-spin pi-spinner text-4xl text-gold-500"></i>
+            </div>
+            <div v-else class="p-2">
+                <Timeline :value="historyItems" class="customized-timeline">
+                    <template #content="slotProps">
+                        <div class="flex flex-col mb-6 bg-pearl-50 p-4 rounded-2xl border border-pearl-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Changement</span>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Tag :value="slotProps.item.old_status?.toUpperCase() || 'CRÉATION'" severity="secondary" class="opacity-50" />
+                                        <i class="pi pi-arrow-right text-[10px] text-charcoal-300"></i>
+                                        <Tag :value="slotProps.item.new_status?.toUpperCase()" :severity="getStatusSeverity(slotProps.item.new_status)" />
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Date</span>
+                                    <div class="text-xs font-bold text-charcoal-600 mt-1">{{ formatDateTime(slotProps.item.created_at) }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-pearl-200">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Par</span>
+                                <div class="text-xs font-black text-charcoal-700">{{ slotProps.item.author?.first_name || 'Système' }} {{ slotProps.item.author?.last_name || '' }}</div>
+                                <div v-if="slotProps.item.reason" class="mt-2 text-xs text-charcoal-500 italic bg-white p-2 rounded-lg border border-pearl-100">
+                                    "{{ slotProps.item.reason }}"
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template #marker="slotProps">
+                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'valide' ? 'bg-emerald-500' : 'bg-charcoal-700'">
+                            <i :class="slotProps.item.new_status === 'valide' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
+                        </span>
+                    </template>
+                </Timeline>
+                <div v-if="!historyItems.length" class="text-center p-8 text-charcoal-400 italic">
+                    Aucun historique disponible.
+                </div>
+            </div>
+            <template #footer>
+                <Button label="Fermer" text severity="secondary" @click="displayHistoryDialog = false" />
+            </template>
+        </Dialog>
     </CpLayout>
 </template>
+
+<style scoped>
+.customized-timeline :deep(.p-timeline-event-opposite) {
+    display: none;
+}
+.customized-timeline :deep(.p-timeline-event-content) {
+    padding-left: 2rem;
+}
+</style>
