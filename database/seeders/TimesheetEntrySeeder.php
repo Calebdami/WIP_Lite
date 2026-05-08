@@ -40,21 +40,25 @@ class TimesheetEntrySeeder extends Seeder
             $date = now()->subDays(rand(0, 365))->format('Y-m-d');
             $startTime = rand(8, 10) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT);
             $endTime = rand(16, 19) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT);
-            
+
             // Calculer les heures travaillées
             $start = strtotime($startTime);
             $end = strtotime($endTime);
             $totalHours = round(($end - $start) / 3600, 2);
 
-            TimesheetEntry::create([
-                'timesheet_id' => $timesheetId,
-                'date' => $date,
-                'check_in' => $startTime,
-                'check_out' => $endTime,
-                'total_hours' => $totalHours,
-                'planned_hours' => 8.00,
-                'comment' => 'Description de la tâche ' . $i,
-            ]);
+            TimesheetEntry::firstOrCreate(
+                [
+                    'timesheet_id' => $timesheetId,
+                    'date' => $date,
+                ],
+                [
+                    'check_in' => $startTime,
+                    'check_out' => $endTime,
+                    'total_hours' => $totalHours,
+                    'planned_hours' => 8.00,
+                    'comment' => 'Description de la tâche ' . $i,
+                ]
+            );
         }
     }
 }
