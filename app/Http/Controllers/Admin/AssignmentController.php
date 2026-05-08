@@ -443,4 +443,61 @@ class AssignmentController extends Controller
 
         return response()->json($managers);
     }
+
+    /**
+     * Afficher l'historique des affectations
+     */
+    public function affectationHistory(Request $request)
+    {
+        $search = $request->input('search');
+        $campaignFilter = $request->input('campaign_id');
+        $roleFilter = $request->input('role');
+        $dateFilter = $request->input('date');
+        $actionFilter = $request->input('action_type');
+
+        // Récupérer toutes les affectations avec leurs relations
+        $query = Assignment::with([
+            'employee.position',
+            'manager.position', 
+            'campaign',
+            'position'
+        ]);
+
+        // Filtres
+        if ($search) {
+            $query->whereHas('employee', function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('matricule', 'like', "%{$search}%");
+            });
+        }
+
+        if ($campaignFilter) {
+            $query->where('campaign_id', $campaignFilter);
+        }
+
+        if ($roleFilter) {
+            $query->whereHas('position', function($q) use ($roleFilter) {
+                $q->where('code', $roleFilter);
+            });
+        }
+
+        if ($dateFilter) {
+            $query->whereDate('start_date', $dateFilter);
+        }
+
+        // Pagination
+        $assignments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+
+        // Données pour les filtres
+        $campaigns = Campaign::orderBy('name')->get(['id', 'name']);
+        $positions = Position::orderBy('name')->get(['id', 'code', 'name']);
+
+        return Inertia::render('Admin/Assignments/AffectationHistory', [
+            'assignments' => $assignments,
+            'campaigns' => $campaigns,
+            'positions' => $positions,
+            'filters' => $request->only(['search', 'campaign_id', 'role', 'date', 'action_type'])
+        ]);
+    }
 }

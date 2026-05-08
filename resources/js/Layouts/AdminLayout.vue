@@ -77,7 +77,7 @@ const navItems = [
         children: [
             { label: 'Structure', href: route('admin.assignments.structure') },
             { label: 'Ressources disponibles', href: route('admin.assignments.resources') },
-            // { label: 'Historique', href: route('admin.assignments.history') },
+            { label: 'Historique des affectations', href: route('admin.assignments.affectation-history') },
         ],
     },
     {

@@ -50,6 +50,33 @@ class EmployeeSeeder extends Seeder
             'status' => 'actif',
         ]);
         
+        // Création de CP supplémentaires pour couvrir toutes les campagnes
+        // Besoin de 20 CP au total (2 par 10 campagnes actives)
+        $cpNames = [
+            ['Jean', 'Dupont'], ['Marie', 'Laurent'], ['Pierre', 'Martin'], ['Sophie', 'Bernard'],
+            ['Lucas', 'Petit'], ['Emma', 'Robert'], ['Hugo', 'Durand'], ['Léa', 'Leroy'],
+            ['Louis', 'Moreau'], ['Alice', 'Simon'], ['David', 'Laurent'], ['Chloé', 'Garcia'],
+            ['Thomas', 'Rousseau'], ['Julie', 'Vincent'], ['Antoine', 'Fournier'], ['Camille', 'Mercier'],
+            ['Maxime', 'Bertrand'], ['Sarah', 'Perez']
+        ];
+        
+        foreach ($cpNames as $index => $name) {
+            Employee::create([
+                'user_id' => null, // Pas de compte utilisateur pour l'instant
+                'matricule' => 'EMP-CP-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT),
+                'first_name' => $name[0],
+                'last_name' => $name[1],
+                'birth_date' => fake()->date('Y-m-d', '1975-01-01'),
+                'hire_date' => fake()->date('Y-m-d', '2022-01-01'),
+                'phone' => fake()->phoneNumber(),
+                'email' => fake()->unique()->companyEmail(),
+                'address' => fake()->address(),
+                'position_id' => $positions->where('code', 'CP')->first()->id,
+                'salary_base' => 250000.00,
+                'status' => 'actif',
+            ]);
+        }
+        
         // Création des Superviseurs existants
         $supervisorEmails = ['supervisor1@example.com', 'supervisor2@example.com'];
         foreach ($supervisorEmails as $index => $email) {
@@ -70,6 +97,25 @@ class EmployeeSeeder extends Seeder
                     'status' => 'actif',
                 ]);
             }
+        }
+        
+        // Création de superviseurs supplémentaires
+        // Besoin de 60 superviseurs au total (3 par 20 CP)
+        for ($i = 3; $i <= 60; $i++) {
+            Employee::create([
+                'user_id' => null, // Pas de compte utilisateur pour l'instant
+                'matricule' => 'EMP-SUP-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'first_name' => fake()->firstName(),
+                'last_name' => fake()->lastName(),
+                'birth_date' => fake()->date('Y-m-d', '1980-01-01'),
+                'hire_date' => fake()->date('Y-m-d', '2023-01-01'),
+                'phone' => fake()->phoneNumber(),
+                'email' => fake()->unique()->companyEmail(),
+                'address' => fake()->address(),
+                'position_id' => $positions->where('code', 'SUP')->first()->id,
+                'salary_base' => 180000.00,
+                'status' => 'actif',
+            ]);
         }
         
         // Création des Téléconseillers existants

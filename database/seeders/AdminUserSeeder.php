@@ -13,10 +13,10 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         // On récupère les rôles
-        $adminRole = Role::where('name', 'Administrateur')->first();
-        $cpRole = Role::where('name', 'Chef de Plateau')->first();
-        $supRole = Role::where('name', 'Superviseur')->first();
-        $tcRole = Role::where('name', 'Téléconseiller')->first();
+        $adminRole = Role::where('name', 'admin')->first();
+        $cpRole = Role::where('name', 'cp')->first();
+        $supRole = Role::where('name', 'sup')->first();
+        $tcRole = Role::where('name', 'tc')->first();
 
         // Créer 10 utilisateurs avec des IDs 1-10
         User::create([

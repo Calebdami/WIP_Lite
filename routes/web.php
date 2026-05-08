@@ -84,11 +84,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/schedules/assign', [PlanningAssignmentController::class, 'create'])->name('schedules.assign');
         Route::post('/schedules/assign', [PlanningAssignmentController::class, 'store'])->name('schedules.assign.store');
         Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
+        Route::get('/history', [App\Http\Controllers\Admin\AssignmentController::class, 'history'])->name('history');
+        Route::get('/affectation-history', [App\Http\Controllers\Admin\AssignmentController::class, 'affectationHistory'])->name('affectation-history');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
         Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
         Route::patch('/validation/bulk', [PlanningAssignmentController::class, 'bulkUpdateStatus'])->name('validation.bulk');
         Route::patch('/validation/{assignment}/status', [PlanningAssignmentController::class, 'updateStatus'])->name('validation.status');
-        Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
+        Route::get('/planning-history', [PlanningHistoryController::class, 'index'])->name('planning-history');
     });
 
     // Temps de travail
