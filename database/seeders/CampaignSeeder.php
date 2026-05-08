@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Campaign;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class CampaignSeeder extends Seeder
 {
@@ -12,7 +13,7 @@ class CampaignSeeder extends Seeder
      */
     public function run(): void
     {
-        // Créer les 3 campagnes de base
+        // Créer 3 campagnes de base pour la démo
         Campaign::create([
             'name' => 'Campagne Marketing 2026',
             'description' => 'Promotion des nouveaux produits 2026',
@@ -25,8 +26,8 @@ class CampaignSeeder extends Seeder
             'name' => 'Campagne Recrutement IT',
             'description' => 'Recrutement de développeurs Laravel et Vue',
             'start_date' => '2026-02-01',
-            'end_date' => null,
-            'status' => 'inactive',
+            'end_date' => '2026-06-30',
+            'status' => 'active',
         ]);
 
         Campaign::create([
@@ -37,15 +38,15 @@ class CampaignSeeder extends Seeder
             'status' => 'finished',
         ]);
 
-        // Générer 247 campagnes supplémentaires
+        // Générer des campagnes supplémentaires cohérentes
         $campaignTypes = [
             'Marketing', 'Recrutement', 'Ventes', 'Communication', 'Formation', 
             'Lancement Produit', 'Fidélisation', 'Acquisition', 'Rétention', 'Notoriété'
         ];
         
         $statuses = ['active', 'inactive', 'finished'];
-
-        for ($i = 4; $i <= 250; $i++) {
+        
+        for ($i = 4; $i <= 10; $i++) {
             $type = $campaignTypes[array_rand($campaignTypes)];
             $status = $statuses[array_rand($statuses)];
             $startDate = now()->subDays(rand(0, 365));

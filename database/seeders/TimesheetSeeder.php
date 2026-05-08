@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Timesheet;
+use App\Models\Employee;
+use App\Models\Campaign;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class TimesheetSeeder extends Seeder
 {
@@ -13,42 +15,49 @@ class TimesheetSeeder extends Seeder
      */
     public function run(): void
     {
-        // Créer les 2 timesheets de base
-        Timesheet::create([
-            'employee_id' => 1,
-            'period_start' => '2026-05-05',
-            'period_end' => '2026-05-11',
-            'status' => 'brouillon',
-        ]);
-
-        Timesheet::create([
-            'employee_id' => 1,
-            'period_start' => '2026-05-12',
-            'period_end' => '2026-05-18',
-            'status' => 'soumis',
-            'validated_by' => 2,
-            'validated_at' => now(),
-        ]);
-
-        // Générer 248 timesheets supplémentaires
-        $statuses = ['brouillon', 'soumis', 'validé', 'rejeté'];
+        $employees = Employee::all();
+        $campaigns = Campaign::all();
         
-        for ($i = 3; $i <= 250; $i++) {
-            $status = $statuses[array_rand($statuses)];
-            $employeeId = rand(1, 300);
-            $startDate = now()->subWeeks(rand(1, 52))->startOfWeek();
-            $endDate = $startDate->copy()->endOfWeek();
-            $validatedBy = in_array($status, ['validé', 'rejeté']) ? rand(1, 10) : null;
-            $validatedAt = $validatedBy ? $startDate->copy()->addDays(rand(1, 7)) : null;
+        if ($employees->isEmpty() || $campaigns->isEmpty()) {
+            return;
+        }
 
-            Timesheet::create([
-                'employee_id' => $employeeId,
-                'period_start' => $startDate->format('Y-m-d'),
-                'period_end' => $endDate->format('Y-m-d'),
-                'status' => $status,
-                'validated_by' => $validatedBy,
-                'validated_at' => $validatedAt,
-            ]);
+        // Créer des feuilles de temps pour les téléconseillers
+        $tcEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'TC';
+        });
+        
+        foreach ($tcEmployees as $tc) {
+            // Une feuille de temps par semaine pour les 4 dernières semaines
+            for ($week = 1; $week <= 4; $week++) {
+                $weekStartDate = now()->subWeeks($week)->startOfWeek();
+                
+                Timesheet::create([
+                    'employee_id' => $tc->id,
+                    'period_start' => $weekStartDate->format('Y-m-d'),
+                    'period_end' => $weekStartDate->copy()->addDays(6)->format('Y-m-d'),
+                    'status' => 'brouillon',
+                ]);
+            }
+        }
+
+        // Créer des feuilles de temps pour les superviseurs
+        $supEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'SUP';
+        });
+        
+        foreach ($supEmployees as $sup) {
+            // Une feuille de temps par semaine pour les 4 dernières semaines
+            for ($week = 1; $week <= 4; $week++) {
+                $weekStartDate = now()->subWeeks($week)->startOfWeek();
+                
+                Timesheet::create([
+                    'employee_id' => $sup->id,
+                    'period_start' => $weekStartDate->format('Y-m-d'),
+                    'period_end' => $weekStartDate->copy()->addDays(6)->format('Y-m-d'),
+                    'status' => 'brouillon',
+                ]);
+            }
         }
     }
 }

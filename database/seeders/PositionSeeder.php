@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Seeder;
 use App\Models\Position;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 
 class PositionSeeder extends Seeder
 {
@@ -15,29 +15,29 @@ class PositionSeeder extends Seeder
     {
         $positions = [
             [
-                'name' => 'Administrateur',
                 'code' => 'ADMIN',
-                'description' => 'Accès complet à la gestion du personnel et des paramètres.'
+                'name' => 'Administrateur',
+                'description' => 'Accès complet à la gestion du personnel et des paramètres.',
             ],
             [
-                'name' => 'Chef de Projet',
                 'code' => 'CP',
-                'description' => 'Responsable du suivi des livrables et de la gestion d\'équipe.'
+                'name' => 'Chef de Plateau',
+                'description' => 'Responsable de la gestion des superviseurs et des campagnes.',
             ],
             [
-                'name' => 'Superviseur',
                 'code' => 'SUP',
-                'description' => 'Contrôle la qualité et assiste les techniciens sur le terrain.'
+                'name' => 'Superviseur',
+                'description' => 'Gestion directe des téléconseillers et saisie des heures travaillées.',
             ],
             [
-                'name' => 'Teleconseiller',
                 'code' => 'TC',
-                'description' => 'Effectue des appels sortants pour des enquêtes ou sondages.'
+                'name' => 'Téléconseiller',
+                'description' => 'Conseiller les clients et saisir les heures travaillées.',
             ],
         ];
-
-        foreach ($positions as $pos) {
-            Position::updateOrCreate(['code' => $pos['code']], $pos);
+        
+        foreach ($positions as $position) {
+            Position::updateOrCreate(['code' => $position['code']], $position);
         }
     }
 }

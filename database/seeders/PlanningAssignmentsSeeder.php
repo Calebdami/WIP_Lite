@@ -3,71 +3,84 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\PlanningAssignment;
+use App\Models\Employee;
+use App\Models\PlanningModel;
+use App\Models\Campaign;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Carbon\Carbon;
 
 class PlanningAssignmentsSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
-        // Créer les 3 planning assignments de base
-        DB::table('planning_assignments')->insert([
-            [
-                'planning_model_id' => 1,
-                'employee_id' => 1,
-                'start_date' => '2026-01-01',
-                'end_date' => '2026-06-30',
-                'status' => 'validé',
-                'validated_by' => 2,
-                'validated_at' => Carbon::now(),
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'planning_model_id' => 2,
-                'employee_id' => 2,
-                'start_date' => '2026-02-01',
-                'end_date' => '2026-12-31',
-                'status' => 'en attente',
-                'validated_by' => null,
-                'validated_at' => null,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'planning_model_id' => 3,
-                'employee_id' => 3,
-                'start_date' => '2026-03-01',
-                'end_date' => null,
-                'status' => 'suspendu',
-                'validated_by' => 1,
-                'validated_at' => Carbon::now(),
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-        ]);
-
-        // Générer 247 planning assignments supplémentaires
-        $statuses = ['en attente', 'validé', 'suspendu'];
+        $employees = Employee::all();
+        $planningModels = PlanningModel::all();
+        $campaigns = Campaign::all();
         
-        for ($i = 4; $i <= 250; $i++) {
-            $status = $statuses[array_rand($statuses)];
-            $startDate = now()->subDays(rand(0, 365));
-            $endDate = $status === 'suspendu' ? $startDate->copy()->addDays(rand(1, 30)) : 
-                      ($status === 'validé' ? $startDate->copy()->addDays(rand(90, 365)) : null);
-            $validatedBy = $status === 'validé' ? rand(1, 10) : null;
-            $validatedAt = $validatedBy ? Carbon::now()->subDays(rand(1, 30)) : null;
+        if ($employees->isEmpty() || $planningModels->isEmpty() || $campaigns->isEmpty()) {
+            return;
+        }
 
-            DB::table('planning_assignments')->insert([
-                'planning_model_id' => rand(1, 250),
-                'employee_id' => rand(1, 300),
+        // Affectations de planning aux superviseurs
+        $supEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'SUP';
+        });
+        
+        foreach ($supEmployees as $sup) {
+            // Un superviseur peut avoir plusieurs plannings dans le temps
+            for ($i = 1; $i <= 2; $i++) {
+                $planningModel = $planningModels->random();
+                $startDate = now()->addDays(rand(1, 30));
+                $endDate = now()->addDays(rand(60, 180));
+                
+                PlanningAssignment::create([
+                    'employee_id' => $sup->id,
+                    'planning_model_id' => $planningModel->id,
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'status' => 'validé',
+                ]);
+            }
+        }
+
+        // Affectations de planning aux téléconseillers
+        $tcEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'TC';
+        });
+        
+        foreach ($tcEmployees as $tc) {
+            // Un téléconseiller peut avoir plusieurs plannings dans le temps
+            for ($i = 1; $i <= 2; $i++) {
+                $planningModel = $planningModels->random();
+                $startDate = now()->addDays(rand(1, 30));
+                $endDate = now()->addDays(rand(60, 180));
+                
+                PlanningAssignment::create([
+                    'employee_id' => $tc->id,
+                    'planning_model_id' => $planningModel->id,
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'status' => 'validé',
+                ]);
+            }
+        }
+
+        // Créer quelques affectations en attente pour démonstration
+        for ($i = 0; $i < 10; $i++) {
+            $employee = $employees->random();
+            $planningModel = $planningModels->random();
+            $startDate = now()->addDays(rand(1, 30));
+            
+            PlanningAssignment::create([
+                'employee_id' => $employee->id,
+                'planning_model_id' => $planningModel->id,
                 'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate ? $endDate->format('Y-m-d') : null,
-                'status' => $status,
-                'validated_by' => $validatedBy,
-                'validated_at' => $validatedAt,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
+                'end_date' => null,
+                'status' => 'en attente',
             ]);
         }
     }
