@@ -328,10 +328,19 @@ class TimesheetController extends Controller
 
         $since = Carbon::now()->subMonths(12)->startOfMonth();
 
-        $timesheets = Timesheet::with('entries')
+        $query = Timesheet::with('entries')
             ->where('employee_id', $employeeId)
-            ->where('status', 'valide')
-            ->where('period_start', '>=', $since)
+            ->where('period_start', '>=', $since);
+
+        if (!$request->boolean('all', false)) {
+            $query->where('status', 'valide');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $timesheets = $query
             ->orderBy('period_start', 'desc')
             ->get()
             ->map(function ($ts) {
@@ -346,6 +355,7 @@ class TimesheetController extends Controller
                     'overtime_hours' => $ts->total_overtime_hours,
                     'deviation'     => $ts->hours_deviation,
                     'entries'       => $ts->entries->map(fn ($e) => [
+                        'id'             => $e->id,
                         'date'           => $e->date->toDateString(),
                         'check_in'       => $e->check_in?->format('H:i'),
                         'check_out'      => $e->check_out?->format('H:i'),
@@ -356,8 +366,8 @@ class TimesheetController extends Controller
                         'management_hours' => $e->management_hours,
                         'on_call_hours'    => $e->on_call_hours,
                         'training_hours'   => $e->training_hours,
-                        'absence_type'   => $e->absence_type,
-                        'comment'        => $e->comment,
+                        'absence_type'     => $e->absence_type,
+                        'comment'          => $e->comment,
                     ]),
                 ];
             });
