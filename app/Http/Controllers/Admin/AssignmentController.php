@@ -119,7 +119,7 @@ class AssignmentController extends Controller
             }
         }
 
-        Assignment::create([
+        $newAssignment = Assignment::create([
             'employee_id' => $validated['employee_id'],
             'campaign_id' => $validated['campaign_id'],
             'position_id' => $validated['position_id'],
@@ -127,6 +127,31 @@ class AssignmentController extends Controller
             'start_date' => $validated['start_date'],
             'status' => 'active',
         ]);
+
+        // --- Auto-rattachement des collaborateurs orphelins ---
+        // Si on affecte un CP → rattacher les SUPs orphelins de cette campagne
+        if ($position->code === 'CP') {
+            $supPositionId = Position::where('code', 'SUP')->value('id');
+            if ($supPositionId) {
+                Assignment::where('campaign_id', $validated['campaign_id'])
+                    ->where('position_id', $supPositionId)
+                    ->where('status', 'active')
+                    ->whereNull('manager_id')
+                    ->update(['manager_id' => $newAssignment->employee_id]);
+            }
+        }
+
+        // Si on affecte un SUP → rattacher les TCs orphelins de cette campagne
+        if ($position->code === 'SUP') {
+            $tcPositionId = Position::where('code', 'TC')->value('id');
+            if ($tcPositionId) {
+                Assignment::where('campaign_id', $validated['campaign_id'])
+                    ->where('position_id', $tcPositionId)
+                    ->where('status', 'active')
+                    ->whereNull('manager_id')
+                    ->update(['manager_id' => $newAssignment->employee_id]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Affectation réussie.');
     }
@@ -214,5 +239,199 @@ class AssignmentController extends Controller
             'employees' => $query->paginate(8)->withQueryString(),
             'filters' => $request->only(['search', 'status']),
         ]);
+    }
+
+    /**
+     * Affiche la page d'affectation multiple
+     */
+    public function bulkAssign(Request $request)
+    {
+        $search = $request->input('search');
+        
+        // Récupérer tous les employés disponibles pour l'affectation multiple
+        $employeesQuery = Employee::with('position')
+            ->whereIn('status', ['actif', 'inactif']);
+
+        if ($search) {
+            $employeesQuery->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('matricule', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtrer les ressources disponibles (non affectées ou CP pour multi-campagnes)
+        $employees = $employeesQuery->where(function($q) {
+            $q->whereDoesntHave('assignments', function($sq) {
+                $sq->where('status', 'active');
+            })->orWhereHas('position', function($sq) {
+                $sq->where('code', 'CP');
+            });
+        })->paginate(15)->withQueryString();
+
+        // Récupérer toutes les campagnes actives
+        $campaigns = Campaign::where('status', 'active')->get();
+
+        // Récupérer les managers actifs pour les affectations hiérarchiques
+        $managers = Assignment::where('status', 'active')
+            ->whereHas('position', function($q) {
+                $q->whereIn('code', ['CP', 'SUP']);
+            })
+            ->with(['employee', 'campaign', 'position'])
+            ->get()
+            ->groupBy(function($assignment) {
+                return $assignment->position->code;
+            });
+
+        return Inertia::render('Admin/Assignments/BulkAssign', [
+            'employees' => $employees,
+            'campaigns' => $campaigns,
+            'managers' => $managers,
+            'positions' => Position::all(),
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    /**
+     * Traite l'affectation multiple
+     */
+    public function bulkAssignStore(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_ids' => 'required|array|min:1',
+            'employee_ids.*' => 'exists:employees,id',
+            'assignment_type' => 'required|in:campaign,manager',
+            'campaign_ids' => 'required_if:assignment_type,campaign|array|min:1',
+            'campaign_ids.*' => 'exists:campaigns,id',
+            'manager_assignment_id' => 'required_if:assignment_type,manager|exists:assignments,id',
+            'position_id' => 'required|exists:positions,id',
+            'start_date' => 'required|date',
+        ]);
+
+        $position = Position::find($validated['position_id']);
+        $successCount = 0;
+        $errors = [];
+
+        if ($validated['assignment_type'] === 'campaign') {
+            // Affectation multiple à des campagnes (CP → campagnes multiples)
+            foreach ($validated['employee_ids'] as $employeeId) {
+                foreach ($validated['campaign_ids'] as $campaignId) {
+                    try {
+                        // Vérifier si l'affectation n'existe pas déjà
+                        $existing = Assignment::where('employee_id', $employeeId)
+                            ->where('campaign_id', $campaignId)
+                            ->where('position_id', $validated['position_id'])
+                            ->where('status', 'active')
+                            ->first();
+
+                        if ($existing) {
+                            $errors[] = "L'employé #{$employeeId} est déjà affecté à cette campagne.";
+                            continue;
+                        }
+
+                        // Pour les CP, vérifier qu'ils ne sont pas déjà affectés à cette campagne
+                        if ($position->code === 'CP') {
+                            $existingCP = Assignment::where('employee_id', $employeeId)
+                                ->where('campaign_id', $campaignId)
+                                ->where('status', 'active')
+                                ->exists();
+                            
+                            if ($existingCP) {
+                                $errors[] = "Ce Chef de Plateau est déjà affecté à la campagne #{$campaignId}.";
+                                continue;
+                            }
+                        } else {
+                            // Pour les autres rôles, vérifier qu'ils n'ont pas d'affectation active
+                            $hasActive = Assignment::where('employee_id', $employeeId)
+                                ->where('status', 'active')
+                                ->exists();
+                            
+                            if ($hasActive) {
+                                $errors[] = "L'employé #{$employeeId} a déjà une affectation active.";
+                                continue;
+                            }
+                        }
+
+                        Assignment::create([
+                            'employee_id' => $employeeId,
+                            'campaign_id' => $campaignId,
+                            'position_id' => $validated['position_id'],
+                            'start_date' => $validated['start_date'],
+                            'status' => 'active',
+                        ]);
+
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $errors[] = "Erreur lors de l'affectation de l'employé #{$employeeId} à la campagne #{$campaignId}: " . $e->getMessage();
+                    }
+                }
+            }
+        } else {
+            // Affectation multiple à un manager (SUP/TC → manager)
+            $managerAssignment = Assignment::find($validated['manager_assignment_id']);
+            
+            if (!$managerAssignment) {
+                return back()->withErrors(['error' => 'Manager non trouvé.']);
+            }
+
+            foreach ($validated['employee_ids'] as $employeeId) {
+                try {
+                    // Vérifier que l'employé n'a pas déjà d'affectation active
+                    $hasActive = Assignment::where('employee_id', $employeeId)
+                        ->where('status', 'active')
+                        ->exists();
+                    
+                    if ($hasActive) {
+                        $errors[] = "L'employé #{$employeeId} a déjà une affectation active.";
+                        continue;
+                    }
+
+                    Assignment::create([
+                        'employee_id' => $employeeId,
+                        'campaign_id' => $managerAssignment->campaign_id,
+                        'position_id' => $validated['position_id'],
+                        'manager_id' => $managerAssignment->employee_id,
+                        'start_date' => $validated['start_date'],
+                        'status' => 'active',
+                    ]);
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "Erreur lors de l'affectation de l'employé #{$employeeId} au manager: " . $e->getMessage();
+                }
+            }
+        }
+
+        $message = "{$successCount} affectation(s) réussie(s).";
+        if (!empty($errors)) {
+            $message .= " Erreurs: " . implode(' ', $errors);
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * API pour récupérer les managers disponibles selon le type de position
+     */
+    public function getAvailableManagers(Request $request)
+    {
+        $positionCode = $request->input('position_code');
+        
+        if (!$positionCode) {
+            return response()->json([]);
+        }
+
+        $managers = Assignment::where('status', 'active')
+            ->whereHas('position', function($q) use ($positionCode) {
+                if ($positionCode === 'SUP') {
+                    $q->where('code', 'CP');
+                } elseif ($positionCode === 'TC') {
+                    $q->where('code', 'SUP');
+                }
+            })
+            ->with(['employee', 'campaign', 'position'])
+            ->get();
+
+        return response()->json($managers);
     }
 }

@@ -61,11 +61,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Campagnes
-    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class);
+    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {
-        Route::get('/structure', fn () => Inertia::render('Admin/Assignments/Structure'))->name('structure');
+        Route::get('/structure', [App\Http\Controllers\Admin\AssignmentController::class, 'structure'])->name('structure');
+        Route::post('/', [App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('store');
+        Route::patch('/{assignment}/release', [App\Http\Controllers\Admin\AssignmentController::class, 'release'])->name('release');
+        
+        // Affectation multiple
+        Route::get('/bulk-assign', [App\Http\Controllers\Admin\AssignmentController::class, 'bulkAssign'])->name('bulk-assign');
+        Route::post('/bulk-assign', [App\Http\Controllers\Admin\AssignmentController::class, 'bulkAssignStore'])->name('bulk-assign.store');
+        Route::get('/api/managers', [App\Http\Controllers\Admin\AssignmentController::class, 'getAvailableManagers'])->name('api.managers');
+        
         Route::get('/schedules', [PlanningModelController::class, 'index'])->name('schedules');
         Route::get('/schedules/create', [PlanningModelController::class, 'create'])->name('schedules.create');
         Route::post('/schedules', [PlanningModelController::class, 'store'])->name('schedules.store');
@@ -75,7 +83,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         
         Route::get('/schedules/assign', [PlanningAssignmentController::class, 'create'])->name('schedules.assign');
         Route::post('/schedules/assign', [PlanningAssignmentController::class, 'store'])->name('schedules.assign.store');
-        Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
+        Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
         Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
         Route::patch('/validation/bulk', [PlanningAssignmentController::class, 'bulkUpdateStatus'])->name('validation.bulk');
