@@ -188,14 +188,6 @@ const deleteModel = (model) => {
                     </button>
                 </div>
             </div>
-
-            <!-- Carte vide pour ajouter -->
-            <button v-if="props.models.current_page === 1" class="group flex flex-col items-center justify-center p-8 bg-white/50 border-2 border-dashed border-pearl-200 rounded-xl hover:border-gold-300 hover:bg-white transition-all min-h-[300px]">
-                <div class="w-12 h-12 rounded-full bg-pearl-100 text-charcoal-400 flex items-center justify-center mb-3 group-hover:bg-gold-100 group-hover:text-gold-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                </div>
-                <span class="text-sm font-bold text-charcoal-400 group-hover:text-charcoal-700">Nouveau modèle</span>
-            </button>
         </div>
 
         <!-- Pagination -->
