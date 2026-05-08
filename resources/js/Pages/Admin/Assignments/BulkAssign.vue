@@ -56,9 +56,28 @@ const filteredEmployees = computed(() => {
     )
   }
   
-  // Filtrage par position
+  // Filtrage par position - MAINTIENT la logique de disponibilité
   if (selectedPositionFilter.value) {
-    employees = employees.filter(employee => employee.position_id === selectedPositionFilter.value)
+    // Récupérer la position sélectionnée pour connaître son code
+    const selectedPosition = props.positions.find(p => p.id === selectedPositionFilter.value)
+    
+    if (selectedPosition) {
+      employees = employees.filter(employee => {
+        // Vérifier si l'employé correspond à la position filtrée
+        if (employee.position_id !== selectedPositionFilter.value) {
+          return false
+        }
+        
+        // Appliquer les règles de disponibilité selon le type de position
+        if (selectedPosition.code === 'CP') {
+          // Les CP peuvent avoir des affectations multiples (multi-campagnes)
+          return true
+        } else {
+          // Pour SUP et TC : doivent être non affectés
+          return !employee.assignments || employee.assignments.length === 0
+        }
+      })
+    }
   }
   
   return employees
@@ -155,17 +174,29 @@ const getPositionName = (positionId) => {
 }
 
 const getEmployeeStatus = (employee) => {
-  if (employee.assignments && employee.assignments.length > 0) {
-    return 'Déjà affecté'
+  if (!employee.assignments || employee.assignments.length === 0) {
+    return 'Disponible'
   }
-  return 'Disponible'
+  
+  // Si l'employé a des affectations
+  if (employee.position.code === 'CP') {
+    return 'Disponible (multi-campagnes)'
+  } else {
+    return 'Non disponible'
+  }
 }
 
 const getEmployeeStatusClass = (employee) => {
-  if (employee.assignments && employee.assignments.length > 0) {
-    return employee.position.code === 'CP' ? 'text-yellow-600' : 'text-red-600'
+  if (!employee.assignments || employee.assignments.length === 0) {
+    return 'text-green-600'
   }
-  return 'text-green-600'
+  
+  // Si l'employé a des affectations
+  if (employee.position.code === 'CP') {
+    return 'text-yellow-600'
+  } else {
+    return 'text-red-600'
+  }
 }
 </script>
 

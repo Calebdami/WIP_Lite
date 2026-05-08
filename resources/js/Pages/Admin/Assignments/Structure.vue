@@ -849,6 +849,22 @@ const campaignsStructure = computed(() => {
                 </div>
             </div>
         </Transition>
+
+        <!-- Pagination for Structure (Campaigns) -->
+        <div v-if="activeTab === 'hierarchy' && campaigns.links.length > 3" class="mt-8 flex items-center justify-center gap-1">
+            <template v-for="(link, k) in campaigns.links" :key="k">
+                <div v-if="link.url === null" 
+                     class="px-4 py-2 text-xs font-bold text-charcoal-300 cursor-not-allowed"
+                     v-html="link.label" />
+                <Link v-else
+                      :href="link.url"
+                      class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
+                      :class="link.active 
+                        ? 'bg-gold-gradient text-white shadow-gold' 
+                        : 'bg-white border border-pearl-200 text-charcoal-500 hover:bg-pearl-50'"
+                      v-html="link.label" />
+            </template>
+        </div>
     </AdminLayout>
 </template>
 

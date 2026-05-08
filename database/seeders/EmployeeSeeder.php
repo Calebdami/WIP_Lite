@@ -47,7 +47,7 @@ class EmployeeSeeder extends Seeder
                 'address' => fake()->address(),
                 'position_id' => $positions->random()->id,
                 'salary_base' => fake()->randomFloat(2, 1800, 4500),
-                'status' => fake()->randomElement(['actif', 'actif', 'suspendu']), // Plus de chances d'être actif
+                'status' => fake()->randomElement(['actif', 'suspendu']), // Plus de chances d'être actif
             ]);
         }
     }
