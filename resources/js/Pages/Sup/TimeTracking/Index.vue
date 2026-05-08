@@ -1,10 +1,11 @@
 <script setup>
 import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -23,6 +24,16 @@ const confirm = useConfirm();
 
 const timesheets = ref([]);
 const loading = ref(false);
+const searchQuery = ref('');
+const statusFilter = ref('');
+
+const statusOptions = [
+    { label: 'Tous les statuts', value: '' },
+    { label: 'Brouillon', value: 'brouillon' },
+    { label: 'Soumis', value: 'soumis' },
+    { label: 'Validé', value: 'valide' },
+    { label: 'Rejeté', value: 'rejete' },
+];
 
 const teamMembers = ref([]);
 
@@ -41,7 +52,12 @@ const fetchTeamMembers = async () => {
 const fetchTimesheets = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/timesheets');
+        const params = {};
+        const search = searchQuery.value.trim();
+        if (search) params.search = search;
+        if (statusFilter.value) params.status = statusFilter.value;
+
+        const response = await axios.get('/api/timesheets', { params });
         timesheets.value = response.data;
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les feuilles de temps', life: 3000 });
@@ -50,9 +66,18 @@ const fetchTimesheets = async () => {
     }
 };
 
+let searchTimeout = null;
+
 onMounted(() => {
     fetchTimesheets();
     fetchTeamMembers();
+});
+
+watch([searchQuery, statusFilter], () => {
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    searchTimeout = setTimeout(fetchTimesheets, 250);
 });
 
 // Modale de Création
@@ -166,8 +191,14 @@ const openEditDialog = async (ts) => {
     currentTimesheet.value = ts;
     try {
         const response = await axios.get(`/api/timesheets/${ts.id}/entries`);
-        timesheetEntries.value = response.data.entries;
+        timesheetEntries.value = Array.isArray(response.data.entries)
+            ? response.data.entries
+            : [];
         displayEditDialog.value = true;
+
+        if (!timesheetEntries.value.length) {
+            toast.add({ severity: 'info', summary: 'Aucune entrée', detail: 'Cette feuille de temps ne contient pas encore de lignes de saisie.', life: 3000 });
+        }
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les entrées', life: 3000 });
     }
@@ -274,8 +305,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -311,6 +342,16 @@ const getStatusSeverity = (status) => {
                 <Button label="Saisie Groupée" icon="pi pi-bolt" severity="warn" class="rounded-lg shadow-md shadow-gold-100" @click="displayBatchDialog = true" />
             </div>
 
+            <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="relative w-full md:w-80">
+                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400"></i>
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom de collaborateur..." class="w-full pl-10 pr-4 text-xs border-pearl-200 rounded-xl" />
+                </div>
+                <div class="w-full md:w-64">
+                    <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full text-xs rounded-xl border-pearl-200" />
+                </div>
+            </div>
+
             <DataTable :value="timesheets" v-model:selection="selectedTimesheets" :loading="loading" stripedRows responsiveLayout="scroll" 
                 paginator :rows="8" class="p-datatable-sm custom-selection-table" dataKey="id">
                 <template #empty>
@@ -341,7 +382,7 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Total Heures" sortable>
                     <template #body="{ data }">
-                        <span class="font-black text-charcoal-700">{{ data.total_hours }}h</span>
+                        <span class="font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column field="status" header="Statut" sortable>
@@ -358,13 +399,13 @@ const getStatusSeverity = (status) => {
                                 text
                                 class="hover:bg-pearl-100"
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'validé' || data.status === 'soumis'" />
-                            <Button label="Soumettre" icon="pi pi-send" 
+                                :disabled="data.status === 'valide' || data.status === 'soumis'" />
+                            <Button v-if="data.status === 'brouillon' || data.status === 'rejete'" 
+                                label="Soumettre" icon="pi pi-send" 
                                 size="small"
                                 severity="info"
                                 text
-                                @click="submitTimesheet(data.id)" 
-                                :disabled="data.status !== 'brouillon' && data.status !== 'rejeté'" />
+                                @click="submitTimesheet(data.id)" />
                             <Button icon="pi pi-history" text severity="info" rounded 
                                 @click="openHistory(data)" 
                                 title="Historique" />
@@ -407,9 +448,9 @@ const getStatusSeverity = (status) => {
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Analyse des Écarts</span>
                     <div class="flex items-baseline gap-2">
                         <span class="text-2xl font-black" :class="globalDeviation < 0 ? 'text-red-600' : 'text-emerald-600'">
-                            {{ globalDeviation > 0 ? '+' : '' }}{{ globalDeviation }}h
+                            {{ globalDeviation > 0 ? '+' : '' }}{{ formatHours(globalDeviation) }}
                         </span>
-                        <span class="text-[10px] text-charcoal-400 font-bold uppercase">/ {{ currentTimesheet?.total_planned_hours || 35 }}h prévues</span>
+                        <span class="text-[10px] text-charcoal-400 font-bold uppercase">/ {{ formatHours(currentTimesheet?.total_planned_hours || 35) }} prévues</span>
                     </div>
                 </div>
                 <div class="flex flex-col items-end">
@@ -446,7 +487,12 @@ const getStatusSeverity = (status) => {
                 </div>
             </div>
 
-            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm entry-form-table">
+            <template v-if="timesheetEntries.length === 0">
+                <div class="p-8 text-center text-sm text-charcoal-500">
+                    Aucune ligne de saisie disponible pour cette feuille de temps.
+                </div>
+            </template>
+            <DataTable v-else :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm entry-form-table">
                 <Column field="date" header="Date" headerClass="w-40">
                     <template #body="{ data }">
                         <div class="flex flex-col">
@@ -541,8 +587,8 @@ const getStatusSeverity = (status) => {
                         </div>
                     </template>
                     <template #marker="slotProps">
-                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'validé' ? 'bg-emerald-500' : 'bg-charcoal-700'">
-                            <i :class="slotProps.item.new_status === 'validé' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
+                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'valide' ? 'bg-emerald-500' : 'bg-charcoal-700'">
+                            <i :class="slotProps.item.new_status === 'valide' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
                         </span>
                     </template>
                 </Timeline>

@@ -9,6 +9,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Slider from 'primevue/slider';
 import Textarea from 'primevue/textarea';
+import ConfirmDialogBox from '@/Components/ConfirmDialog.vue';
 
 const props = defineProps({
     employee: Object,
@@ -242,40 +243,26 @@ const formatDate = (dateString) => {
             </form>
         </Dialog>
         <!-- Confirm Validation Modal -->
-        <Dialog 
-            v-model:visible="showConfirmModal" 
-            :modal="true" 
-            :draggable="false"
-            class="p-dialog-premium"
-            :style="{ width: '400px' }"
+        <ConfirmDialogBox
+            v-model="showConfirmModal"
+            title="Valider la mission"
+            confirmLabel="Confirmer la validation"
+            cancelLabel="Annuler"
+            confirmSeverity="success"
+            icon="pi pi-exclamation-triangle"
+            iconBgClass="bg-amber-100"
+            iconTextClass="text-amber-600"
+            width="420px"
             :closable="false"
+            className="max-w-sm"
+            @confirm="validateTask"
+            @cancel="showConfirmModal = false"
         >
-            <template #header>
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                        <i class="pi pi-exclamation-triangle text-lg"></i>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Confirmation</span>
-                        <h2 class="text-sm font-black text-charcoal-800 uppercase">Valider la mission</h2>
-                    </div>
-                </div>
-            </template>
-
-            <div class="py-4">
-                <p class="text-xs text-charcoal-500 leading-relaxed">
-                    Êtes-vous sûr de vouloir valider la mission <span class="font-bold text-charcoal-700">"{{ taskToValidate?.title }}"</span> ? 
-                    Cette action créditera immédiatement <span class="font-black text-gold-600">{{ taskToValidate?.points }} points</span> sur le compte de l'employé.
-                </p>
-            </div>
-
-            <template #footer>
-                <div class="flex justify-end gap-3 pt-2">
-                    <Button label="Annuler" text class="text-xs font-bold text-charcoal-400 uppercase" @click="showConfirmModal = false" />
-                    <Button label="Confirmer la validation" icon="pi pi-check" class="p-button-success text-xs font-black uppercase tracking-widest px-6" @click="validateTask" />
-                </div>
-            </template>
-        </Dialog>
+            <p class="text-xs text-charcoal-500 leading-relaxed">
+                Êtes-vous sûr de vouloir valider la mission <span class="font-bold text-charcoal-700">"{{ taskToValidate?.title }}"</span> ?
+                Cette action créditera immédiatement <span class="font-black text-gold-600">{{ taskToValidate?.points }} points</span>.
+            </p>
+        </ConfirmDialogBox>
     </AdminLayout>
 </template>
 

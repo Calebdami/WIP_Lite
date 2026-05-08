@@ -25,8 +25,8 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             // Transition de statut
-            $table->enum('old_status', ['brouillon', 'soumis', 'validé', 'rejeté'])->nullable();
-            $table->enum('new_status', ['brouillon', 'soumis', 'validé', 'rejeté']);
+            $table->enum('old_status', ['brouillon', 'soumis', 'valide', 'rejete'])->nullable();
+            $table->enum('new_status', ['brouillon', 'soumis', 'valide', 'rejete']);
 
             // Auteur du changement (superviseur ou CP)
             $table->foreignId('changed_by')

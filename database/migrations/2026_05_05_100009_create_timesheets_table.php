@@ -24,7 +24,7 @@ return new class extends Migration
             $table->date('period_end');
 
             // Statut du workflow de validation
-            $table->enum('status', ['brouillon', 'soumis', 'validé', 'rejeté'])
+            $table->enum('status', ['brouillon', 'soumis', 'valide', 'rejete'])
                 ->default('brouillon');
 
             // Validation par le Chef de Plateau (référence employees)

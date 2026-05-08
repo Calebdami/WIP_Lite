@@ -10,6 +10,7 @@ import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+import ConfirmDialogBox from '@/Components/ConfirmDialog.vue';
 
 const props = defineProps({
     campaigns: Object,
@@ -283,23 +284,25 @@ const getStatusLabel = (status) => {
         </Dialog>
 
         <!-- Delete Confirmation Modal -->
-        <Dialog v-model:visible="showDeleteModal" header="CONFIRMATION DE SUPPRESSION" :modal="true" :draggable="false" class="w-full max-w-md mx-4">
-            <div class="flex flex-col items-center text-center gap-4 py-4">
-                <div class="w-16 h-16 rounded-full flex items-center justify-center bg-rose-50">
-                    <i class="pi pi-exclamation-triangle text-2xl text-rose-500"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-black text-charcoal-700 uppercase tracking-tight">Supprimer la campagne ?</h3>
-                    <p class="text-xs text-charcoal-500 mt-2 leading-relaxed px-4">
-                        Attention : cette action est irréversible. La campagne <span class="font-bold text-rose-600">"{{ campaignToDelete?.name }}"</span> sera supprimée et <span class="font-bold">tous les employés affectés seront automatiquement libérés</span>.
-                    </p>
-                </div>
-                <div class="flex gap-3 w-full mt-6">
-                    <Button label="Annuler" text severity="secondary" @click="showDeleteModal = false" class="flex-1 text-xs" />
-                    <Button label="Confirmer la suppression" severity="danger" @click="handleDelete" class="flex-1 text-xs shadow-rose- premium" />
-                </div>
-            </div>
-        </Dialog>
+        <ConfirmDialogBox
+            v-model="showDeleteModal"
+            title="Confirmation de suppression"
+            confirmLabel="Confirmer la suppression"
+            cancelLabel="Annuler"
+            confirmSeverity="danger"
+            icon="pi pi-exclamation-triangle"
+            iconBgClass="bg-rose-50"
+            iconTextClass="text-rose-500"
+            width="450px"
+            :closable="false"
+            className="max-w-md"
+            @confirm="handleDelete"
+            @cancel="showDeleteModal = false"
+        >
+            <p class="text-xs text-charcoal-500 mt-2 leading-relaxed px-4">
+                Attention : cette action est irréversible. La campagne <span class="font-bold text-rose-600">"{{ campaignToDelete?.name }}"</span> sera supprimée et <span class="font-bold">tous les employés affectés seront automatiquement libérés</span>.
+            </p>
+        </ConfirmDialogBox>
     </AdminLayout>
 </template>
 

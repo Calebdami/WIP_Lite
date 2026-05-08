@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -17,12 +18,23 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Tag from 'primevue/tag';
 import Timeline from 'primevue/timeline';
+import { watch } from 'vue';
 
 const toast = useToast();
 const confirm = useConfirm();
 
 const timesheets = ref([]);
 const loading = ref(false);
+
+const searchQuery = ref('');
+const statusFilter = ref(null);
+const statusOptions = ref([
+    { label: 'Tous les statuts', value: null },
+    { label: 'Brouillon', value: 'brouillon' },
+    { label: 'Soumis', value: 'soumis' },
+    { label: 'Validé', value: 'valide' },
+    { label: 'Rejeté', value: 'rejete' }
+]);
 
 const supervisors = ref([]);
 
@@ -61,7 +73,10 @@ const fetchSupervisors = async () => {
 const fetchTimesheets = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/timesheets');
+        const params = {};
+        if (searchQuery.value) params.search = searchQuery.value;
+        if (statusFilter.value) params.status = statusFilter.value;
+        const response = await axios.get('/api/timesheets', { params });
         timesheets.value = response.data;
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les feuilles de temps', life: 3000 });
@@ -74,6 +89,10 @@ onMounted(() => {
     fetchTimesheets();
     fetchSupervisors();
 });
+
+watch([searchQuery, statusFilter], () => {
+    fetchTimesheets();
+}, { debounce: 300 });
 
 // Modale de Création
 const displayCreateDialog = ref(false);
@@ -254,7 +273,7 @@ const validateTimesheet = (id) => {
         accept: async () => {
             try {
                 await axios.post(`/api/timesheets/${id}/validate`);
-                toast.add({ severity: 'success', summary: 'Validé', detail: 'Feuille validée', life: 3000 });
+                toast.add({ severity: 'success', summary: 'Valide', detail: 'Feuille validée', life: 3000 });
                 fetchTimesheets();
             } catch (error) {
                 toast.add({ severity: 'error', summary: 'Erreur', detail: error.response?.data?.message || 'Erreur lors de la validation', life: 3000 });
@@ -267,8 +286,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -291,6 +310,15 @@ const getStatusSeverity = (status) => {
         </template>
 
         <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1">
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom d'employé..." class="w-full rounded-xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-3" />
+                </div>
+                <div class="w-48">
+                    <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full rounded-xl border-pearl-200" />
+                </div>
+            </div>
+
             <div v-if="selectedTimesheets.length" class="mb-4 p-4 bg-pearl-50 border border-pearl-200 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-gold-500 flex items-center justify-center text-white shadow-lg shadow-gold-200">
@@ -334,7 +362,7 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Heures" sortable>
                     <template #body="{ data }">
-                        <span class="font-black text-charcoal-700">{{ data.total_hours }} h</span>
+                        <span class="font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column field="status" header="Statut" sortable>
@@ -347,8 +375,11 @@ const getStatusSeverity = (status) => {
                         <div class="flex gap-1">
                             <Button icon="pi pi-pencil" text severity="secondary" rounded 
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'validé'" 
+                                :disabled="data.status === 'valide' || data.status === 'soumis'" 
                                 title="Saisir les heures" />
+                            <Button v-if="data.status === 'brouillon' || data.status === 'rejete'" icon="pi pi-send" text severity="info" rounded 
+                                @click="submitTimesheet(data.id)" 
+                                title="Soumettre pour validation" />
                             <Button v-if="data.status === 'soumis'" icon="pi pi-check-circle" text severity="success" rounded 
                                 @click="validateTimesheet(data.id)" 
                                 title="Valider définitivement" />

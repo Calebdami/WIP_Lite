@@ -2,6 +2,7 @@
 import TcLayout from '@/Layouts/TcLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 const props = defineProps({
     personal_stats: Object
@@ -68,7 +69,7 @@ const weekProgress = computed(() => {
                     <p class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heures de la semaine</p>
                 </div>
                 <div class="flex items-end gap-2">
-                    <p class="text-3xl font-black text-charcoal-700">{{ personal_stats?.hours_week || 0 }}h</p>
+                    <p class="text-3xl font-black text-charcoal-700">{{ formatHours(personal_stats?.hours_week || 0) }}</p>
                     <p class="text-[10px] font-bold text-charcoal-400 mb-1.5 uppercase">/ 35h</p>
                 </div>
                 <div class="w-full bg-pearl-100 h-1.5 rounded-full mt-4 overflow-hidden shadow-inner">

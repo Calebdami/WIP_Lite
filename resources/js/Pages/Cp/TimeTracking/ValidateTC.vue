@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -15,6 +16,9 @@ import Textarea from 'primevue/textarea';
 import Tag from 'primevue/tag';
 import Timeline from 'primevue/timeline';
 import Message from 'primevue/message';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
+import { watch } from 'vue';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -23,10 +27,24 @@ const submittedTimesheets = ref([]);
 const selectedTimesheets = ref([]);
 const loading = ref(false);
 
+const searchQuery = ref('');
+const statusFilter = ref(null);
+const statusOptions = ref([
+    { label: 'Tous les statuts', value: null },
+    { label: 'Brouillon', value: 'brouillon' },
+    { label: 'Soumis', value: 'soumis' },
+    { label: 'Validé', value: 'valide' },
+    { label: 'Rejeté', value: 'rejete' }
+]);
+
 const fetchSubmittedTimesheets = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/timesheets?status=soumis');
+        const params = {};
+        if (searchQuery.value) params.search = searchQuery.value;
+        if (statusFilter.value) params.status = statusFilter.value;
+        else params.status = 'soumis'; // default to submitted
+        const response = await axios.get('/api/timesheets', { params });
         submittedTimesheets.value = response.data;
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les feuilles soumises', life: 3000 });
@@ -38,6 +56,10 @@ const fetchSubmittedTimesheets = async () => {
 onMounted(() => {
     fetchSubmittedTimesheets();
 });
+
+watch([searchQuery, statusFilter], () => {
+    fetchSubmittedTimesheets();
+}, { debounce: 300 });
 
 // Validation
 const validateSingle = (id) => {
@@ -106,7 +128,7 @@ const rejectTimesheet = () => {
                 await axios.post(`/api/timesheets/${rejectingTimesheet.value.id}/reject`, {
                     reason: rejectReason.value
                 });
-                toast.add({ severity: 'success', summary: 'Rejeté', detail: 'La feuille a été rejetée', life: 3000 });
+                toast.add({ severity: 'success', summary: 'Rejete', detail: 'La feuille a été rejetée', life: 3000 });
                 displayRejectDialog.value = false;
                 fetchSubmittedTimesheets();
             } catch (error) {
@@ -174,8 +196,8 @@ const getStatusSeverity = (status) => {
     switch (status) {
         case 'brouillon': return 'secondary';
         case 'soumis': return 'info';
-        case 'validé': return 'success';
-        case 'rejeté': return 'danger';
+        case 'valide': return 'success';
+        case 'rejete': return 'danger';
         default: return 'info';
     }
 };
@@ -198,6 +220,15 @@ const getStatusSeverity = (status) => {
         </template>
 
         <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1">
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom d'employé..." class="w-full rounded-xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-3" />
+                </div>
+                <div class="w-48">
+                    <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full rounded-xl border-pearl-200" />
+                </div>
+            </div>
+
             <DataTable :value="submittedTimesheets" v-model:selection="selectedTimesheets" :loading="loading" 
                 dataKey="id" stripedRows responsiveLayout="scroll" paginator :rows="8" class="p-datatable-sm">
                 <template #empty>
@@ -229,16 +260,16 @@ const getStatusSeverity = (status) => {
                     <template #body="{ data }">
                         <div class="flex flex-col">
                             <span :class="{'text-amber-600 font-black': data.hours_deviation > 2 || data.hours_deviation < -2, 'text-charcoal-700 font-bold': !(data.hours_deviation > 2 || data.hours_deviation < -2)}">
-                                {{ data.total_hours }} h
+                                {{ formatHours(data.total_hours) }}
                             </span>
-                            <span class="text-[10px] text-charcoal-400 uppercase tracking-tighter">Prévu: {{ data.total_planned_hours }}h</span>
+                            <span class="text-[10px] text-charcoal-400 uppercase tracking-tighter">Prévu: {{ formatHours(data.total_planned_hours) }}</span>
                         </div>
                     </template>
                 </Column>
                 <Column header="Écart" sortable>
                     <template #body="{ data }">
-                        <Tag v-if="data.hours_deviation > 0" :value="`+${data.hours_deviation}h`" severity="warn" />
-                        <Tag v-else-if="data.hours_deviation < 0" :value="`${data.hours_deviation}h`" severity="danger" />
+                        <Tag v-if="data.hours_deviation > 0" :value="`+${Math.round(data.hours_deviation)}h`" severity="warn" />
+                        <Tag v-else-if="data.hours_deviation < 0" :value="`${Math.round(data.hours_deviation)}h`" severity="danger" />
                         <Tag v-else value="CONFORME" severity="success" class="opacity-50" />
                     </template>
                 </Column>
@@ -290,16 +321,16 @@ const getStatusSeverity = (status) => {
                 <div class="mb-6 grid grid-cols-4 gap-4 bg-pearl-50 p-5 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Total Réalisé</span>
-                        <span class="text-2xl font-black text-charcoal-700">{{ currentTimesheetDetails.timesheet.total_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-700">{{ formatHours(currentTimesheetDetails.timesheet.total_hours) }}</span>
                     </div>
                     <div class="flex flex-col border-x border-pearl-200 px-4">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Prévu Planning</span>
-                        <span class="text-2xl font-black text-charcoal-400">{{ currentTimesheetDetails.timesheet.planned_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-400">{{ formatHours(currentTimesheetDetails.timesheet.planned_hours) }}</span>
                     </div>
                     <div class="flex flex-col border-r border-pearl-200 pr-4">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Écart Analysé</span>
                         <span class="text-2xl font-black" :class="currentTimesheetDetails.timesheet.deviation < 0 ? 'text-red-600' : (currentTimesheetDetails.timesheet.deviation > 0 ? 'text-amber-600' : 'text-emerald-600')">
-                            {{ currentTimesheetDetails.timesheet.deviation > 0 ? '+' : '' }}{{ currentTimesheetDetails.timesheet.deviation }}h
+                            {{ currentTimesheetDetails.timesheet.deviation > 0 ? '+' : '' }}{{ Math.round(currentTimesheetDetails.timesheet.deviation) }}h
                         </span>
                     </div>
                     <div class="flex flex-col items-end">
@@ -327,7 +358,7 @@ const getStatusSeverity = (status) => {
                     </Column>
                     <Column field="total_hours" header="Total">
                          <template #body="{ data }">
-                            <span class="font-bold text-charcoal-700">{{ data.total_hours }}h</span>
+                            <span class="font-bold text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                         </template>
                     </Column>
                     <Column header="Anomalies / Alertes">
@@ -390,8 +421,8 @@ const getStatusSeverity = (status) => {
                         </div>
                     </template>
                     <template #marker="slotProps">
-                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'validé' ? 'bg-emerald-500' : 'bg-charcoal-700'">
-                            <i :class="slotProps.item.new_status === 'validé' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
+                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" :class="slotProps.item.new_status === 'valide' ? 'bg-emerald-500' : 'bg-charcoal-700'">
+                            <i :class="slotProps.item.new_status === 'valide' ? 'pi pi-check' : 'pi pi-sync'" class="text-[10px]"></i>
                         </span>
                     </template>
                 </Timeline>

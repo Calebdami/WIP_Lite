@@ -12,6 +12,7 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
+import ConfirmDialogBox from '@/Components/ConfirmDialog.vue';
 
 const props = defineProps({
     users: Object, 
@@ -242,28 +243,26 @@ const getStatusSeverity = (status) => {
         </div>
 
         <!-- Confirm Status Toggle Modal -->
-        <Dialog v-model:visible="showConfirmModal" header="CONFIRMATION" :modal="true" :draggable="false" class="w-full max-w-sm mx-4">
-            <div class="flex flex-col items-center text-center gap-4 py-4">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center bg-pearl-100">
-                    <i class="pi pi-exclamation-triangle text-xl" :class="userToToggle?.status === 'actif' ? 'text-red-500' : 'text-green-600'"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-bold text-charcoal-700">
-                        Êtes-vous sûr de vouloir {{ userToToggle?.status === 'actif' ? 'désactiver' : 'activer' }} ce compte ?
-                    </p>
-                    <p class="text-[10px] text-charcoal-400 mt-1 uppercase font-black">
-                        {{ userToToggle?.email }}
-                    </p>
-                </div>
-                <div class="flex gap-3 w-full mt-4">
-                    <Button label="Annuler" text severity="secondary" @click="showConfirmModal = false" class="flex-1 text-[10px] uppercase font-black" />
-                    <Button :label="userToToggle?.status === 'actif' ? 'Confirmer la désactivation' : 'Confirmer l\'activation'" 
-                        :severity="userToToggle?.status === 'actif' ? 'danger' : 'success'" 
-                        @click="handleToggleStatus" 
-                        class="flex-1 text-[10px] uppercase font-black" />
-                </div>
-            </div>
-        </Dialog>
+        <ConfirmDialogBox
+            v-model="showConfirmModal"
+            title="Confirmation"
+            :description="userToToggle ? `Êtes-vous sûr de vouloir ${userToToggle.status === 'actif' ? 'désactiver' : 'activer'} ce compte ?` : ''"
+            confirmLabel="Confirmer"
+            cancelLabel="Annuler"
+            :confirmSeverity="userToToggle?.status === 'actif' ? 'danger' : 'success'"
+            icon="pi pi-exclamation-triangle"
+            iconBgClass="bg-pearl-100"
+            iconTextClass="text-charcoal-700"
+            width="420px"
+            :closable="false"
+            className="max-w-sm"
+            @confirm="handleToggleStatus"
+            @cancel="showConfirmModal = false"
+        >
+            <p class="text-[10px] text-charcoal-400 mt-1 uppercase font-black">
+                {{ userToToggle?.email }}
+            </p>
+        </ConfirmDialogBox>
 
         <!-- Create Account Modal -->
         <Dialog v-model:visible="showCreateModal" header="NOUVEAU COMPTE" :modal="true" :draggable="false" class="w-full max-w-md mx-4">
