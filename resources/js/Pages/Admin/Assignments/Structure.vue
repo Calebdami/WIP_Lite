@@ -237,17 +237,17 @@ const campaignsStructure = computed(() => {
                     <p class="text-xs text-charcoal-400 mt-0.5">Gérez la hiérarchie CP ➔ SUP ➔ TC par campagne</p>
                 </div>
 
-                <div class="flex flex-1 max-w-lg items-center gap-3">
+                <div class="flex flex-1 max-w-2xl items-center gap-3">
                     <!-- Search Bar -->
                     <div class="relative flex-1">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-charcoal-400">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-charcoal-400">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
                         <input v-model="search" type="text" placeholder="Rechercher une ressource..."
-                            class="block w-full pl-10 pr-3 py-2 border border-pearl-200 rounded-xl text-xs focus:ring-gold-500 focus:border-gold-500 bg-white" />
+                            class="block w-full pl-12 pr-4 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
                     </div>
 
                     <!-- Bulk Assign Button -->
@@ -570,7 +570,7 @@ const campaignsStructure = computed(() => {
         <!-- 2. TAB: AVAILABLE RESOURCES -->
         <div v-if="activeTab === 'available'">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div v-for="emp in filteredAvailableEmployees" :key="emp.id"
+                <div v-for="emp in availableEmployees.data" :key="emp.id"
                     class="bg-white rounded-2xl border border-pearl-200 p-5 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
                     <div class="flex items-center gap-3 mb-4">
                         <div

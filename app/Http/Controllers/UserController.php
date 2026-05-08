@@ -24,8 +24,12 @@ class UserController extends Controller
             ->paginate(8);
 
         // Récupérer les employés qui n'ont pas encore de compte utilisateur (user_id est NULL)
+        // et qui ont un statut actif, ordonnés alphabétiquement
         $employeesWithoutAccount = Employee::whereNull('user_id')
+            ->where('status', 'actif')
             ->select('id', 'first_name', 'last_name', 'email', 'position_id')
+            ->orderBy('first_name', 'asc')
+            ->orderBy('last_name', 'asc')
             ->get();
 
         // Récupérer tous les rôles pour le formulaire de création

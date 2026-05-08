@@ -19,6 +19,14 @@ const props = defineProps({
     roles: Array
 });
 
+// Computed property pour les employés avec champ de recherche combiné
+const employeesWithoutAccountWithSearch = computed(() => {
+    return props.employeesWithoutAccount.map(emp => ({
+        ...emp,
+        searchField: `${emp.first_name} ${emp.last_name} ${emp.email}`.toLowerCase()
+    }));
+});
+
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showConfirmModal = ref(false);
@@ -262,7 +270,7 @@ const getStatusSeverity = (status) => {
             <form @submit.prevent="submitCreate" class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Employé</label>
-                    <Dropdown v-model="createForm.employee_id" :options="employeesWithoutAccount" optionValue="id" placeholder="Choisir un employé..." class="w-full text-xs" filter>
+                    <Dropdown v-model="createForm.employee_id" :options="employeesWithoutAccountWithSearch" optionValue="id" optionLabel="searchField" placeholder="Choisir un employé..." class="w-full text-xs" filter>
                         <template #option="slot">{{ slot.option.first_name }} {{ slot.option.last_name }}</template>
                         <template #value="slot">
                             <span v-if="slot.value">{{ employeesWithoutAccount.find(e => e.id === slot.value)?.first_name }} {{ employeesWithoutAccount.find(e => e.id === slot.value)?.last_name }}</span>
