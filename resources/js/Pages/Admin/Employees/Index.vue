@@ -35,6 +35,28 @@ const role_id = ref(props.filters.role_id || '');
 const status = ref(props.filters.status || '');
 const assignment_status = ref(props.filters.assignment_status || '');
 
+// Manual search functions
+const triggerSearch = () => {
+    router.get(route('admin.employees.index'), {
+        search: search.value,
+        role_id: role_id.value,
+        status: status.value,
+        assignment_status: assignment_status.value,
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
+// Custom debounce (for filters only, not search)
 const updateFilters = debounce(() => {
     router.get(route('admin.employees.index'), {
         search: search.value,
@@ -47,7 +69,8 @@ const updateFilters = debounce(() => {
     });
 }, 300);
 
-watch([search, role_id, status, assignment_status], updateFilters);
+// Only watch filters, not search
+watch([role_id, status, assignment_status], updateFilters);
 
 // Form Management (Add/Edit/View)
 const showModal = ref(false);
@@ -161,8 +184,16 @@ const getStatusSeverity = (status) => {
                     v-model="search"
                     type="text" 
                     placeholder="Rechercher (Nom, matricule...)" 
-                    class="block w-full pl-10 pr-3 py-2 border border-pearl-200 rounded-lg text-xs focus:ring-gold-500 focus:border-gold-500 outline-none"
+                    @keydown="handleSearchKeydown"
+                    class="block w-full pl-10 pr-20 py-2 border border-pearl-200 rounded-lg text-xs focus:ring-gold-500 focus:border-gold-500 outline-none"
                 />
+                <button @click="triggerSearch"
+                    class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-lg hover:bg-gold-700 transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
             </div>
             
             <select v-model="role_id" class="block w-full py-2 border border-pearl-200 rounded-lg text-xs focus:ring-gold-500 focus:border-gold-500 outline-none">

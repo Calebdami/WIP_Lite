@@ -78,7 +78,26 @@ const submit = () => {
 const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || '');
 
-// Custom debounce
+// Manual search functions
+const triggerSearch = () => {
+    router.get(route('admin.campaigns.index'), {
+        search: search.value,
+        status: statusFilter.value,
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
+// Custom debounce (for status filter changes only)
 const debounce = (fn, delay) => {
     let timeoutId;
     return (...args) => {
@@ -89,7 +108,8 @@ const debounce = (fn, delay) => {
     };
 };
 
-const updateFilters = debounce(() => {
+// Only debounce status filter changes, not search
+const updateStatusFilter = debounce(() => {
     router.get(route('admin.campaigns.index'), {
         search: search.value,
         status: statusFilter.value,
@@ -99,7 +119,7 @@ const updateFilters = debounce(() => {
     });
 }, 300);
 
-watch([search, statusFilter], updateFilters);
+watch(statusFilter, updateStatusFilter);
 
 const getStatusSeverity = (status) => {
     switch (status) {
@@ -147,8 +167,16 @@ const getStatusLabel = (status) => {
                         v-model="search"
                         type="text" 
                         placeholder="Rechercher une campagne..." 
-                        class="block w-full pl-10 pr-3 py-2 border border-pearl-200 rounded-lg text-xs focus:ring-gold-500 focus:border-gold-500"
+                        @keydown="handleSearchKeydown"
+                        class="block w-full pl-10 pr-20 py-2 border border-pearl-200 rounded-lg text-xs focus:ring-gold-500 focus:border-gold-500"
                     />
+                    <button @click="triggerSearch"
+                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-lg hover:bg-gold-700 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
                 </div>
                 <select 
                     v-model="statusFilter"

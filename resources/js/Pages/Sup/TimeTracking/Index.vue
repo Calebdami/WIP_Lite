@@ -27,6 +27,21 @@ const loading = ref(false);
 const searchQuery = ref('');
 const statusFilter = ref('');
 
+// Manual search functions
+const triggerSearch = () => {
+    if (searchQuery.value === '' || searchQuery.value.length > 2) {
+        fetchTimesheets();
+    }
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
 const statusOptions = [
     { label: 'Tous les statuts', value: '' },
     { label: 'Brouillon', value: 'brouillon' },
@@ -345,7 +360,16 @@ const getStatusSeverity = (status) => {
             <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div class="relative w-full md:w-80">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400"></i>
-                    <InputText v-model="searchQuery" placeholder="Rechercher par nom de collaborateur..." class="w-full pl-10 pr-4 text-xs border-pearl-200 rounded-xl" />
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom de collaborateur..." 
+                        @keydown="handleSearchKeydown"
+                        class="w-full pl-10 pr-20 text-xs border-pearl-200 rounded-xl" />
+                    <button @click="triggerSearch"
+                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="w-full md:w-64">
                     <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full text-xs rounded-xl border-pearl-200" />

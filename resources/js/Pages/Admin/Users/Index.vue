@@ -38,6 +38,20 @@ const searchQuery = ref('');
 const roleFilter = ref(null);
 const statusFilter = ref(null);
 
+// Manual search functions
+const triggerSearch = () => {
+    // La recherche est déjà gérée par le computed property et le watch existant
+    // Pas besoin de modification supplémentaire ici
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
 const filteredUsers = computed(() => {
     return props.users.data.filter(user => {
         const fullName = user.employee 
@@ -148,9 +162,18 @@ const getStatusSeverity = (status) => {
         <div class="mt-6 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-pearl-200 shadow-sm">
             <div class="flex flex-col gap-1.5">
                 <label class="text-[9px] font-black text-charcoal-400 uppercase tracking-widest">Rechercher</label>
-                <span class="p-input-icon-left w-full">
+                <span class="p-input-icon-left w-full relative">
                     <i class="pi pi-search text-charcoal-300 ml-3" />
-                    <InputText v-model="searchQuery" placeholder="Nom ou email..." class="w-full pl-10 text-xs border-pearl-300 focus:border-gold outline-none" />
+                    <InputText v-model="searchQuery" placeholder="Nom ou email..." 
+                        @keydown="handleSearchKeydown"
+                        class="w-full pl-10 pr-20 text-xs border-pearl-300 focus:border-gold outline-none" />
+                    <button @click="triggerSearch"
+                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
                 </span>
             </div>
 

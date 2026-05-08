@@ -214,7 +214,16 @@ class AssignmentController extends Controller
         $query = Employee::whereIn('status', ['actif', 'inactif'])
             ->with(['position', 'assignments' => function($q) {
                 $q->where('status', 'active')->with('campaign');
-            }]);
+            }])
+            ->where(function($q) {
+                // Exclure les employés qui ont déjà des affectations actives
+                // SAUF les CPs qui peuvent avoir plusieurs campagnes
+                $q->whereDoesntHave('assignments', function($subQ) {
+                    $subQ->where('status', 'active');
+                })->orWhereHas('position', function($posQ) {
+                    $posQ->where('code', 'CP');
+                });
+            });
 
         if ($request->search) {
             $search = $request->search;
@@ -236,7 +245,7 @@ class AssignmentController extends Controller
         }
 
         return Inertia::render('Admin/Assignments/Resources', [
-            'employees' => $query->paginate(8)->withQueryString(),
+            'employees' => $query->paginate(12)->withQueryString(),
             'filters' => $request->only(['search', 'status']),
         ]);
     }

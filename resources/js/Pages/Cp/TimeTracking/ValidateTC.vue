@@ -37,6 +37,21 @@ const statusOptions = ref([
     { label: 'Rejeté', value: 'rejete' }
 ]);
 
+// Manual search functions
+const triggerSearch = () => {
+    if (searchQuery.value === '' || searchQuery.value.length > 2) {
+        fetchSubmittedTimesheets();
+    }
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
 const fetchSubmittedTimesheets = async () => {
     loading.value = true;
     try {
@@ -222,7 +237,18 @@ const getStatusSeverity = (status) => {
         <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
             <div class="flex gap-4 mb-6">
                 <div class="flex-1">
-                    <InputText v-model="searchQuery" placeholder="Rechercher par nom d'employé..." class="w-full rounded-xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-3" />
+                    <div class="relative flex-1">
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom d'employé..." 
+                        @keydown="handleSearchKeydown"
+                        class="w-full pr-20 rounded-xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-3" />
+                    <button @click="triggerSearch"
+                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
                 </div>
                 <div class="w-48">
                     <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full rounded-xl border-pearl-200" />

@@ -1,20 +1,21 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     campaigns: Object,      // Paginated for Hierarchy View
     assignments: Array,    // For Hierarchy Tree
     allCampaigns: Array,   // Full list for Modal
     allManagers: Array,    // Full list for Modal
-    availableEmployees: Object, // Not used in Structure but sent by controller
+    availableEmployees: Object,
     positions: Array,
     filters: Object,
     assign: [String, Number], // Optional employee ID to auto-open modal
 });
 
 const search = ref(props.filters?.search || '');
+const activeTab = ref('hierarchy'); // 'hierarchy' or 'available'
 const showAssignModal = ref(false);
 const showReleaseModal = ref(false);
 const selectedEmployee = ref(null);
@@ -99,17 +100,38 @@ const openAssignModal = (emp) => {
 
 const setPendingContext = (ctx) => {
     pendingContext.value = ctx;
-    // Rediriger vers la page des ressources disponibles
-    router.get(route('admin.assignments.resources'), {
-        campaign_id: ctx.campaign_id,
-        manager_assignment_id: ctx.manager_assignment_id,
-        position_code: ctx.position_code
-    });
+    activeTab.value = 'available';
 };
+
+// Filtrage des ressources disponibles par position quand un contexte est actif
+const filteredAvailableEmployees = computed(() => {
+    if (!pendingContext.value?.position_code) {
+        return props.availableEmployees.data;
+    }
+    return props.availableEmployees.data.filter(
+        emp => emp.position?.code === pendingContext.value.position_code
+    );
+});
 
 const clearPendingContext = () => {
     pendingContext.value = null;
 };
+
+// Check for auto-assign on mount
+import { onMounted } from 'vue';
+onMounted(() => {
+    if (props.assign) {
+        // Look for the employee in the available list first
+        const emp = props.availableEmployees.data.find(e => e.id == props.assign);
+        if (emp) {
+            openAssignModal(emp);
+        } else {
+            // If not in available (maybe a CP with assignments), we might need to find them elsewhere
+            // For now, if they are a CP and already have assignments, we should ensure they are in the available list (handled by controller)
+            // If the search/pagination prevents finding them, the admin can still use the search bar.
+        }
+    }
+});
 
 const openReleaseModal = (assignment) => {
     selectedAssignment.value = assignment;
@@ -120,6 +142,7 @@ const openReleaseModal = (assignment) => {
 const submitAssignment = () => {
     form.post(route('admin.assignments.store'), {
         onSuccess: () => {
+            activeTab.value = 'hierarchy'; // Switch first for immediate feedback
             showAssignModal.value = false;
             form.reset();
             clearPendingContext();
@@ -148,35 +171,17 @@ const confirmRelease = () => {
 const updateSearch = () => {
     router.get(route('admin.assignments.structure'), {
         search: search.value,
+        available_page: 1, // Reset page when searching
     }, {
         preserveState: true,
         replace: true,
     });
 };
 
-const triggerSearch = () => {
-    if (search.value === '' || search.value.length > 2) {
-        updateSearch();
-    }
-};
-
-// Handle Enter key press
-const handleSearchKeydown = (event) => {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        triggerSearch();
-    }
-};
-
-// Handle auto-open assign modal if assign parameter is present
-
-onMounted(() => {
-    if (props.assign) {
-        // Find the employee in availableEmployees
-        const employee = props.availableEmployees?.data?.find(emp => emp.id == props.assign);
-        if (employee) {
-            openAssignModal(employee);
-        }
+watch(search, (val) => {
+    // Optional debounce if needed, but simple for now
+    if (val === '' || val.length > 2) {
+        setTimeout(updateSearch, 300);
     }
 });
 
@@ -222,13 +227,14 @@ const campaignsStructure = computed(() => {
 </script>
 
 <template>
+
     <Head title="Structure des Affectations — Admin" />
     <AdminLayout>
         <template #header>
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Structure des Affectations</h1>
-                    <p class="text-xs text-charcoal-400 mt-0.5">Visualisez la hiérarchie CP ➔ SUP ➔ TC par campagne</p>
+                    <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Structure & Affectations</h1>
+                    <p class="text-xs text-charcoal-400 mt-0.5">Gérez la hiérarchie CP ➔ SUP ➔ TC par campagne</p>
                 </div>
 
                 <div class="flex flex-1 max-w-2xl items-center gap-3">
@@ -241,15 +247,7 @@ const campaignsStructure = computed(() => {
                             </svg>
                         </span>
                         <input v-model="search" type="text" placeholder="Rechercher une ressource..."
-                            @keydown="handleSearchKeydown"
-                            class="block w-full pl-12 pr-20 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
-                        <button @click="triggerSearch"
-                            class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </button>
+                            class="block w-full pl-12 pr-4 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
                     </div>
 
                     <!-- Bulk Assign Button -->
@@ -262,21 +260,24 @@ const campaignsStructure = computed(() => {
                         Affectation Multiple
                     </Link>
 
-                    <!-- Resources Available Link -->
-                    <Link :href="route('admin.assignments.resources')"
-                        class="inline-flex items-center px-4 py-2 bg-charcoal-900 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-gold-600 transition-all shrink-0">
-                        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Ressources Disponibles
-                    </Link>
+                    <div class="flex bg-pearl-50 p-1 rounded-lg border border-pearl-200 shadow-sm shrink-0">
+                        <button @click="activeTab = 'hierarchy'"
+                            :class="activeTab === 'hierarchy' ? 'bg-white text-gold-600 shadow-sm' : 'text-charcoal-400 hover:text-charcoal-600'"
+                            class="px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all">
+                            Structure
+                        </button>
+                        <button @click="activeTab = 'available'"
+                            :class="activeTab === 'available' ? 'bg-white text-gold-600 shadow-sm' : 'text-charcoal-400 hover:text-charcoal-600'"
+                            class="px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all">
+                            Disponibles ({{ availableEmployees.total }})
+                        </button>
+                    </div>
                 </div>
             </div>
         </template>
 
-        <!-- HIERARCHY VIEW -->
-        <div class="space-y-8">
+        <!-- 1. TAB: HIERARCHY VIEW -->
+        <div v-if="activeTab === 'hierarchy'" class="space-y-8">
             <div v-for="(struct, campaignId) in campaignsStructure" :key="campaignId"
                 class="bg-white rounded-2xl border border-pearl-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                 <div class="px-6 py-4 bg-charcoal-900 border-b border-charcoal-800 flex justify-between items-center">
@@ -397,7 +398,7 @@ const campaignsStructure = computed(() => {
                         </div>
                     </div>
 
-                    <!-- 2. Orphan CP Placeholder -->
+                    <!-- 2. Orphan CP Placeholder (Only if NO CPs in campaign but Orphan SUPs exist) -->
                     <div v-if="struct.cps.length === 0 && struct.orphanSups.length > 0"
                         class="relative pl-6 border-l-2 border-rose-200 bg-rose-50/30 rounded-2xl p-6 border-dashed">
                         <div class="absolute top-0 left-0 w-6 h-0.5 bg-rose-200 -ml-[2px] mt-4"></div>
@@ -485,7 +486,7 @@ const campaignsStructure = computed(() => {
                         </div>
                     </div>
 
-                    <!-- 3. Simple Orphan SUPs display -->
+                    <!-- 3. Simple Orphan SUPs display (When CPs exist but some SUPs are not attached) -->
                     <div v-if="struct.cps.length > 0 && struct.orphanSups.length > 0" class="mt-6 space-y-4">
                         <div class="text-[10px] font-black text-rose-500 uppercase tracking-widest pl-6">Superviseurs
                             non
@@ -513,7 +514,7 @@ const campaignsStructure = computed(() => {
                         </div>
                     </div>
 
-                    <!-- 4. Orphan TC Placeholder -->
+                    <!-- 4. Orphan TC Placeholder at Campaign Level (Missing SUP) -->
                     <div v-if="struct.orphanTcs.length > 0"
                         class="relative pl-6 border-l-2 border-amber-100 bg-amber-50/20 rounded-xl p-4 border-dashed mt-4">
                         <div class="absolute top-0 left-0 w-6 h-0.5 bg-amber-100 -ml-[2px] mt-3"></div>
@@ -563,6 +564,59 @@ const campaignsStructure = computed(() => {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 2. TAB: AVAILABLE RESOURCES -->
+        <div v-if="activeTab === 'available'">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div v-for="emp in availableEmployees.data" :key="emp.id"
+                    class="bg-white rounded-2xl border border-pearl-200 p-5 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-pearl-100 flex items-center justify-center text-charcoal-700 font-black border border-pearl-200 group-hover:bg-gold-100 group-hover:text-gold-700 transition-colors">
+                            {{ emp.first_name.charAt(0) }}{{ emp.last_name.charAt(0) }}
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-black text-charcoal-800 tracking-tight">{{ emp.first_name }} {{
+                                emp.last_name }}</h3>
+                            <p class="text-[9px] text-gold-600 font-bold uppercase tracking-widest">{{
+                                emp.position?.name }}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-6 bg-pearl-50/50 p-3 rounded-lg border border-pearl-50">
+                        <div class="flex justify-between text-[9px] font-bold">
+                            <span class="text-charcoal-400 uppercase">Matricule</span>
+                            <span class="text-charcoal-700">{{ emp.matricule }}</span>
+                        </div>
+                        <div class="flex justify-between text-[9px] font-bold">
+                            <span class="text-charcoal-400 uppercase">Embauche</span>
+                            <span class="text-charcoal-700">{{ new Date(emp.hire_date).toLocaleDateString('fr-FR')
+                                }}</span>
+                        </div>
+                    </div>
+                    <button @click="openAssignModal(emp)"
+                        class="w-full py-2 bg-charcoal-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gold-600 transition-all shadow-md active:scale-95">
+                        Affecter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Available Employees Pagination (12 per page) -->
+            <div v-if="availableEmployees.links.length > 3" class="mt-8 flex justify-center">
+                <div class="flex gap-1 bg-white p-1 rounded-xl border border-pearl-200 shadow-sm">
+                    <Link v-for="link in availableEmployees.links" :key="link.label" :href="link.url || '#'"
+                        v-html="link.label" class="px-4 py-2 rounded-lg text-xs font-bold transition-all" :class="{
+                            'bg-gold-gradient text-charcoal-900 shadow-md': link.active,
+                            'text-charcoal-500 hover:bg-pearl-50': !link.active && link.url,
+                            'opacity-30 cursor-not-allowed': !link.url
+                        }" />
+                </div>
+            </div>
+
+            <div v-if="availableEmployees.data.length === 0"
+                class="text-center py-20 bg-white rounded-2xl border border-pearl-200">
+                <p class="text-charcoal-400 text-sm italic">Aucune ressource disponible pour le moment.</p>
             </div>
         </div>
 
@@ -745,11 +799,11 @@ const campaignsStructure = computed(() => {
             </div>
         </Transition>
 
-        <!-- Campaigns Pagination -->
-        <div v-if="campaigns.links.length > 3" class="mt-8 flex items-center justify-center gap-1">
+        <!-- Campaigns Pagination (12 per page) -->
+        <div v-if="activeTab === 'hierarchy' && campaigns.links.length > 3" class="mt-8 flex items-center justify-center gap-1">
             <template v-for="(link, k) in campaigns.links" :key="k">
                 <div v-if="link.url === null" class="px-4 py-2 text-xs font-bold text-charcoal-300 cursor-not-allowed" v-html="link.label" />
-                <Link v-else-if="link.url" :href="link.url" class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
+                <Link :href="link.url" class="px-4 py-2 text-xs font-bold rounded-lg transition-all"
                     :class="link.active ? 'bg-gold-gradient text-white shadow-gold' : 'bg-white border border-pearl-200 text-charcoal-500 hover:bg-pearl-50'"
                     v-html="link.label" />
             </template>

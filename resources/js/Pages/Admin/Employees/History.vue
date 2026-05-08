@@ -28,16 +28,23 @@ const debounce = (fn, delay) => {
 
 const search = ref(props.filters.search || '');
 
-const updateFilters = debounce(() => {
+// Manual search functions
+const triggerSearch = () => {
     router.get(route('admin.employees.history'), {
         search: search.value,
     }, {
         preserveState: true,
         replace: true,
     });
-}, 300);
+};
 
-watch(search, updateFilters);
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
 
 const formatDate = (dateString, includeTime = false) => {
     if (!dateString) return '-';
@@ -74,11 +81,24 @@ const formatCurrency = (amount) => {
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-charcoal-400">
                     <i class="pi pi-search text-xs"></i>
                 </span>
+                <div class="relative max-w-md w-full">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-charcoal-400">
+                    <i class="pi pi-search text-xs"></i>
+                </span>
                 <InputText 
                     v-model="search"
                     placeholder="Rechercher par nom, matricule..." 
-                    class="block w-full pl-10 text-xs border-pearl-200 focus:border-gold outline-none"
+                    @keydown="handleSearchKeydown"
+                    class="block w-full pl-10 pr-20 text-xs border-pearl-200 focus:border-gold outline-none"
                 />
+                <button @click="triggerSearch"
+                    class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-lg hover:bg-gold-700 transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </div>
             </div>
             <div class="flex items-center gap-2 text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">
                 <i class="pi pi-history text-gold-500"></i>
