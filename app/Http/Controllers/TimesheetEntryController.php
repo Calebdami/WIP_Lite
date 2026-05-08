@@ -173,8 +173,28 @@ class TimesheetEntryController extends Controller
     {
         $entries = $timesheet->entries()
             ->orderBy('date')
-            ->get()
-            ->map(function ($entry) {
+            ->get();
+
+        // Si aucune entrée n'existe, les créer automatiquement pour la période
+        if ($entries->isEmpty()) {
+            $start = $timesheet->period_start;
+            $end = $timesheet->period_end;
+
+            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                TimesheetEntry::create([
+                    'timesheet_id' => $timesheet->id,
+                    'date'         => $date->toDateString(),
+                    'planned_hours' => 0,
+                ]);
+            }
+
+            // Recharger les entrées après création
+            $entries = $timesheet->entries()
+                ->orderBy('date')
+                ->get();
+        }
+
+        $entries = $entries->map(function ($entry) {
                 return [
                     'id'             => $entry->id,
                     'date'           => $entry->date->toDateString(),

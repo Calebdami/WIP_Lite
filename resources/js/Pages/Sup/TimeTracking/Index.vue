@@ -1,7 +1,7 @@
 <script setup>
 import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -24,6 +24,16 @@ const confirm = useConfirm();
 
 const timesheets = ref([]);
 const loading = ref(false);
+const searchQuery = ref('');
+const statusFilter = ref('');
+
+const statusOptions = [
+    { label: 'Tous les statuts', value: '' },
+    { label: 'Brouillon', value: 'brouillon' },
+    { label: 'Soumis', value: 'soumis' },
+    { label: 'Validé', value: 'valide' },
+    { label: 'Rejeté', value: 'rejete' },
+];
 
 const teamMembers = ref([]);
 
@@ -42,7 +52,12 @@ const fetchTeamMembers = async () => {
 const fetchTimesheets = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/timesheets');
+        const params = {};
+        const search = searchQuery.value.trim();
+        if (search) params.search = search;
+        if (statusFilter.value) params.status = statusFilter.value;
+
+        const response = await axios.get('/api/timesheets', { params });
         timesheets.value = response.data;
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les feuilles de temps', life: 3000 });
@@ -51,9 +66,18 @@ const fetchTimesheets = async () => {
     }
 };
 
+let searchTimeout = null;
+
 onMounted(() => {
     fetchTimesheets();
     fetchTeamMembers();
+});
+
+watch([searchQuery, statusFilter], () => {
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    searchTimeout = setTimeout(fetchTimesheets, 250);
 });
 
 // Modale de Création
@@ -167,8 +191,14 @@ const openEditDialog = async (ts) => {
     currentTimesheet.value = ts;
     try {
         const response = await axios.get(`/api/timesheets/${ts.id}/entries`);
-        timesheetEntries.value = response.data.entries;
+        timesheetEntries.value = Array.isArray(response.data.entries)
+            ? response.data.entries
+            : [];
         displayEditDialog.value = true;
+
+        if (!timesheetEntries.value.length) {
+            toast.add({ severity: 'info', summary: 'Aucune entrée', detail: 'Cette feuille de temps ne contient pas encore de lignes de saisie.', life: 3000 });
+        }
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les entrées', life: 3000 });
     }
@@ -312,6 +342,16 @@ const getStatusSeverity = (status) => {
                 <Button label="Saisie Groupée" icon="pi pi-bolt" severity="warn" class="rounded-lg shadow-md shadow-gold-100" @click="displayBatchDialog = true" />
             </div>
 
+            <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="relative w-full md:w-80">
+                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400"></i>
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom de collaborateur..." class="w-full pl-10 pr-4 text-xs border-pearl-200 rounded-xl" />
+                </div>
+                <div class="w-full md:w-64">
+                    <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full text-xs rounded-xl border-pearl-200" />
+                </div>
+            </div>
+
             <DataTable :value="timesheets" v-model:selection="selectedTimesheets" :loading="loading" stripedRows responsiveLayout="scroll" 
                 paginator :rows="8" class="p-datatable-sm custom-selection-table" dataKey="id">
                 <template #empty>
@@ -447,7 +487,12 @@ const getStatusSeverity = (status) => {
                 </div>
             </div>
 
-            <DataTable :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm entry-form-table">
+            <template v-if="timesheetEntries.length === 0">
+                <div class="p-8 text-center text-sm text-charcoal-500">
+                    Aucune ligne de saisie disponible pour cette feuille de temps.
+                </div>
+            </template>
+            <DataTable v-else :value="timesheetEntries" responsiveLayout="scroll" class="p-datatable-sm entry-form-table">
                 <Column field="date" header="Date" headerClass="w-40">
                     <template #body="{ data }">
                         <div class="flex flex-col">

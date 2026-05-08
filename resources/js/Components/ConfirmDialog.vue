@@ -56,13 +56,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel']);
 
+const visible = computed({
+    get: () => props.modelValue,
+    set: (value) => emit('update:modelValue', value),
+});
+
 const dialogClass = computed(() => `p-confirm-dialog w-full mx-4 ${props.className}`.trim());
 
 const close = () => {
-    if (props.closable) {
-        emit('update:modelValue', false);
-        emit('cancel');
-    }
+    emit('update:modelValue', false);
+    emit('cancel');
 };
 
 const confirm = () => emit('confirm');
@@ -70,7 +73,7 @@ const confirm = () => emit('confirm');
 
 <template>
     <Dialog
-        v-model:visible="modelValue"
+        v-model:visible="visible"
         :modal="true"
         :draggable="false"
         :closable="closable"

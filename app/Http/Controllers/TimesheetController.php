@@ -8,6 +8,7 @@ use App\Models\TimesheetHistory;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class TimesheetController extends Controller
@@ -29,9 +30,19 @@ class TimesheetController extends Controller
             'status'      => 'nullable|in:brouillon,soumis,valide,rejete',
             'period_start' => 'nullable|date',
             'period_end'   => 'nullable|date',
+            'search'      => 'nullable|string',
         ]);
 
         $query = Timesheet::with(['employee', 'validator', 'entries']);
+
+        if ($request->filled('search')) {
+            $search = '%' . trim($request->search) . '%';
+            $query->whereHas('employee', function ($q) use ($search) {
+                $q->where('first_name', 'like', $search)
+                    ->orWhere('last_name', 'like', $search)
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$search]);
+            });
+        }
 
         if ($request->filled('employee_id')) {
             $query->where('employee_id', $request->employee_id);

@@ -16,6 +16,9 @@ import Textarea from 'primevue/textarea';
 import Tag from 'primevue/tag';
 import Timeline from 'primevue/timeline';
 import Message from 'primevue/message';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
+import { watch } from 'vue';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -24,10 +27,24 @@ const submittedTimesheets = ref([]);
 const selectedTimesheets = ref([]);
 const loading = ref(false);
 
+const searchQuery = ref('');
+const statusFilter = ref(null);
+const statusOptions = ref([
+    { label: 'Tous les statuts', value: null },
+    { label: 'Brouillon', value: 'brouillon' },
+    { label: 'Soumis', value: 'soumis' },
+    { label: 'Validé', value: 'valide' },
+    { label: 'Rejeté', value: 'rejete' }
+]);
+
 const fetchSubmittedTimesheets = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/timesheets?status=soumis');
+        const params = {};
+        if (searchQuery.value) params.search = searchQuery.value;
+        if (statusFilter.value) params.status = statusFilter.value;
+        else params.status = 'soumis'; // default to submitted
+        const response = await axios.get('/api/timesheets', { params });
         submittedTimesheets.value = response.data;
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les feuilles soumises', life: 3000 });
@@ -39,6 +56,10 @@ const fetchSubmittedTimesheets = async () => {
 onMounted(() => {
     fetchSubmittedTimesheets();
 });
+
+watch([searchQuery, statusFilter], () => {
+    fetchSubmittedTimesheets();
+}, { debounce: 300 });
 
 // Validation
 const validateSingle = (id) => {
@@ -199,6 +220,15 @@ const getStatusSeverity = (status) => {
         </template>
 
         <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1">
+                    <InputText v-model="searchQuery" placeholder="Rechercher par nom d'employé..." class="w-full rounded-xl border-pearl-200 bg-pearl-50 focus:bg-white transition-all p-3" />
+                </div>
+                <div class="w-48">
+                    <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Filtrer par statut" class="w-full rounded-xl border-pearl-200" />
+                </div>
+            </div>
+
             <DataTable :value="submittedTimesheets" v-model:selection="selectedTimesheets" :loading="loading" 
                 dataKey="id" stripedRows responsiveLayout="scroll" paginator :rows="8" class="p-datatable-sm">
                 <template #empty>
