@@ -5,6 +5,7 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -341,7 +342,7 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Total Heures" sortable>
                     <template #body="{ data }">
-                        <span class="font-black text-charcoal-700">{{ data.total_hours }}h</span>
+                        <span class="font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column field="status" header="Statut" sortable>
@@ -359,12 +360,12 @@ const getStatusSeverity = (status) => {
                                 class="hover:bg-pearl-100"
                                 @click="openEditDialog(data)" 
                                 :disabled="data.status === 'valide' || data.status === 'soumis'" />
-                            <Button label="Soumettre" icon="pi pi-send" 
+                            <Button v-if="data.status === 'brouillon' || data.status === 'rejete'" 
+                                label="Soumettre" icon="pi pi-send" 
                                 size="small"
                                 severity="info"
                                 text
-                                @click="submitTimesheet(data.id)" 
-                                :disabled="data.status !== 'brouillon' && data.status !== 'rejete'" />
+                                @click="submitTimesheet(data.id)" />
                             <Button icon="pi pi-history" text severity="info" rounded 
                                 @click="openHistory(data)" 
                                 title="Historique" />
@@ -407,9 +408,9 @@ const getStatusSeverity = (status) => {
                     <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Analyse des Écarts</span>
                     <div class="flex items-baseline gap-2">
                         <span class="text-2xl font-black" :class="globalDeviation < 0 ? 'text-red-600' : 'text-emerald-600'">
-                            {{ globalDeviation > 0 ? '+' : '' }}{{ globalDeviation }}h
+                            {{ globalDeviation > 0 ? '+' : '' }}{{ formatHours(globalDeviation) }}
                         </span>
-                        <span class="text-[10px] text-charcoal-400 font-bold uppercase">/ {{ currentTimesheet?.total_planned_hours || 35 }}h prévues</span>
+                        <span class="text-[10px] text-charcoal-400 font-bold uppercase">/ {{ formatHours(currentTimesheet?.total_planned_hours || 35) }} prévues</span>
                     </div>
                 </div>
                 <div class="flex flex-col items-end">

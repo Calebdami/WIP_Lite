@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PlanningModelController;
+use App\Http\Controllers\PlanningAssignmentController;
+use App\Http\Controllers\PlanningHistoryController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -18,7 +21,6 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = auth()->user();
     $roleName = $user->role?->name ?? 'tc';
-
     $redirectRoute = match ($roleName) {
         'admin' => 'admin.dashboard',
         'cp'    => 'cp.dashboard',
@@ -34,29 +36,57 @@ Route::get('/dashboard', function () {
     return redirect()->route($redirectRoute);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+use App\Http\Controllers\UserController;
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Personnel
-    Route::get('/employees', fn () => Inertia::render('Admin/Employees/Index'))->name('employees.index');
-    Route::get('/users', fn () => Inertia::render('Admin/Users/Index'))->name('users.index');
+    Route::get('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/history', [App\Http\Controllers\Admin\EmployeeController::class, 'history'])->name('employees.history');
+    Route::post('/employees', [App\Http\Controllers\Admin\EmployeeController::class, 'store'])->name('employees.store');
+    Route::put('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'update'])->name('employees.update');
+    Route::get('/employees/{employee}', [App\Http\Controllers\Admin\EmployeeController::class, 'show'])->name('employees.show');
+    
+    // Scoring
+    Route::get('/scoring', [App\Http\Controllers\Admin\ScoringController::class, 'index'])->name('scoring.index');
+    Route::get('/scoring/{employee}', [App\Http\Controllers\Admin\ScoringController::class, 'show'])->name('scoring.show');
+    Route::post('/scoring/tasks', [App\Http\Controllers\Admin\ScoringController::class, 'storeTask'])->name('scoring.tasks.store');
+    Route::patch('/scoring/tasks/{task}/validate', [App\Http\Controllers\Admin\ScoringController::class, 'validateTask'])->name('scoring.tasks.validate');
+    
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Campagnes
-    Route::get('/campaigns', fn () => Inertia::render('Admin/Campaigns/Index'))->name('campaigns.index');
+    Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class);
 
     // Affectations
     Route::prefix('assignments')->name('assignments.')->group(function () {
         Route::get('/structure', fn () => Inertia::render('Admin/Assignments/Structure'))->name('structure');
-        Route::get('/schedules', fn () => Inertia::render('Admin/Assignments/Schedules'))->name('schedules');
+        Route::get('/schedules', [PlanningModelController::class, 'index'])->name('schedules');
+        Route::get('/schedules/create', [PlanningModelController::class, 'create'])->name('schedules.create');
+        Route::post('/schedules', [PlanningModelController::class, 'store'])->name('schedules.store');
+        Route::get('/schedules/{planningModel}/edit', [PlanningModelController::class, 'edit'])->name('schedules.edit');
+        Route::patch('/schedules/{planningModel}', [PlanningModelController::class, 'update'])->name('schedules.update');
+        Route::delete('/schedules/{planningModel}', [PlanningModelController::class, 'destroy'])->name('schedules.destroy');
+        
+        Route::get('/schedules/assign', [PlanningAssignmentController::class, 'create'])->name('schedules.assign');
+        Route::post('/schedules/assign', [PlanningAssignmentController::class, 'store'])->name('schedules.assign.store');
         Route::get('/resources', fn () => Inertia::render('Admin/Assignments/Resources'))->name('resources');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
-        Route::get('/validation', fn () => Inertia::render('Admin/Assignments/Validation'))->name('validation');
-        Route::get('/history', fn () => Inertia::render('Admin/Assignments/History'))->name('history');
+        Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
+        Route::patch('/validation/bulk', [PlanningAssignmentController::class, 'bulkUpdateStatus'])->name('validation.bulk');
+        Route::patch('/validation/{assignment}/status', [PlanningAssignmentController::class, 'updateStatus'])->name('validation.status');
+        Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
     });
 
     // Temps de travail
-    Route::get('/time-tracking', fn () => Inertia::render('Admin/Time/Tracking'))->name('time.tracking');
+    Route::prefix('time')->name('time.')->group(function () {
+        Route::get('/tracking', fn () => Inertia::render('Admin/Time/Tracking'))->name('tracking');
+    });
 
     // Configuration
     Route::prefix('config')->name('config.')->group(function () {
@@ -72,7 +102,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     // Calendrier
-    Route::get('/calendar', fn () => Inertia::render('Admin/Calendar/Index'))->name('calendar');
 
     // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -82,22 +111,74 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Maintenance
     Route::get('/maintenance', fn () => Inertia::render('Admin/Maintenance/Index'))->name('maintenance');
+
+    // API Routes for Maintenance
+    Route::prefix('maintenance')->name('maintenance.')->group(function () {
+        // System Health
+        Route::get('/health', [App\Http\Controllers\MaintenanceController::class, 'getSystemHealth']);
+        Route::get('/logs/errors', [App\Http\Controllers\MaintenanceController::class, 'getErrorLogs']);
+
+        // Database Management
+        Route::post('/database/backup', [App\Http\Controllers\MaintenanceController::class, 'createBackup']);
+        Route::get('/database/backups', [App\Http\Controllers\MaintenanceController::class, 'getBackups']);
+        Route::get('/database/backups/{backupId}/download', [App\Http\Controllers\MaintenanceController::class, 'downloadBackup']);
+        Route::post('/database/backups/{backupId}/restore', [App\Http\Controllers\MaintenanceController::class, 'restoreBackup']);
+        Route::post('/database/clean-temp', [App\Http\Controllers\MaintenanceController::class, 'cleanTempTables']);
+        Route::post('/database/reindex', [App\Http\Controllers\MaintenanceController::class, 'reindexTables']);
+        Route::post('/database/remove-orphans', [App\Http\Controllers\MaintenanceController::class, 'removeOrphans']);
+        Route::get('/database/migrations', [App\Http\Controllers\MaintenanceController::class, 'getMigrations']);
+        Route::post('/database/anonymize', [App\Http\Controllers\MaintenanceController::class, 'anonymizeData']);
+
+        // User Control & Security
+        Route::get('/sessions', [App\Http\Controllers\MaintenanceController::class, 'getActiveSessions']);
+        Route::delete('/sessions/{sessionId}', [App\Http\Controllers\MaintenanceController::class, 'forceLogout']);
+        Route::get('/audit-logs', [App\Http\Controllers\MaintenanceController::class, 'getAuditLogs']);
+        Route::get('/maintenance-mode', [App\Http\Controllers\MaintenanceController::class, 'getMaintenanceMode']);
+        Route::post('/maintenance-mode', [App\Http\Controllers\MaintenanceController::class, 'toggleMaintenanceMode']);
+        Route::get('/permissions/check', [App\Http\Controllers\MaintenanceController::class, 'checkCriticalAccess']);
+        Route::get('/2fa/scan', [App\Http\Controllers\MaintenanceController::class, 'scan2FA']);
+
+        // Application Maintenance
+        Route::post('/files/purge-temp', [App\Http\Controllers\MaintenanceController::class, 'purgeTempFiles']);
+        Route::post('/files/purge-reports', [App\Http\Controllers\MaintenanceController::class, 'purgeOldReports']);
+        Route::post('/cache/clear-app', [App\Http\Controllers\MaintenanceController::class, 'clearAppCache']);
+        Route::post('/cache/clear-routes', [App\Http\Controllers\MaintenanceController::class, 'clearRouteCache']);
+        Route::post('/cache/clear-config', [App\Http\Controllers\MaintenanceController::class, 'clearConfigCache']);
+        Route::get('/queue/jobs', [App\Http\Controllers\MaintenanceController::class, 'getQueueJobs']);
+        Route::post('/queue/retry-failed', [App\Http\Controllers\MaintenanceController::class, 'retryFailedJobs']);
+        Route::get('/config/env', [App\Http\Controllers\MaintenanceController::class, 'getEnvVars']);
+        Route::post('/config/env', [App\Http\Controllers\MaintenanceController::class, 'saveEnvVars']);
+
+        // Communication & Support
+        Route::post('/notifications/send', [App\Http\Controllers\MaintenanceController::class, 'sendSystemNotification']);
+        Route::post('/mail/test', [App\Http\Controllers\MaintenanceController::class, 'sendTestMail']);
+
+        // Existing functionalities
+        Route::post('/clear-cache', [App\Http\Controllers\MaintenanceController::class, 'clearCache']);
+        Route::post('/backup-database', [App\Http\Controllers\MaintenanceController::class, 'backupDatabase']);
+    });
 });
 
 // ─── Chef de Projet (CP) ──────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
-    Route::get('/dashboard', fn () => Inertia::render('Cp/Dashboard'))->name('dashboard');
+Route::middleware(['auth', 'role:cp'])->prefix('cp')->name('cp.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     
     // Équipes
-    Route::get('/supervisors', fn () => Inertia::render('Cp/Teams/Supervisors'))->name('supervisors');
-    Route::get('/assignments/tc', fn () => Inertia::render('Cp/Teams/AssignmentsTC'))->name('assignments.tc');
-    Route::get('/resources/idle', fn () => Inertia::render('Cp/Teams/ResourcesIdle'))->name('resources.idle');
+    Route::get('/teams', [\App\Http\Controllers\Cp\TeamController::class, 'index'])->name('teams');
 
     // Plannings
     Route::prefix('schedules')->name('schedules.')->group(function () {
-        Route::get('/templates', fn () => Inertia::render('Cp/Schedules/Templates'))->name('templates');
-        Route::get('/assign', fn () => Inertia::render('Cp/Schedules/Assign'))->name('assign');
-        Route::get('/validation', fn () => Inertia::render('Cp/Schedules/Validation'))->name('validation');
+        Route::get('/templates', [PlanningModelController::class, 'index'])->name('templates');
+        Route::get('/templates/create', [PlanningModelController::class, 'create'])->name('templates.create');
+        Route::post('/templates', [PlanningModelController::class, 'store'])->name('templates.store');
+        Route::get('/templates/{planningModel}/edit', [PlanningModelController::class, 'edit'])->name('templates.edit');
+        Route::patch('/templates/{planningModel}', [PlanningModelController::class, 'update'])->name('templates.update');
+        Route::delete('/templates/{planningModel}', [PlanningModelController::class, 'destroy'])->name('templates.destroy');
+
+        Route::get('/assign', [PlanningAssignmentController::class, 'assignTC'])->name('assign');
+        Route::get('/assign-sup', [PlanningAssignmentController::class, 'create'])->name('assign-sup');
+        Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
+        Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
     });
 
     // Saisie & Validation
@@ -112,18 +193,18 @@ Route::middleware(['auth'])->prefix('cp')->name('cp.')->group(function () {
 });
 
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('sup')->name('sup.')->group(function () {
-    Route::get('/dashboard', fn () => Inertia::render('Sup/Dashboard'))->name('dashboard');
+Route::middleware(['auth', 'role:sup'])->prefix('sup')->name('sup.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
-    Route::get('/schedule', fn () => Inertia::render('Sup/Schedule/Index'))->name('schedule');
+    Route::get('/schedule', [App\Http\Controllers\SupPlanningController::class, 'index'])->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
     Route::get('/my-hours', fn () => Inertia::render('Sup/Hours/Index'))->name('hours');
 });
 
 // ─── Technicien (TC) ──────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('tc')->name('tc.')->group(function () {
-    Route::get('/dashboard', fn () => Inertia::render('Tc/Dashboard'))->name('dashboard');
-    Route::get('/my-schedule', fn () => Inertia::render('Tc/Schedule/Index'))->name('schedule');
+Route::middleware(['auth', 'role:tc'])->prefix('tc')->name('tc.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/my-schedule', [App\Http\Controllers\TcPlanningController::class, 'index'])->name('schedule');
     Route::get('/my-hours', fn () => Inertia::render('Tc/Hours/Index'))->name('hours');
     Route::get('/my-profile', fn () => Inertia::render('Tc/Profile/Index'))->name('profile');
 });
@@ -160,11 +241,5 @@ Route::middleware(['auth'])->get('/api/employees', function() {
     return App\Models\Employee::orderBy('last_name')->get();
 });
 
-// ─── Profile ──────────────────────────────────────────────────────────────────
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
 require __DIR__.'/auth.php';

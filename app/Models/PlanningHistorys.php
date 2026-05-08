@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PlanningHistory extends Model
+class PlanningHistorys extends Model
 {
     // Désactiver updated_at car un historique ne se modifie pas
+    protected $table = 'planning_histories';
     public $timestamps = false;
 
     protected $fillable = [

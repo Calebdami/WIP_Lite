@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -229,16 +230,16 @@ const getStatusSeverity = (status) => {
                     <template #body="{ data }">
                         <div class="flex flex-col">
                             <span :class="{'text-amber-600 font-black': data.hours_deviation > 2 || data.hours_deviation < -2, 'text-charcoal-700 font-bold': !(data.hours_deviation > 2 || data.hours_deviation < -2)}">
-                                {{ data.total_hours }} h
+                                {{ formatHours(data.total_hours) }}
                             </span>
-                            <span class="text-[10px] text-charcoal-400 uppercase tracking-tighter">Prévu: {{ data.total_planned_hours }}h</span>
+                            <span class="text-[10px] text-charcoal-400 uppercase tracking-tighter">Prévu: {{ formatHours(data.total_planned_hours) }}</span>
                         </div>
                     </template>
                 </Column>
                 <Column header="Écart" sortable>
                     <template #body="{ data }">
-                        <Tag v-if="data.hours_deviation > 0" :value="`+${data.hours_deviation}h`" severity="warn" />
-                        <Tag v-else-if="data.hours_deviation < 0" :value="`${data.hours_deviation}h`" severity="danger" />
+                        <Tag v-if="data.hours_deviation > 0" :value="`+${Math.round(data.hours_deviation)}h`" severity="warn" />
+                        <Tag v-else-if="data.hours_deviation < 0" :value="`${Math.round(data.hours_deviation)}h`" severity="danger" />
                         <Tag v-else value="CONFORME" severity="success" class="opacity-50" />
                     </template>
                 </Column>
@@ -290,16 +291,16 @@ const getStatusSeverity = (status) => {
                 <div class="mb-6 grid grid-cols-4 gap-4 bg-pearl-50 p-5 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Total Réalisé</span>
-                        <span class="text-2xl font-black text-charcoal-700">{{ currentTimesheetDetails.timesheet.total_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-700">{{ formatHours(currentTimesheetDetails.timesheet.total_hours) }}</span>
                     </div>
                     <div class="flex flex-col border-x border-pearl-200 px-4">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Prévu Planning</span>
-                        <span class="text-2xl font-black text-charcoal-400">{{ currentTimesheetDetails.timesheet.planned_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-400">{{ formatHours(currentTimesheetDetails.timesheet.planned_hours) }}</span>
                     </div>
                     <div class="flex flex-col border-r border-pearl-200 pr-4">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400 mb-1">Écart Analysé</span>
                         <span class="text-2xl font-black" :class="currentTimesheetDetails.timesheet.deviation < 0 ? 'text-red-600' : (currentTimesheetDetails.timesheet.deviation > 0 ? 'text-amber-600' : 'text-emerald-600')">
-                            {{ currentTimesheetDetails.timesheet.deviation > 0 ? '+' : '' }}{{ currentTimesheetDetails.timesheet.deviation }}h
+                            {{ currentTimesheetDetails.timesheet.deviation > 0 ? '+' : '' }}{{ Math.round(currentTimesheetDetails.timesheet.deviation) }}h
                         </span>
                     </div>
                     <div class="flex flex-col items-end">
@@ -327,7 +328,7 @@ const getStatusSeverity = (status) => {
                     </Column>
                     <Column field="total_hours" header="Total">
                          <template #body="{ data }">
-                            <span class="font-bold text-charcoal-700">{{ data.total_hours }}h</span>
+                            <span class="font-bold text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                         </template>
                     </Column>
                     <Column header="Anomalies / Alertes">

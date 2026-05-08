@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -81,12 +82,12 @@ const formatDateDisplay = (dateStr) => {
                 </Column>
                 <Column header="Total Heures" sortable>
                     <template #body="{ data }">
-                        <span class="font-black text-charcoal-700">{{ data.total_hours }} h</span>
+                        <span class="font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column header="Heures Suppl." sortable>
                     <template #body="{ data }">
-                        <Tag v-if="data.overtime_hours > 0" :value="`+${data.overtime_hours} h`" severity="warn" />
+                        <Tag v-if="data.overtime_hours > 0" :value="formatHours(data.overtime_hours)" severity="warn" />
                         <span v-else class="text-charcoal-300">-</span>
                     </template>
                 </Column>
@@ -117,11 +118,11 @@ const formatDateDisplay = (dateStr) => {
                 <div class="mb-6 grid grid-cols-2 gap-4 bg-pearl-50 p-4 rounded-2xl border border-pearl-200">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Total Réalisé</span>
-                        <span class="text-2xl font-black text-charcoal-700">{{ currentTimesheetDetails.total_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-700">{{ formatHours(currentTimesheetDetails.total_hours) }}</span>
                     </div>
                     <div class="flex flex-col border-l border-pearl-200 pl-4 items-end">
                         <span class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Prévu au Planning</span>
-                        <span class="text-2xl font-black text-charcoal-400">{{ currentTimesheetDetails.planned_hours }}h</span>
+                        <span class="text-2xl font-black text-charcoal-400">{{ formatHours(currentTimesheetDetails.planned_hours) }}</span>
                     </div>
                 </div>
 
@@ -149,7 +150,7 @@ const formatDateDisplay = (dateStr) => {
                     </Column>
                     <Column field="total_hours" header="Total">
                         <template #body="{ data }">
-                            <span class="font-bold text-charcoal-700">{{ data.total_hours }}h</span>
+                            <span class="font-bold text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                         </template>
                     </Column>
                     <Column header="Absence/Congé">

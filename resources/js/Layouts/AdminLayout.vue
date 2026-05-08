@@ -1,11 +1,34 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 import ConfirmDialog from 'primevue/confirmdialog';
 
 const page = usePage();
+const toast = useToast();
 const user = computed(() => page.props.auth?.user);
+const flash = computed(() => page.props.flash);
+
+// Watch for flash messages
+watch(flash, (newFlash) => {
+    if (newFlash?.success) {
+        toast.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: newFlash.success,
+            life: 3000
+        });
+    }
+    if (newFlash?.error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: newFlash.error,
+            life: 5000
+        });
+    }
+}, { deep: true, immediate: true });
 
 // Mobile menu
 const mobileMenuOpen = ref(false);
@@ -29,13 +52,15 @@ const navItems = [
         href: route('admin.dashboard'),
         active: route().current('admin.dashboard'),
     },
-    {
+    { 
         label: 'Personnel',
         icon: '',
         key: 'personnel',
         children: [
             { label: 'Employés', href: route('admin.employees.index') },
             { label: 'Comptes & Rôles', href: route('admin.users.index') },
+            { label: 'Historique des employés', href: route('admin.employees.history') },
+            { label: 'Scoring & Performance', href: route('admin.scoring.index') },
         ],
     },
     {
@@ -62,53 +87,10 @@ const navItems = [
         children: [
             { label: 'Plannings', href: route('admin.assignments.schedules') },
             { label: 'Validation Plannings', href: route('admin.assignments.validation') },
+            { label: 'Historique plannings', href: route('admin.assignments.history') },
+            { label: 'Suivi & Clôture', href: route('admin.time.tracking') },
         ],
-    },
-    {
-        label: 'Configuration',
-        icon: '',
-        key: 'config',
-        children: [
-            { label: 'Entreprise', href: route('admin.config.company') },
-            { label: 'Référentiels', href: route('admin.config.referentials') },
-            { label: 'Rôles & Permissions', href: route('admin.config.permissions') },
-        ],
-    },
-    {
-        label: 'Sécurité',
-        icon: '',
-        key: 'securite',
-        children: [
-            { label: 'Audit Logs', href: route('admin.security.logs') },
-            { label: 'Sessions actives', href: route('admin.security.sessions') },
-        ],
-    },
-    {
-        label: 'Calendrier',
-        icon: '',
-        href: route('admin.time.tracking'),
-        active: route().current('admin.time.tracking'),
-    },
-    {
-        label: 'Notifications',
-        icon: '',
-        key: 'notifications',
-        children: [
-            { label: 'Modèles', href: route('admin.notifications.templates') },
-            { label: 'Diffusion', href: route('admin.notifications.broadcast') },
-        ],
-    },
-    {
-        label: 'Maintenance',
-        icon: '',
-        href: route('admin.maintenance'),
-        active: route().current('admin.maintenance'),
-    },
-    {
-        label: 'Mon Profil',
-        href: route('profile.edit'),
-        active: route().current('profile.edit'),
-    },
+    }
 ];
 </script>
 
@@ -210,11 +192,7 @@ const navItems = [
                                 <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
                             <div class="p-2">
-                                <Link :href="route('profile.edit')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-charcoal-600 hover:bg-pearl-100 hover:text-gold-600 transition-premium" @click="closeMenus">
-                                    <i class="pi pi-user text-sm opacity-60"></i>
-                                    Mon Profil
-                                </Link>
-                                <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
+                                <Link :href="route('logout')" method="post" as="button" replace class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
                                     <i class="pi pi-power-off text-sm opacity-60"></i>
                                     Déconnexion
                                 </Link>

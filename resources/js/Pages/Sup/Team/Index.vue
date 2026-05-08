@@ -26,7 +26,7 @@ const getStatusSeverity = (status) => {
 </script>
 
 <template>
-    <Head title="Mon Équipe — Superviseur" />
+    <Head title="Mon Équipe — SUP" />
     <SupLayout>
         <template #header>
             <div>
@@ -74,5 +74,60 @@ const getStatusSeverity = (status) => {
                 </Column>
             </DataTable>
         </div>
+
+        <!-- Details Modal -->
+        <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div v-if="showDetailsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-charcoal-900/60 backdrop-blur-sm">
+                <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                    <div class="p-6 bg-charcoal-900 text-white flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-black tracking-tight">Fiche Téléconseiller</h3>
+                            <p class="text-[10px] font-bold text-gold-400 uppercase tracking-widest">{{ selectedMember?.matricule }}</p>
+                        </div>
+                        <button @click="showDetailsModal = false" class="text-charcoal-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="p-8 space-y-6">
+                        <div class="flex items-center gap-6">
+                            <div class="w-20 h-20 rounded-2xl bg-pearl-100 flex items-center justify-center text-charcoal-700 font-black text-2xl border border-pearl-200 shadow-inner">
+                                {{ selectedMember?.first_name.charAt(0) }}{{ selectedMember?.last_name.charAt(0) }}
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-charcoal-700">{{ selectedMember?.first_name }} {{ selectedMember?.last_name }}</h4>
+                                <div class="px-2 py-1 bg-pearl-100 rounded text-[9px] font-black uppercase text-charcoal-500 inline-block mt-1 tracking-widest">
+                                    Téléconseiller
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 bg-pearl-50 p-5 rounded-xl border border-pearl-100">
+                            <div>
+                                <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-widest">Email Professionnel</p>
+                                <p class="text-sm font-bold text-charcoal-700 mt-0.5">{{ selectedMember?.email }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-charcoal-400 uppercase font-black tracking-widest">Téléphone</p>
+                                <p class="text-sm font-bold text-charcoal-700 mt-0.5">{{ selectedMember?.phone || 'Non renseigné' }}</p>
+                            </div>
+                        </div>
+
+                        <button 
+                            @click="showDetailsModal = false"
+                            class="w-full py-3 bg-charcoal-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-charcoal-800 transition-all shadow-lg active:scale-95"
+                        >
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </SupLayout>
 </template>

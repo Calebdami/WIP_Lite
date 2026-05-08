@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -334,7 +335,7 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Heures" sortable>
                     <template #body="{ data }">
-                        <span class="font-black text-charcoal-700">{{ data.total_hours }} h</span>
+                        <span class="font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column field="status" header="Statut" sortable>
@@ -347,8 +348,11 @@ const getStatusSeverity = (status) => {
                         <div class="flex gap-1">
                             <Button icon="pi pi-pencil" text severity="secondary" rounded 
                                 @click="openEditDialog(data)" 
-                                :disabled="data.status === 'valide'" 
+                                :disabled="data.status === 'valide' || data.status === 'soumis'" 
                                 title="Saisir les heures" />
+                            <Button v-if="data.status === 'brouillon' || data.status === 'rejete'" icon="pi pi-send" text severity="info" rounded 
+                                @click="submitTimesheet(data.id)" 
+                                title="Soumettre pour validation" />
                             <Button v-if="data.status === 'soumis'" icon="pi pi-check-circle" text severity="success" rounded 
                                 @click="validateTimesheet(data.id)" 
                                 title="Valider définitivement" />

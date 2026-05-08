@@ -1,11 +1,34 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 import ConfirmDialog from 'primevue/confirmdialog';
 
 const page = usePage();
+const toast = useToast();
 const user = computed(() => page.props.auth?.user);
+const flash = computed(() => page.props.flash);
+
+// Watch for flash messages
+watch(flash, (newFlash) => {
+    if (newFlash?.success) {
+        toast.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: newFlash.success,
+            life: 3000
+        });
+    }
+    if (newFlash?.error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: newFlash.error,
+            life: 5000
+        });
+    }
+}, { deep: true, immediate: true });
 
 // Dropdown state
 const openMenu = ref(null);
@@ -34,11 +57,6 @@ const navItems = [
         label: 'Mes Heures',
         href: route('tc.hours'),
         active: route().current('tc.hours'),
-    },
-    {
-        label: 'Mon Profil',
-        href: route('profile.edit'),
-        active: route().current('profile.edit'),
     },
 ];
 </script>
@@ -102,11 +120,7 @@ const navItems = [
                                 <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
                             <div class="p-2">
-                                <Link :href="route('profile.edit')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-charcoal-600 hover:bg-pearl-100 hover:text-gold-600 transition-premium" @click="closeMenus">
-                                    <i class="pi pi-user text-sm opacity-60"></i>
-                                    Profil Personnel
-                                </Link>
-                                <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
+                                <Link :href="route('logout')" method="post" as="button" replace class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
                                     <i class="pi pi-power-off text-sm opacity-60"></i>
                                     Déconnexion
                                 </Link>

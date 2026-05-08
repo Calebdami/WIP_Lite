@@ -152,9 +152,9 @@ class TimesheetController extends Controller
      */
     public function submit(Request $request, Timesheet $timesheet): JsonResponse
     {
-        if ($timesheet->status !== 'brouillon') {
+        if (!in_array($timesheet->status, ['brouillon', 'rejete'])) {
             return response()->json([
-                'message' => 'Seules les feuilles au statut brouillon peuvent être soumises.'
+                'message' => 'Seules les feuilles au statut brouillon ou rejeté peuvent être soumises.'
             ], 422);
         }
 

@@ -10,6 +10,18 @@ const props = defineProps({
     active: {
         type: Boolean,
     },
+    replace: {
+        type: Boolean,
+        default: false,
+    },
+    method: {
+        type: String,
+        default: 'get',
+    },
+    as: {
+        type: String,
+        default: 'a',
+    },
 });
 
 const classes = computed(() =>
@@ -20,7 +32,7 @@ const classes = computed(() =>
 </script>
 
 <template>
-    <Link :href="href" :class="classes">
+    <Link :href="href" :class="classes" :replace="replace" :method="method" :as="as">
         <slot />
     </Link>
 </template>

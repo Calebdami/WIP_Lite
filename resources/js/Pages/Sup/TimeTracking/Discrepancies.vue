@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 // PrimeVue components
 import DataTable from 'primevue/datatable';
@@ -34,12 +35,12 @@ onMounted(() => {
 });
 
 const totalOvertime = computed(() => {
-    return timesheets.value.reduce((acc, ts) => acc + (parseFloat(ts.total_overtime_hours) || 0), 0).toFixed(1);
+    return Math.round(timesheets.value.reduce((acc, ts) => acc + (parseFloat(ts.total_overtime_hours) || 0), 0));
 });
 
 const totalAbsenceDeviation = computed(() => {
     const negativeDeviations = timesheets.value.filter(ts => ts.hours_deviation < 0);
-    return negativeDeviations.reduce((acc, ts) => acc + Math.abs(ts.hours_deviation), 0).toFixed(1);
+    return Math.round(negativeDeviations.reduce((acc, ts) => acc + Math.abs(ts.hours_deviation), 0));
 });
 
 const severeDiscrepanciesCount = computed(() => {
@@ -162,19 +163,19 @@ const getStatusSeverity = (status) => {
                 </Column>
                 <Column header="Prévu" sortable>
                     <template #body="{ data }">
-                        <span class="text-xs font-black text-charcoal-400 italic">{{ data.total_planned_hours }} h</span>
+                        <span class="text-xs font-black text-charcoal-400 italic">{{ formatHours(data.total_planned_hours) }}</span>
                     </template>
                 </Column>
                 <Column header="Réalisé" sortable>
                     <template #body="{ data }">
-                        <span class="text-xs font-black text-charcoal-700">{{ data.total_hours }} h</span>
+                        <span class="text-xs font-black text-charcoal-700">{{ formatHours(data.total_hours) }}</span>
                     </template>
                 </Column>
                 <Column header="Écart Analysé" sortable>
                     <template #body="{ data }">
                         <div class="flex items-center gap-2">
-                            <Tag v-if="data.hours_deviation > 0" :value="`+${data.hours_deviation}h`" severity="warn" />
-                            <Tag v-else-if="data.hours_deviation < 0" :value="`${data.hours_deviation}h`" severity="danger" />
+                            <Tag v-if="data.hours_deviation > 0" :value="`+${Math.round(data.hours_deviation)}h`" severity="warn" />
+                            <Tag v-else-if="data.hours_deviation < 0" :value="`${Math.round(data.hours_deviation)}h`" severity="danger" />
                             
                             <i v-if="Math.abs(data.hours_deviation) >= 5" class="pi pi-exclamation-circle text-red-500 animate-pulse" title="Écart Sévère"></i>
                         </div>

@@ -120,3 +120,25 @@
 .p-inputtext:focus, .p-inputnumber-input:focus, .p-select:focus, .p-datepicker-input:focus {
     @apply border-gold-500 ring-4 ring-gold-500/15 bg-white !important;
 }
+
+/* Inertia Progress Bar Customization */
+#nprogress .bar {
+    background: linear-gradient(to right, #D4A017, #FBBF24) !important;
+    height: 4px !important;
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.6) !important;
+    z-index: 99999 !important;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 15px #D4A017, 0 0 8px #D4A017 !important;
+}
+
+#nprogress .spinner {
+    z-index: 99999 !important;
+}
+
+#nprogress .spinner-icon {
+    border-top-color: #D4A017 !important;
+    border-left-color: #D4A017 !important;
+    border-width: 3px !important;
+}

@@ -10,7 +10,7 @@ class Employee extends Model
 {
     protected $fillable = [
         'user_id', 'matricule', 'first_name', 'last_name', 
-        'birth_date', 'phone', 'email', 'address', 
+        'birth_date', 'hire_date', 'phone', 'email', 'address', 
         'position_id', 'salary_base', 'status'
     ];
 
@@ -28,6 +28,20 @@ class Employee extends Model
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);
+    }
+
+    /**
+     * Relation avec les affectations
+     * Liste des affectations (Campagnes/Teams)
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     /**
