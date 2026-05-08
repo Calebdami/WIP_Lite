@@ -2,6 +2,9 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
+
+const confirm = useConfirm();
 
 const props = defineProps({
     models: Object,
@@ -84,13 +87,20 @@ const formatLatestDate = (date) => {
 };
 
 const deleteModel = (model) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le modèle "${model.name}" ?`)) {
-        router.delete(route('admin.assignments.schedules.destroy', model.id), {
-            onSuccess: () => {
-                // Flash message will handle success notification
-            }
-        });
-    }
+    confirm.require({
+        message: `Êtes-vous sûr de vouloir supprimer le modèle "${model.name}" ?`,
+        header: 'Confirmation de suppression',
+        icon: 'pi-exclamation-triangle',
+        acceptClass: 'p-button-danger',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        accept: () => {
+            router.delete(route('admin.assignments.schedules.destroy', model.id), {
+                onSuccess: () => {
+                    // Flash message will handle success notification
+                }
+            });
+        }
+    });
 };
 </script>
 

@@ -11,6 +11,9 @@ import InputSwitch from 'primevue/inputswitch'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
+import { useConfirm } from 'primevue/useconfirm'
+
+const confirm = useConfirm()
 
 // Reactive data
 const loading = ref({
@@ -118,14 +121,21 @@ const downloadBackup = async (backup) => {
 }
 
 const restoreBackup = async (backup) => {
-  if (confirm('Êtes-vous sûr de vouloir restaurer cette sauvegarde ?')) {
-    try {
-      await axios.post(`/admin/maintenance/database/backup/${backup.id}/restore`)
-      // Show success message
-    } catch (error) {
-      // Handle error
+  confirm.require({
+    message: 'Êtes-vous sûr de vouloir restaurer cette sauvegarde ?',
+    header: 'Confirmation de restauration',
+    icon: 'pi-exclamation-triangle',
+    acceptClass: 'p-button-warning',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    accept: async () => {
+      try {
+        await axios.post(`/admin/maintenance/database/backup/${backup.id}/restore`)
+        // Show success message
+      } catch (error) {
+        // Handle error
+      }
     }
-  }
+  })
 }
 
 const cleanTempTables = async () => {
@@ -165,17 +175,24 @@ const removeOrphans = async () => {
 }
 
 const anonymizeData = async () => {
-  if (confirm('Cette action va anonymiser les données sensibles. Continuer ?')) {
-    loading.value.anonymize = true
-    try {
-      await axios.post('/admin/maintenance/database/anonymize')
-      // Show success message
-    } catch (error) {
-      // Handle error
-    } finally {
-      loading.value.anonymize = false
+  confirm.require({
+    message: 'Cette action va anonymiser les données sensibles. Continuer ?',
+    header: 'Confirmation d\'anonymisation',
+    icon: 'pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    accept: async () => {
+      loading.value.anonymize = true
+      try {
+        await axios.post('/admin/maintenance/database/anonymize')
+        // Show success message
+      } catch (error) {
+        // Handle error
+      } finally {
+        loading.value.anonymize = false
+      }
     }
-  }
+  })
 }
 
 const forceLogout = async (session) => {

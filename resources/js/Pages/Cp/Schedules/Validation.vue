@@ -2,6 +2,9 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
+
+const confirm = useConfirm();
 
 const props = defineProps({
     assignments: Object,
@@ -55,16 +58,23 @@ const updateStatus = (id, status, reason = '') => {
 const bulkUpdate = (status) => {
     if (selectedIds.value.length === 0) return;
     
-    if (confirm(`Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`)) {
-        router.patch(route('admin.assignments.validation.bulk'), {
-            ids: selectedIds.value,
-            status: status
-        }, {
-            onSuccess: () => {
-                selectedIds.value = [];
-            }
-        });
-    }
+    confirm.require({
+        message: `Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`,
+        header: 'Confirmation de mise à jour',
+        icon: 'pi-exclamation-triangle',
+        acceptClass: 'p-button-success',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        accept: () => {
+            router.patch(route('admin.assignments.validation.bulk'), {
+                ids: selectedIds.value,
+                status: status
+            }, {
+                onSuccess: () => {
+                    selectedIds.value = [];
+                }
+            });
+        }
+    });
 };
 
 const formatPeriod = (start, end) => {
