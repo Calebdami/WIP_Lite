@@ -75,7 +75,8 @@ class PlanningAssignmentController extends Controller
         return Inertia::render($view, [
             'supervisors' => $supervisors,
             'models' => $models,
-            'campaigns' => $campaigns
+            'campaigns' => $campaigns,
+            'assignType' => 'sup'
         ]);
     }
 
