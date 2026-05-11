@@ -278,12 +278,14 @@ class AssignmentController extends Controller
 
         // Filtrer les ressources disponibles (non affectées ou CP pour multi-campagnes)
         $employees = $employeesQuery->where(function($q) {
-            $q->whereHas('position', function($posQ) {
-                // Inclure tous les CP
-                $posQ->where('code', 'CP');
-            })->whereDoesntHave('user', function($userQ) {
-                // Exclure l'admin
-                $userQ->where('email', 'admin@example.com');
+            $q->where(function($inner) {
+                $inner->whereHas('position', function($posQ) {
+                    // Inclure tous les CP
+                    $posQ->where('code', 'CP');
+                })->whereDoesntHave('user', function($userQ) {
+                    // Exclure l'admin
+                    $userQ->where('email', 'admin@example.com');
+                });
             })->orWhere(function($subQ) {
                 // Inclure les SUP et TC seulement s'ils n'ont pas d'affectation active
                 $subQ->whereHas('position', function($posQ) {
@@ -292,7 +294,9 @@ class AssignmentController extends Controller
                     $assignQ->where('status', 'active');
                 });
             });
-        })->paginate(500)->withQueryString();
+        })->paginate(500);
+
+        $employees->withQueryString();
 
         // Récupérer toutes les campagnes actives
         $campaigns = Campaign::where('status', 'active')->get();
@@ -408,6 +412,11 @@ class AssignmentController extends Controller
                     
                     if ($hasActive) {
                         $errors[] = "L'employé #{$employeeId} a déjà une affectation active.";
+                        continue;
+                    }
+
+                    if (!$managerAssignment->campaign_id) {
+                        $errors[] = "Erreur : L'affectation du manager sélectionné n'est pas liée à une campagne.";
                         continue;
                     }
 
