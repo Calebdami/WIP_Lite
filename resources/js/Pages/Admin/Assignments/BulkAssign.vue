@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link } from '@inertiajs/vue3'
-import { useToast } from 'primevue/usetoast'
+import { Head } from '@inertiajs/vue3'
 
 const props = defineProps({
   employees: Object,
@@ -14,20 +14,6 @@ const props = defineProps({
 })
 
 const page = usePage()
-const toast = useToast()
-const success = computed(() => page.props.flash?.success)
-
-// Afficher les notifications PrimeVue si succès
-watch(success, (newSuccess) => {
-  if (newSuccess) {
-    toast.add({
-      severity: 'success',
-      summary: 'Succès',
-      detail: newSuccess,
-      life: 5000
-    })
-  }
-})
 
 // État du formulaire
 const selectedEmployees = ref([])
@@ -56,7 +42,7 @@ const filteredEmployees = computed(() => {
     )
   }
   
-  // Filtrage par position - MAINTIENT la logique de disponibilité
+  // Filtrage par position - seulement si un filtre est sélectionné
   if (selectedPositionFilter.value) {
     // Récupérer la position sélectionnée pour connaître son code
     const selectedPosition = props.positions.find(p => p.id === selectedPositionFilter.value)
@@ -78,6 +64,21 @@ const filteredEmployees = computed(() => {
         }
       })
     }
+  } else {
+    // Si aucun filtre de position, appliquer la logique par défaut du contrôleur
+    employees = employees.filter(employee => {
+      const position = props.positions.find(p => p.id === employee.position_id)
+      if (!position) return false
+      
+      // Exclure les admins
+      if (position.code === 'ADMIN') return false
+      
+      // Inclure tous les CP
+      if (position.code === 'CP') return true
+      
+      // Pour SUP et TC : seulement s'ils sont non affectés
+      return !employee.assignments || employee.assignments.length === 0
+    })
   }
   
   return employees
@@ -203,8 +204,7 @@ const getEmployeeStatusClass = (employee) => {
 <template>
   <AdminLayout>
     <Head title="Affectation Multiple" />
-    <Toast />
-    
+        
     <div class="py-6">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -296,7 +296,7 @@ const getEmployeeStatusClass = (employee) => {
                 </div>
 
                 <!-- Liste des employés -->
-                <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="space-y-2 max-h-[600px] overflow-y-auto">
                   <div
                     v-for="employee in filteredEmployees"
                     :key="employee.id"

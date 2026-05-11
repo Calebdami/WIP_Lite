@@ -93,6 +93,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/planning-history', [PlanningHistoryController::class, 'index'])->name('planning-history');
     });
 
+    // Planning Multiple
+    Route::prefix('plannings')->name('plannings.')->group(function () {
+        Route::get('/bulk', [App\Http\Controllers\Admin\BulkPlanningController::class, 'index'])->name('bulk');
+        Route::post('/bulk', [App\Http\Controllers\Admin\BulkPlanningController::class, 'store'])->name('bulk.store');
+        Route::get('/bulk/employee-details', [App\Http\Controllers\Admin\BulkPlanningController::class, 'getEmployeeDetails'])->name('bulk.employee-details');
+        Route::delete('/bulk/{planningAssignment}', [App\Http\Controllers\Admin\BulkPlanningController::class, 'destroy'])->name('bulk.destroy');
+    });
+
     // Temps de travail
     Route::prefix('time')->name('time.')->group(function () {
         Route::get('/tracking', fn () => Inertia::render('Admin/Time/Tracking'))->name('tracking');

@@ -216,12 +216,19 @@ class AssignmentController extends Controller
                 $q->where('status', 'active')->with('campaign');
             }])
             ->where(function($q) {
-                // Exclure les employés qui ont déjà des affectations actives
-                // SAUF les CPs qui peuvent avoir plusieurs campagnes
-                $q->whereDoesntHave('assignments', function($subQ) {
-                    $subQ->where('status', 'active');
-                })->orWhereHas('position', function($posQ) {
+                $q->whereHas('position', function($posQ) {
+                    // Inclure tous les CP
                     $posQ->where('code', 'CP');
+                })->whereDoesntHave('user', function($userQ) {
+                    // Exclure l'admin
+                    $userQ->where('email', 'admin@example.com');
+                })->orWhere(function($subQ) {
+                    // Inclure les SUP et TC seulement s'ils n'ont pas d'affectation active
+                    $subQ->whereHas('position', function($posQ) {
+                        $posQ->whereIn('code', ['SUP', 'TC']);
+                    })->whereDoesntHave('assignments', function($assignQ) {
+                        $assignQ->where('status', 'active');
+                    });
                 });
             });
 
@@ -245,7 +252,7 @@ class AssignmentController extends Controller
         }
 
         return Inertia::render('Admin/Assignments/Resources', [
-            'employees' => $query->paginate(12)->withQueryString(),
+            'employees' => $query->paginate(200)->withQueryString(),
             'filters' => $request->only(['search', 'status']),
         ]);
     }
@@ -271,12 +278,21 @@ class AssignmentController extends Controller
 
         // Filtrer les ressources disponibles (non affectées ou CP pour multi-campagnes)
         $employees = $employeesQuery->where(function($q) {
-            $q->whereDoesntHave('assignments', function($sq) {
-                $sq->where('status', 'active');
-            })->orWhereHas('position', function($sq) {
-                $sq->where('code', 'CP');
+            $q->whereHas('position', function($posQ) {
+                // Inclure tous les CP
+                $posQ->where('code', 'CP');
+            })->whereDoesntHave('user', function($userQ) {
+                // Exclure l'admin
+                $userQ->where('email', 'admin@example.com');
+            })->orWhere(function($subQ) {
+                // Inclure les SUP et TC seulement s'ils n'ont pas d'affectation active
+                $subQ->whereHas('position', function($posQ) {
+                    $posQ->whereIn('code', ['SUP', 'TC']);
+                })->whereDoesntHave('assignments', function($assignQ) {
+                    $assignQ->where('status', 'active');
+                });
             });
-        })->paginate(15)->withQueryString();
+        })->paginate(500)->withQueryString();
 
         // Récupérer toutes les campagnes actives
         $campaigns = Campaign::where('status', 'active')->get();

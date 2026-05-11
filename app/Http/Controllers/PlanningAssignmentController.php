@@ -147,7 +147,7 @@ class PlanningAssignmentController extends Controller
 
         DB::transaction(function () use ($employeeIds, $validated) {
             foreach ($employeeIds as $id) {
-                if (!$id) continue;
+                if (!$id) { continue; }
                 
                 $assignment = PlanningAssignment::create([
                     'planning_model_id' => $validated['planning_model_id'],

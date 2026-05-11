@@ -1,14 +1,9 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
-// PrimeVue components
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+// Components simplifiés
 
 const props = defineProps({
     history: Object,
@@ -19,19 +14,61 @@ const props = defineProps({
     }
 });
 
+const page = usePage();
+
+// Custom debounce function
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            fn(...args);
+        }, delay);
+    };
+};
+
+// Search & Filtering
 const search = ref(props.filters?.search || '');
 
-// Debounce for search
-let timeout;
-watch(search, (value) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-        router.get(route('admin.assignments.history'), { search: value }, {
-            preserveState: true,
-            replace: true
-        });
-    }, 300);
-});
+// Manual search functions
+const triggerSearch = () => {
+    const currentUrl = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    
+    if (search.value) {
+        params.set('search', search.value);
+    } else {
+        params.delete('search');
+    }
+    
+    const newUrl = currentUrl + (params.toString() ? '?' + params.toString() : '');
+    window.location.href = newUrl;
+};
+
+// Handle Enter key press
+const handleSearchKeydown = (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        triggerSearch();
+    }
+};
+
+// Afficher les détails
+const showDetails = (historyItem) => {
+    // Créer un message détaillé pour l'instant
+    const details = `
+        ID: ${historyItem.id}
+        Employé: ${historyItem.assignment?.employee?.first_name} ${historyItem.assignment?.employee?.last_name}
+        Matricule: ${historyItem.assignment?.employee?.matricule}
+        Ancien statut: ${historyItem.old_status}
+        Nouveau statut: ${historyItem.new_status}
+        Raison: ${historyItem.reason || 'Aucune raison'}
+        Validé par: ${historyItem.author?.email || 'Système'}
+        Date: ${formatDate(historyItem.created_at)} ${formatTime(historyItem.created_at)}
+    `;
+    
+    alert(details.trim());
+};
 
 const getStatusSeverity = (status) => {
     if (!status) return 'secondary';
@@ -42,6 +79,18 @@ const getStatusSeverity = (status) => {
         case 'actif': return 'success';
         case 'clôturé': return 'info';
         default: return 'secondary';
+    }
+};
+
+const getStatusClass = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-600';
+    switch (status.toLowerCase()) {
+        case 'en attente': return 'bg-yellow-100 text-yellow-700';
+        case 'validé': return 'bg-green-100 text-green-700';
+        case 'suspendu': return 'bg-red-100 text-red-700';
+        case 'actif': return 'bg-green-100 text-green-700';
+        case 'clôturé': return 'bg-blue-100 text-blue-700';
+        default: return 'bg-gray-100 text-gray-600';
     }
 };
 
@@ -77,15 +126,24 @@ const formatTime = (dateString) => {
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Historique des Plannings</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Suivi chronologique des changements d'états et affectations</p>
                 </div>
-                <div class="relative max-w-md">
+                <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-charcoal-400">
                         <i class="pi pi-search text-xs"></i>
                     </span>
-                    <InputText 
+                    <input 
                         v-model="search"
-                        placeholder="Rechercher un employé ou une raison..." 
-                        class="block w-full pl-10 text-xs border-pearl-200 focus:border-gold outline-none"
+                        type="text" 
+                        placeholder="Rechercher (Nom, matricule, raison...)" 
+                        @keydown="handleSearchKeydown"
+                        class="block w-full pl-10 pr-20 py-3 bg-pearl-50 border-pearl-200 rounded-xl text-sm transition-all duration-200 focus:border-gold-500 focus:ring-4 focus:ring-gold-500/15 focus:bg-white outline-none"
                     />
+                    <button @click="triggerSearch"
+                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl font-black text-xs uppercase tracking-widest shadow-gold-premium hover:opacity-90 transition-all duration-200">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </template>
@@ -98,8 +156,8 @@ const formatTime = (dateString) => {
                 { label: 'Validations', value: stats?.validations || 0, icon: 'pi-check-circle', color: 'emerald' },
                 { label: 'Suspensions', value: stats?.suspensions || 0, icon: 'pi-exclamation-circle', color: 'red' }
             ]" :key="stat.label" 
-            class="bg-white rounded-2xl border border-pearl-200 p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-                <div :class="`w-12 h-12 rounded-xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center`">
+            class="bg-white rounded-3xl border border-pearl-100 p-6 shadow-premium flex items-center gap-4 hover:shadow-gold-premium transition-all duration-300">
+                <div :class="`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center`">
                     <i :class="`pi ${stat.icon} text-lg`"></i>
                 </div>
                 <div>
@@ -109,90 +167,101 @@ const formatTime = (dateString) => {
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium overflow-hidden">
-            <DataTable :value="history.data" responsiveLayout="scroll" class="p-datatable-sm" stripedRows>
-                <template #empty>
-                    <div class="text-center p-12 text-charcoal-400">
-                        <i class="pi pi-inbox text-4xl mb-4 opacity-20"></i>
-                        <p class="text-sm italic">Aucun historique trouvé.</p>
-                    </div>
-                </template>
-
-                <Column header="Employé">
-                    <template #body="{ data }">
-                        <div v-if="data.assignment?.employee" class="flex flex-col">
-                            <span class="text-xs font-bold text-charcoal-700 uppercase">
-                                {{ data.assignment.employee.first_name }} {{ data.assignment.employee.last_name }}
-                            </span>
-                            <span class="text-[9px] font-black text-gold-600 tracking-tighter">
-                                {{ data.assignment.employee.matricule }}
-                            </span>
-                        </div>
-                        <span v-else class="text-charcoal-300 italic text-xs">Inconnu</span>
-                    </template>
-                </Column>
-
-                <Column header="Planning">
-                    <template #body="{ data }">
-                        <div v-if="data.assignment?.planning_model" class="text-xs font-bold text-charcoal-600">
-                            {{ data.assignment.planning_model.name }}
-                        </div>
-                        <span v-else class="text-charcoal-300">—</span>
-                    </template>
-                </Column>
-
-                <Column header="Transition Statut">
-                    <template #body="{ data }">
-                        <div class="flex items-center gap-2">
-                            <Tag :value="formatStatus(data.old_status)" :severity="getStatusSeverity(data.old_status)" class="text-[8px]" />
-                            <i class="pi pi-arrow-right text-[8px] text-charcoal-300"></i>
-                            <Tag :value="formatStatus(data.new_status)" :severity="getStatusSeverity(data.new_status)" class="text-[8px]" />
-                        </div>
-                    </template>
-                </Column>
-
-                <Column header="Validé par">
-                    <template #body="{ data }">
-                        <div v-if="data.author" class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-full bg-pearl-100 flex items-center justify-center text-[10px] font-black text-gold-700 border border-pearl-200 uppercase">
-                                {{ data.author.email.charAt(0) }}
-                            </div>
-                            <div class="text-[11px] font-bold text-charcoal-600 truncate max-w-[100px]">
-                                {{ data.author.email.split('@')[0] }}
-                            </div>
-                        </div>
-                        <span v-else class="text-charcoal-300 italic text-xs">Système</span>
-                    </template>
-                </Column>
-
-                <Column header="Raison">
-                    <template #body="{ data }">
-                        <div class="text-[10px] text-charcoal-500 italic max-w-xs truncate" :title="data.reason">
-                            {{ data.reason || 'Aucune raison spécifiée' }}
-                        </div>
-                    </template>
-                </Column>
-
-                <Column header="Date & Heure" class="text-right">
-                    <template #body="{ data }">
-                        <div class="text-xs font-bold text-charcoal-700">{{ formatDate(data.created_at) }}</div>
-                        <div class="text-[10px] text-charcoal-400 font-medium">{{ formatTime(data.created_at) }}</div>
-                    </template>
-                </Column>
-            </DataTable>
+        <div class="bg-white rounded-3xl border border-pearl-100 shadow-premium overflow-hidden">
+            <div v-if="history.data && history.data.length > 0" class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-pearl-50 border-b border-pearl-200">
+                        <tr>
+                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Employé</th>
+                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Planning</th>
+                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Transition Statut</th>
+                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Validé par</th>
+                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Raison</th>
+                            <th class="py-4 px-6 text-right font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Date & Heure</th>
+                            <th class="py-4 px-6 text-center font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-pearl-50">
+                        <tr v-for="item in history.data" :key="item.id" class="hover:bg-pearl-50 transition-all duration-200">
+                            <td class="py-4 px-6">
+                                <div v-if="item.assignment?.employee" class="flex flex-col">
+                                    <span class="text-sm font-bold text-charcoal-700 uppercase">
+                                        {{ item.assignment.employee.first_name }} {{ item.assignment.employee.last_name }}
+                                    </span>
+                                    <span class="text-[10px] font-black text-gold-500 tracking-tighter">
+                                        {{ item.assignment.employee.matricule }}
+                                    </span>
+                                </div>
+                                <span v-else class="text-charcoal-400 italic text-sm">Inconnu</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div v-if="item.assignment?.planning_model" class="text-sm font-bold text-charcoal-600">
+                                    {{ item.assignment.planning_model.name }}
+                                </div>
+                                <span v-else class="text-charcoal-400">—</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 text-[10px] font-bold rounded-xl" :class="getStatusClass(item.old_status)">
+                                        {{ formatStatus(item.old_status) }}
+                                    </span>
+                                    <i class="pi pi-arrow-right text-xs text-charcoal-400"></i>
+                                    <span class="px-3 py-1 text-[10px] font-bold rounded-xl" :class="getStatusClass(item.new_status)">
+                                        {{ formatStatus(item.new_status) }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div v-if="item.author" class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-pearl-50 flex items-center justify-center text-xs font-black text-gold-500 border border-pearl-200 uppercase">
+                                        {{ item.author.email.charAt(0) }}
+                                    </div>
+                                    <div class="text-sm font-bold text-charcoal-600 truncate max-w-[120px]">
+                                        {{ item.author.email.split('@')[0] }}
+                                    </div>
+                                </div>
+                                <span v-else class="text-charcoal-400 italic text-sm">Système</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="text-xs text-charcoal-500 italic max-w-xs truncate" :title="item.reason">
+                                    {{ item.reason || 'Aucune raison spécifiée' }}
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <div class="text-sm font-bold text-charcoal-700">{{ formatDate(item.created_at) }}</div>
+                                <div class="text-xs text-charcoal-400 font-medium">{{ formatTime(item.created_at) }}</div>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                <button 
+                                    @click="showDetails(item)"
+                                    class="px-4 py-2 bg-pearl-50 text-charcoal-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gold-gradient hover:text-white transition-all duration-200 border border-pearl-200"
+                                >
+                                    <i class="pi pi-eye mr-2"></i>
+                                    Détail
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div v-else class="text-center py-16 text-charcoal-400">
+                <i class="pi pi-inbox text-6xl mb-6 opacity-20"></i>
+                <p class="text-lg italic">Aucun historique trouvé.</p>
+            </div>
 
             <!-- Pagination -->
-            <div v-if="history.links.length > 3" class="p-6 border-t border-pearl-100 flex justify-center">
-                <div class="flex gap-2">
+            <div v-if="history.links.length > 3" class="py-6 border-t border-pearl-100 flex justify-center">
+                <div class="flex gap-3">
                     <Link 
                         v-for="(link, k) in history.links" 
                         :key="k"
                         :href="link.url || '#'"
                         v-html="link.label"
-                        class="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all border"
+                        class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 border"
                         :class="{
-                            'bg-gold-gradient text-charcoal-900 border-transparent shadow-gold-sm': link.active,
-                            'bg-white text-charcoal-500 border-pearl-200 hover:border-gold-300 hover:text-gold-600': !link.active && link.url,
+                            'bg-gold-gradient text-charcoal-900 border-transparent shadow-gold-premium': link.active,
+                            'bg-white text-charcoal-500 border-pearl-200 hover:border-gold-500 hover:text-charcoal-900': !link.active && link.url,
                             'opacity-40 cursor-not-allowed border-pearl-100 text-charcoal-300': !link.url
                         }"
                     />
@@ -201,12 +270,12 @@ const formatTime = (dateString) => {
         </div>
 
         <!-- Explanatory Note -->
-        <div class="mt-8 bg-pearl-50 border border-pearl-200 rounded-2xl p-5 flex items-start gap-4">
-            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gold-500 shadow-sm flex-shrink-0">
-                <i class="pi pi-info-circle text-lg"></i>
+        <div class="mt-8 bg-pearl-50 border border-pearl-100 rounded-3xl p-6 flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-gold-500 shadow-premium flex-shrink-0">
+                <i class="pi pi-info-circle text-xl"></i>
             </div>
-            <div class="text-[11px] leading-relaxed text-charcoal-500 italic">
-                <span class="font-bold text-charcoal-700 not-italic block mb-1 uppercase tracking-widest text-[10px]">Traçabilité des plannings :</span>
+            <div class="text-sm leading-relaxed text-charcoal-500 italic">
+                <span class="font-bold text-charcoal-700 not-italic block mb-2 uppercase tracking-widest text-xs">Traçabilité des plannings :</span>
                 Chaque action effectuée sur une affectation de planning (création, validation, suspension, réactivation) est archivée dans cette table. Cela permet de garantir une traçabilité totale des changements d'état et des interventions des administrateurs ou chefs de plateau sur les ressources de l'entreprise.
             </div>
         </div>
