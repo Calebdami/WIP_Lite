@@ -47,30 +47,51 @@ class SupPlanningController extends Controller
         ];
 
         // 2. Récupération du planning personnel du Superviseur (Mon planning)
-        // On cherche le planning validé ou en attente qui n'est pas encore expiré
+        // On cherche le planning le plus pertinent (Validé > En attente > Suspendu) pour la période actuelle
         $myPlanning = PlanningAssignment::where('employee_id', $supEmployee->id)
             ->where(function($q) {
                 $q->whereNull('end_date')
                   ->orWhere('end_date', '>=', now()->startOfDay());
             })
             ->with('planningModel')
-            ->orderBy('created_at', 'desc')
+            ->get()
+            ->sortByDesc('created_at') // On prend le plus récent par défaut
+            ->sortBy(function($pa) {
+                // Mais on priorise 'validé' puis 'en attente' par rapport à 'suspendu'
+                return match($pa->status) {
+                    'validé' => 1,
+                    'en attente' => 2,
+                    'suspendu' => 3,
+                    default => 4
+                };
+            })
             ->first();
 
-        // 3. Récupération des plannings de l'équipe (Plannings des TC gérés)
+        // 3. Récupération des plannings de l'équipe (Dernier planning de chaque TC)
         // Étape A : Identifier les membres de l'équipe active
         $teamEmployeeIds = Assignment::where('manager_id', $supEmployee->id)
             ->where('status', 'active')
             ->pluck('employee_id');
 
-        // Étape B : Récupérer leurs plannings respectifs
+        // Étape B : Récupérer le dernier planning pour chaque membre
         $teamPlannings = PlanningAssignment::whereIn('employee_id', $teamEmployeeIds)
-            ->where(function($q) {
-                $q->whereNull('end_date')
-                  ->orWhere('end_date', '>=', now()->startOfDay());
-            })
             ->with(['planningModel', 'employee'])
             ->get()
+            ->groupBy('employee_id')
+            ->map(function ($group) {
+                // Pour chaque employé, on prend le planning le plus récent MAIS on priorise le statut 'validé'
+                return $group->sortByDesc('created_at')
+                    ->sortBy(function($pa) {
+                        return match($pa->status) {
+                            'validé' => 1,
+                            'en attente' => 2,
+                            'suspendu' => 3,
+                            default => 4
+                        };
+                    })
+                    ->first();
+            })
+            ->values() // Revenir à une collection indexée numériquement
             ->map(function($pa) {
                 return [
                     'id' => $pa->id,

@@ -115,13 +115,23 @@ class DashboardController extends Controller
         $alerts = PlanningAssignment::whereIn('employee_id', $allManagedIds)
             ->where('status', 'en attente')
             ->count();
+
+        // Activités récentes dans son périmètre
+        $recentActivities = PlanningHistorys::whereHas('assignment', function($q) use ($allManagedIds) {
+                $q->whereIn('employee_id', $allManagedIds);
+            })
+            ->with(['assignment.employee', 'author'])
+            ->latest()
+            ->take(5)
+            ->get();
         
         return Inertia::render('Cp/Dashboard', [
             'stats' => [
                 'campaigns' => $campaignsCount,
                 'employees' => $totalEmployees,
                 'alerts' => $alerts
-            ]
+            ],
+            'recentActivities' => $recentActivities
         ]);
     }
 

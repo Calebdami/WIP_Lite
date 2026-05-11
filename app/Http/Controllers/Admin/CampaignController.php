@@ -30,12 +30,17 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:campaigns,name',
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:active,inactive,finished',
         ]);
+
+        // Auto-bascule en "terminé" si la date de fin est passée
+        if ($validated['end_date'] && \Carbon\Carbon::parse($validated['end_date'])->endOfDay()->isPast()) {
+            $validated['status'] = 'finished';
+        }
 
         Campaign::create($validated);
 
@@ -45,12 +50,17 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:campaigns,name,' . $campaign->id,
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:active,inactive,finished',
         ]);
+
+        // Auto-bascule en "terminé" si la date de fin est passée
+        if ($validated['end_date'] && \Carbon\Carbon::parse($validated['end_date'])->endOfDay()->isPast()) {
+            $validated['status'] = 'finished';
+        }
 
         $campaign->update($validated);
 

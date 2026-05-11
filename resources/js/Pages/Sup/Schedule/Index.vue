@@ -185,6 +185,17 @@ const formatDate = (date) => {
                         </div>
                     </div>
                 </div>
+                <div v-else-if="myPlanning?.status === 'suspendu'" class="p-8">
+                    <div
+                        class="bg-red-50 border border-red-100 rounded-lg p-6 flex flex-col items-center text-center">
+                        <svg class="w-8 h-8 text-red-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h4 class="text-sm font-bold text-red-800">Planning suspendu</h4>
+                        <p class="text-xs text-red-600 mt-1">Votre planning a été suspendu par l'administration. Veuillez contacter votre responsable.</p>
+                    </div>
+                </div>
                 <div v-else-if="myPlanning" class="p-8">
                     <div
                         class="bg-orange-50 border border-orange-100 rounded-lg p-6 flex flex-col items-center text-center">
@@ -193,9 +204,7 @@ const formatDate = (date) => {
                                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <h4 class="text-sm font-bold text-orange-800">En attente de validation par le CP</h4>
-                        <p class="text-xs text-orange-600 mt-1">Les détails de votre planning seront visibles dès qu'il
-                            sera
-                            validé.</p>
+                        <p class="text-xs text-orange-600 mt-1">Les détails de votre planning seront visibles dès qu'il sera validé.</p>
                     </div>
                 </div>
                 <div v-else class="p-12 text-center text-gray-400 text-sm italic">Aucun planning personnel actif.</div>
@@ -211,46 +220,52 @@ const formatDate = (date) => {
                         </svg>
                         Plannings de mon équipe ({{ teamPlannings?.length || 0 }} TC)
                     </h3>
+                </div>
 
-                    <div class="space-y-4">
-                        <div v-for="tp in teamPlannings" :key="tp.id"
-                            class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-800">{{ tp.tc_name }}</h4>
-                                    <p class="text-[10px] text-gray-400 mt-0.5">Du {{ formatDate(tp.start_date) }} au {{
-                                        formatDate(tp.end_date) }}</p>
-                                </div>
+                <div class="p-6 space-y-4">
+                    <div v-for="tp in teamPlannings" :key="tp.id"
+                        class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">{{ tp.tc_name }}</h4>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Du {{ formatDate(tp.start_date) }} au {{
+                                    formatDate(tp.end_date) }}</p>
+                            </div>
+                            <span
+                                :class="['px-2.5 py-0.5 rounded-full text-[10px] font-bold border', getStatusBadge(tp.status).color]">
+                                {{ getStatusBadge(tp.status).label }}
+                            </span>
+                        </div>
+                        <div v-if="tp.status === 'validé'" class="p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h5 class="text-xs font-bold text-gray-700">{{ tp.planning_model?.name }}</h5>
                                 <span
-                                    :class="['px-2.5 py-0.5 rounded-full text-[10px] font-bold border', getStatusBadge(tp.status).color]">
-                                    {{ getStatusBadge(tp.status).label }}
-                                </span>
+                                    class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{{
+                                    tp.total_hours }}h/sem</span>
                             </div>
-                            <div v-if="tp.status === 'validé'" class="p-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h5 class="text-xs font-bold text-gray-700">{{ tp.planning_model?.name }}</h5>
-                                    <span
-                                        class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{{
-                                        tp.total_hours }}h/sem</span>
-                                </div>
-                                <div class="grid grid-cols-7 gap-3 items-end h-32">
-                                    <div v-for="day in daysShort" :key="day.key"
-                                        class="flex flex-col items-center gap-1.5 h-full justify-end">
-                                        <div
-                                            class="w-full bg-gray-100 rounded-t-md relative overflow-hidden h-24 flex flex-col justify-end">
-                                            <div class="w-full bg-blue-400 transition-all duration-500"
-                                                :style="{ height: getBarHeight(tp.planning_model?.[day.key]) }"></div>
-                                        </div>
-                                        <div class="text-[10px] font-medium text-gray-400 uppercase tracking-tighter">{{
-                                            day.label }}</div>
+                            <div class="grid grid-cols-7 gap-3 items-end h-32">
+                                <div v-for="day in daysShort" :key="day.key"
+                                    class="flex flex-col items-center gap-1.5 h-full justify-end">
+                                    <div
+                                        class="w-full bg-gray-100 rounded-t-md relative overflow-hidden h-24 flex flex-col justify-end">
+                                        <div class="w-full bg-blue-400 transition-all duration-500"
+                                            :style="{ height: getBarHeight(tp.planning_model?.[day.key]) }"></div>
                                     </div>
+                                    <div class="text-[10px] font-medium text-gray-400 uppercase tracking-tighter">{{
+                                        day.label }}</div>
                                 </div>
                             </div>
-                            <div v-else class="p-4">
-                                <div
-                                    class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-gray-400 text-xs italic">
-                                    Planning en attente de validation - Détails non disponibles
-                                </div>
+                        </div>
+                        <div v-else-if="tp.status === 'suspendu'" class="p-4">
+                            <div
+                                class="bg-red-50 border border-red-100 rounded-lg p-3 text-center text-red-500 text-xs italic font-medium">
+                                Planning suspendu — Contactez l'administration.
+                            </div>
+                        </div>
+                        <div v-else class="p-4">
+                            <div
+                                class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-gray-400 text-xs italic">
+                                Planning en attente de validation — Détails non disponibles
                             </div>
                         </div>
                     </div>
