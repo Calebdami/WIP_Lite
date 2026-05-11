@@ -3,17 +3,24 @@ import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
+const props = defineProps({
+    team: Array
+});
+
 // PrimeVue components
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
+import Button from 'primevue/button';
 import Avatar from 'primevue/avatar';
 
-const team = ref([
-    { id: 1, first_name: 'Alice', last_name: 'Durand', position: 'Téléconseiller', status: 'En ligne' },
-    { id: 2, first_name: 'Bob', last_name: 'Lemoine', position: 'Téléconseiller', status: 'En pause' },
-    { id: 3, first_name: 'Charlie', last_name: 'Vidal', position: 'Téléconseiller', status: 'Hors ligne' },
-]);
+const showDetailsModal = ref(false);
+const selectedMember = ref(null);
+
+const viewDetails = (member) => {
+    selectedMember.value = member;
+    showDetailsModal.value = true;
+};
 
 const getStatusSeverity = (status) => {
     switch (status) {
@@ -36,7 +43,7 @@ const getStatusSeverity = (status) => {
         </template>
 
         <div class="bg-white rounded-2xl border border-pearl-200 shadow-premium p-6">
-            <DataTable :value="team" stripedRows responsiveLayout="scroll" class="p-datatable-sm" paginator :rows="8">
+            <DataTable :value="props.team" stripedRows responsiveLayout="scroll" class="p-datatable-sm" paginator :rows="8">
                 <template #empty>
                     <div class="text-center p-8 text-charcoal-400">Aucun agent assigné.</div>
                 </template>
@@ -65,8 +72,9 @@ const getStatusSeverity = (status) => {
                 </Column>
                 
                 <Column header="Actions">
-                    <template #body>
+                    <template #body="{ data }">
                         <div class="flex gap-1">
+                            <Button icon="pi pi-eye" @click="viewDetails(data)" text severity="info" rounded title="Voir détails" />
                             <Button icon="pi pi-chart-bar" text severity="info" rounded title="Performance" />
                             <Button icon="pi pi-calendar" text severity="secondary" rounded title="Planning" />
                         </div>

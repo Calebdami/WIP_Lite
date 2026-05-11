@@ -154,26 +154,26 @@ const submit = () => {
                             v-for="sup in paginatedSupervisors" 
                             :key="sup.id"
                             @click="!sup.has_active_planning && (form.employee_id = sup.id)"
-                            class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5 group"
+                            class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 relative overflow-hidden"
                             :class="[
                                 form.employee_id === sup.id ? 'border-gold-400 bg-gold-50/20 shadow-sm' : 'bg-white',
-                                sup.has_active_planning ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' : 'cursor-pointer'
+                                sup.has_active_planning ? 'opacity-60 cursor-not-allowed grayscale-[0.5] select-none pointer-events-none' : 'cursor-pointer hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5'
                             ]"
                         >
                             <div class="flex items-center justify-between">
                                 <div>
                                     <div class="flex items-center gap-3">
-                                        <h3 class="font-bold text-sm text-charcoal-700">{{ sup.name }}</h3>
-                                        <span v-if="sup.has_active_planning" class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[9px] font-bold">Planning actif</span>
+                                        <h3 class="font-bold text-sm" :class="sup.has_active_planning ? 'text-charcoal-400' : 'text-charcoal-700'">{{ sup.name }}</h3>
+                                        <span v-if="sup.has_active_planning" class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[9px] font-black uppercase tracking-wider">Planning déjà actif</span>
                                     </div>
                                     <div class="flex items-center gap-4 mt-1.5 text-[10px] uppercase tracking-wider font-medium">
                                         <div class="flex items-center gap-1.5">
                                             <span class="text-charcoal-500">Campagne:</span>
-                                            <span :class="sup.campaign === 'Aucune campagne' ? 'text-charcoal-100 font-medium italic' : 'text-gold-600'">{{ sup.campaign }}</span>
+                                            <span :class="sup.has_active_planning ? 'text-charcoal-300' : 'text-gold-600'">{{ sup.campaign }}</span>
                                         </div>
                                         <div class="flex items-center gap-1.5 border-l border-pearl-100 pl-4">
                                             <span class="text-charcoal-300">Équipe:</span>
-                                            <span :class="sup.team_count === 0 ? 'text-charcoal-300' : 'text-charcoal-700'">{{ sup.team_count }} TC</span>
+                                            <span :class="sup.has_active_planning ? 'text-charcoal-300' : (sup.team_count === 0 ? 'text-charcoal-300' : 'text-charcoal-700')">{{ sup.team_count }} TC</span>
                                         </div>
                                     </div>
                                 </div>

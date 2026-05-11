@@ -33,7 +33,32 @@ class TimesheetController extends Controller
             'search'      => 'nullable|string',
         ]);
 
+        $user = $request->user();
+        $employee = $user->employee;
+        $role = $user->role->name;
+
         $query = Timesheet::with(['employee', 'validator', 'entries']);
+
+        // Filtrage par rôle
+        if ($role === 'sup' && $employee) {
+            // Le superviseur ne voit que ses TCs
+            $managedIds = \App\Models\Assignment::where('manager_id', $employee->id)
+                ->where('status', 'active')
+                ->pluck('employee_id');
+            $query->whereIn('employee_id', $managedIds);
+        } elseif ($role === 'cp' && $employee) {
+            // Le CP voit ses SUPs et les TCs de ses SUPs
+            $managedSupIds = \App\Models\Assignment::where('manager_id', $employee->id)
+                ->where('status', 'active')
+                ->pluck('employee_id');
+            
+            $managedTcIds = \App\Models\Assignment::whereIn('manager_id', $managedSupIds)
+                ->where('status', 'active')
+                ->pluck('employee_id');
+                
+            $allManagedIds = $managedSupIds->merge($managedTcIds)->unique();
+            $query->whereIn('employee_id', $allManagedIds);
+        }
 
         if ($request->filled('search')) {
             $search = '%' . trim($request->search) . '%';
@@ -86,6 +111,37 @@ class TimesheetController extends Controller
             'period_start' => 'required|date',
             'period_end'   => 'required|date|after_or_equal:period_start',
         ]);
+
+        // Sécurité : Vérifier que l'utilisateur a le droit de créer pour cet employé
+        $user = $request->user();
+        $authEmployee = $user->employee;
+        $role = $user->role->name;
+
+        if ($role === 'sup' && $authEmployee) {
+            $isManaged = \App\Models\Assignment::where('manager_id', $authEmployee->id)
+                ->where('employee_id', $request->employee_id)
+                ->where('status', 'active')
+                ->exists();
+            if (!$isManaged) {
+                return response()->json(['message' => 'Vous n\'avez pas la permission de créer une feuille pour cet agent.'], 403);
+            }
+        } elseif ($role === 'cp' && $authEmployee) {
+            $managedSupIds = \App\Models\Assignment::where('manager_id', $authEmployee->id)
+                ->where('status', 'active')
+                ->pluck('employee_id');
+            
+            $isManaged = \App\Models\Assignment::where('employee_id', $request->employee_id)
+                ->where(function($q) use ($authEmployee, $managedSupIds) {
+                    $q->where('manager_id', $authEmployee->id)
+                      ->orWhereIn('manager_id', $managedSupIds);
+                })
+                ->where('status', 'active')
+                ->exists();
+
+            if (!$isManaged) {
+                return response()->json(['message' => 'Cet employé n\'est pas dans votre périmètre de gestion.'], 403);
+            }
+        }
 
         // Vérifier qu'il n'existe pas déjà une feuille pour cet employé sur cette période
         $existing = Timesheet::where('employee_id', $request->employee_id)

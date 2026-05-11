@@ -6,6 +6,7 @@ use App\Http\Controllers\PlanningAssignmentController;
 use App\Http\Controllers\PlanningHistoryController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -211,10 +212,12 @@ Route::middleware(['auth', 'role:cp'])->prefix('cp')->name('cp.')->group(functio
     Route::get('/my-hours', fn () => Inertia::render('Cp/Hours/Index'))->name('hours');
 });
 
+use App\Http\Controllers\Sup\TeamController;
+
 // ─── Superviseur (SUP) ────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:sup'])->prefix('sup')->name('sup.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/my-team', fn () => Inertia::render('Sup/Team/Index'))->name('team');
+    Route::get('/my-team', [TeamController::class, 'index'])->name('team');
     Route::get('/schedule', [App\Http\Controllers\SupPlanningController::class, 'index'])->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
     Route::get('/my-hours', fn () => Inertia::render('Sup/Hours/Index'))->name('hours');
@@ -256,8 +259,32 @@ Route::middleware(['auth'])->prefix('api/timesheets')->name('api.timesheets.')->
 });
 
 // API Agents (pour les sélections)
-Route::middleware(['auth'])->get('/api/employees', function() {
-    return App\Models\Employee::orderBy('last_name')->get();
+Route::middleware(['auth'])->get('/api/employees', function(Request $request) {
+    $user = $request->user();
+    $employee = $user->employee;
+    $role = $user->role->name;
+
+    $query = App\Models\Employee::query();
+
+    if ($role === 'sup' && $employee) {
+        $managedIds = App\Models\Assignment::where('manager_id', $employee->id)
+            ->where('status', 'active')
+            ->pluck('employee_id');
+        $query->whereIn('id', $managedIds);
+    } elseif ($role === 'cp' && $employee) {
+        $managedSupIds = App\Models\Assignment::where('manager_id', $employee->id)
+            ->where('status', 'active')
+            ->pluck('employee_id');
+        
+        $managedTcIds = App\Models\Assignment::whereIn('manager_id', $managedSupIds)
+            ->where('status', 'active')
+            ->pluck('employee_id');
+            
+        $allManagedIds = $managedSupIds->merge($managedTcIds)->unique();
+        $query->whereIn('id', $allManagedIds);
+    }
+
+    return $query->orderBy('last_name')->get();
 });
 
 

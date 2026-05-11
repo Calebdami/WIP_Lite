@@ -24,17 +24,11 @@ class PlanningAssignmentController extends Controller
         $isCp = $user->role->name === 'cp';
         $cpEmployeeId = $isCp ? Employee::where('user_id', $user->id)->first()?->id : null;
 
-        // Requête de base : récupérer les employés avec la fonction SUP et une campagne active
+        // Requête de base : récupérer tous les employés avec la fonction SUP et une campagne active
         $supervisorsQuery = Employee::whereHas('position', function($q) {
             $q->where('code', 'SUP');
         })->whereHas('assignments', function($q) {
             $q->where('status', 'active')->whereNotNull('campaign_id');
-        })->whereExists(function ($query) {
-            // Un superviseur doit avoir au moins un TC actif dans son équipe pour être éligible à un planning
-            $query->select(DB::raw(1))
-                ->from('assignments')
-                ->whereColumn('assignments.manager_id', 'employees.id')
-                ->where('assignments.status', 'active');
         });
 
         // Si c'est un CP, il ne voit que les superviseurs sous sa responsabilité directe

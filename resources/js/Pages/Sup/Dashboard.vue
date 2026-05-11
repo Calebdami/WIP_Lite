@@ -70,14 +70,14 @@ const user = computed(() => page.props.auth?.user);
             </div>
             <div class="bg-white rounded-2xl border border-pearl-200 p-6 shadow-sm hover:shadow-md transition-premium">
                 <div class="flex items-center gap-4 mb-4">
-                    <div class="w-10 h-10 rounded-xl bg-pearl-50 flex items-center justify-center text-emerald-600 shadow-inner">
-                        <i class="pi pi-percentage text-lg"></i>
+                    <div class="w-10 h-10 rounded-xl bg-pearl-50 flex items-center justify-center text-orange-600 shadow-inner">
+                        <i class="pi pi-calendar-plus text-lg"></i>
                     </div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Taux de Présence</p>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Plannings en attente</p>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-charcoal-700">100%</span>
-                    <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Aujourd'hui</span>
+                    <span class="text-3xl font-black text-charcoal-700">{{ stats?.pending_plannings || 0 }}</span>
+                    <span class="text-[10px] font-bold text-orange-500 uppercase tracking-tighter">À valider</span>
                 </div>
             </div>
         </div>

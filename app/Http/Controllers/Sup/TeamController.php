@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sup;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\Assignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,37 +13,37 @@ class TeamController extends Controller
 {
     public function index()
     {
-        $employee = Auth::user()->employee;
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
 
         if (!$employee) {
             return Inertia::render('Sup/Team/Index', [
-                'campaigns' => []
+                'team' => []
             ]);
         }
 
-        // 1. Récupérer les campagnes actives du superviseur
-        $supAssignments = Assignment::where('employee_id', $employee->id)
+        // Récupérer tous les agents (TC) dont ce superviseur est le manager
+        $team = Assignment::where('manager_id', $employee->id)
             ->where('status', 'active')
-            ->with('campaign')
-            ->get();
-
-        // 2. Pour chaque campagne, récupérer les téléconseillers affectés à ce superviseur
-        $campaigns = $supAssignments->map(function ($supAssign) use ($employee) {
-            $tcs = Assignment::where('manager_id', $employee->id)
-                ->where('campaign_id', $supAssign->campaign_id)
-                ->where('status', 'active')
-                ->with(['employee.position'])
-                ->get();
-
-            return [
-                'id' => $supAssign->id,
-                'campaign' => $supAssign->campaign,
-                'tcs' => $tcs
-            ];
-        });
+            ->with(['employee.position', 'campaign'])
+            ->get()
+            ->map(function ($assignment) {
+                $agent = $assignment->employee;
+                return [
+                    'id' => $agent->id,
+                    'matricule' => $agent->matricule,
+                    'first_name' => $agent->first_name,
+                    'last_name' => $agent->last_name,
+                    'email' => $agent->email,
+                    'phone' => $agent->phone,
+                    'position' => $agent->position?->name ?? 'Téléconseiller',
+                    'campaign' => $assignment->campaign?->name ?? 'N/A',
+                    'status' => 'Hors ligne' // Statut par défaut (pourrait être dynamique plus tard)
+                ];
+            });
 
         return Inertia::render('Sup/Team/Index', [
-            'campaigns' => $campaigns
+            'team' => $team
         ]);
     }
 }
