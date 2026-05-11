@@ -2,38 +2,12 @@
 import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
-<<<<<<< HEAD
-import ConfirmDialog from 'primevue/confirmdialog';
-import { useToast } from 'primevue/usetoast';
-=======
 import { useToast } from 'primevue/usetoast';
 import ConfirmDialog from 'primevue/confirmdialog';
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
 
 const page = usePage();
 const toast = useToast();
 const user = computed(() => page.props.auth?.user);
-const flash = computed(() => page.props.flash);
-
-// Watch for flash messages
-watch(flash, (newFlash) => {
-    if (newFlash?.success) {
-        toast.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: newFlash.success,
-            life: 3000
-        });
-    }
-    if (newFlash?.error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: newFlash.error,
-            life: 5000
-        });
-    }
-}, { deep: true, immediate: true });
 
 // Surveillance des messages Flash d'Inertia
 watch(() => page.props.flash, (flash) => {
@@ -224,13 +198,9 @@ const navItems = [
                 <slot />
             </div>
         </main>
-<<<<<<< HEAD
 
         <!-- PrimeVue Components -->
-        <Toast />
-=======
         <Toast position="top-right" />
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
         <ConfirmDialog />
     </div>
 </template>

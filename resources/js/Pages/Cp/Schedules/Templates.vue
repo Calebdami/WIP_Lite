@@ -2,11 +2,7 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-<<<<<<< HEAD
-import { useConfirm } from "primevue/useconfirm";
-=======
 import { useConfirm } from 'primevue/useconfirm';
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
 
 const confirm = useConfirm();
 
@@ -91,17 +87,9 @@ const deleteModel = (model) => {
     confirm.require({
         message: `Êtes-vous sûr de vouloir supprimer le modèle "${model.name}" ?`,
         header: 'Confirmation de suppression',
-<<<<<<< HEAD
-        icon: 'pi pi-exclamation-triangle',
-        rejectLabel: 'Annuler',
-        acceptLabel: 'Supprimer',
-        rejectClass: 'p-button-secondary p-button-outlined',
-        acceptClass: 'p-button-danger',
-=======
         icon: 'pi-exclamation-triangle',
         acceptClass: 'p-button-danger',
         rejectClass: 'p-button-secondary p-button-outlined',
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
         accept: () => {
             router.delete(route('cp.schedules.templates.destroy', model.id));
         }

@@ -83,6 +83,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         
         Route::get('/schedules/assign', [PlanningAssignmentController::class, 'create'])->name('schedules.assign');
         Route::post('/schedules/assign', [PlanningAssignmentController::class, 'store'])->name('schedules.assign.store');
+        Route::get('/schedules/assign-tc', [PlanningAssignmentController::class, 'assignTCAdmin'])->name('schedules.assign-tc');
+        Route::post('/schedules/assign-tc', [PlanningAssignmentController::class, 'store'])->name('schedules.assign-tc.store');
         Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
         Route::get('/history', [App\Http\Controllers\Admin\AssignmentController::class, 'history'])->name('history');
         Route::get('/affectation-history', [App\Http\Controllers\Admin\AssignmentController::class, 'affectationHistory'])->name('affectation-history');

@@ -50,7 +50,14 @@ const submit = () => {
         rejectClass: 'p-button-secondary p-button-outlined',
         acceptClass: 'p-button-primary',
         accept: () => {
-            form.post(route('cp.schedules.templates.store'));
+            form.post(route('cp.schedules.templates.store'), {
+                onSuccess: () => {
+                    toast.add({ severity: 'success', summary: 'Succès', detail: 'Modèle de planning créé avec succès.', life: 3000 });
+                },
+                onError: () => {
+                    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la création du modèle.', life: 5000 });
+                }
+            });
         }
     });
 };

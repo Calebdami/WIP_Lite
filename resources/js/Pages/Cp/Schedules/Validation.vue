@@ -2,11 +2,7 @@
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-<<<<<<< HEAD
-import { useConfirm } from "primevue/useconfirm";
-=======
 import { useConfirm } from 'primevue/useconfirm';
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
 
 const confirm = useConfirm();
 
@@ -83,19 +79,10 @@ const bulkUpdate = (status) => {
     
     confirm.require({
         message: `Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`,
-<<<<<<< HEAD
-        header: 'Action groupée',
-        icon: 'pi pi-info-circle',
-        rejectLabel: 'Annuler',
-        acceptLabel: 'Confirmer',
-        rejectClass: 'p-button-secondary p-button-outlined',
-        acceptClass: status === 'validé' ? 'p-button-success' : 'p-button-primary',
-=======
         header: 'Confirmation de mise à jour',
         icon: 'pi-exclamation-triangle',
         acceptClass: 'p-button-success',
         rejectClass: 'p-button-secondary p-button-outlined',
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
         accept: () => {
             router.patch(route('admin.assignments.validation.bulk'), {
                 ids: selectedIds.value,

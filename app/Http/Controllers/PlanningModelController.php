@@ -37,7 +37,7 @@ class PlanningModelController extends Controller
             });
         }
 
-        $models = $query->orderByDesc('latest_assignment_date')
+        $models = $query->orderByDesc('created_at')
             ->orderBy('name', 'asc')
             ->paginate(12)
             ->withQueryString();
@@ -69,19 +69,28 @@ class PlanningModelController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'hours_summary' => 'nullable|string|max:255',
-            'monday_hours' => 'numeric|min:0|max:24',
-            'tuesday_hours' => 'numeric|min:0|max:24',
-            'wednesday_hours' => 'numeric|min:0|max:24',
-            'thursday_hours' => 'numeric|min:0|max:24',
-            'friday_hours' => 'numeric|min:0|max:24',
-            'saturday_hours' => 'numeric|min:0|max:24',
-            'sunday_hours' => 'numeric|min:0|max:24',
+            'monday_hours' => 'nullable|numeric|min:0|max:24',
+            'tuesday_hours' => 'nullable|numeric|min:0|max:24',
+            'wednesday_hours' => 'nullable|numeric|min:0|max:24',
+            'thursday_hours' => 'nullable|numeric|min:0|max:24',
+            'friday_hours' => 'nullable|numeric|min:0|max:24',
+            'saturday_hours' => 'nullable|numeric|min:0|max:24',
+            'sunday_hours' => 'nullable|numeric|min:0|max:24',
         ]);
+
+        // S'assurer que les heures sont des nombres (convertir si nécessaire)
+        $validated['monday_hours'] = (float)($validated['monday_hours'] ?? 0);
+        $validated['tuesday_hours'] = (float)($validated['tuesday_hours'] ?? 0);
+        $validated['wednesday_hours'] = (float)($validated['wednesday_hours'] ?? 0);
+        $validated['thursday_hours'] = (float)($validated['thursday_hours'] ?? 0);
+        $validated['friday_hours'] = (float)($validated['friday_hours'] ?? 0);
+        $validated['saturday_hours'] = (float)($validated['saturday_hours'] ?? 0);
+        $validated['sunday_hours'] = (float)($validated['sunday_hours'] ?? 0);
 
         // Calcul automatique du total d'heures hebdomadaires
         $totalHours = array_sum([
-            $request->monday_hours, $request->tuesday_hours, $request->wednesday_hours,
-            $request->thursday_hours, $request->friday_hours, $request->saturday_hours, $request->sunday_hours
+            $validated['monday_hours'], $validated['tuesday_hours'], $validated['wednesday_hours'],
+            $validated['thursday_hours'], $validated['friday_hours'], $validated['saturday_hours'], $validated['sunday_hours']
         ]);
 
         PlanningModel::create(array_merge($validated, [
@@ -113,14 +122,23 @@ class PlanningModelController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'hours_summary' => 'nullable|string|max:255',
-            'monday_hours' => 'numeric|min:0|max:24',
-            'tuesday_hours' => 'numeric|min:0|max:24',
-            'wednesday_hours' => 'numeric|min:0|max:24',
-            'thursday_hours' => 'numeric|min:0|max:24',
-            'friday_hours' => 'numeric|min:0|max:24',
-            'saturday_hours' => 'numeric|min:0|max:24',
-            'sunday_hours' => 'numeric|min:0|max:24',
+            'monday_hours' => 'nullable|numeric|min:0|max:24',
+            'tuesday_hours' => 'nullable|numeric|min:0|max:24',
+            'wednesday_hours' => 'nullable|numeric|min:0|max:24',
+            'thursday_hours' => 'nullable|numeric|min:0|max:24',
+            'friday_hours' => 'nullable|numeric|min:0|max:24',
+            'saturday_hours' => 'nullable|numeric|min:0|max:24',
+            'sunday_hours' => 'nullable|numeric|min:0|max:24',
         ]);
+
+        // S'assurer que les heures sont des nombres (convertir si nécessaire)
+        $validated['monday_hours'] = (float)($validated['monday_hours'] ?? 0);
+        $validated['tuesday_hours'] = (float)($validated['tuesday_hours'] ?? 0);
+        $validated['wednesday_hours'] = (float)($validated['wednesday_hours'] ?? 0);
+        $validated['thursday_hours'] = (float)($validated['thursday_hours'] ?? 0);
+        $validated['friday_hours'] = (float)($validated['friday_hours'] ?? 0);
+        $validated['saturday_hours'] = (float)($validated['saturday_hours'] ?? 0);
+        $validated['sunday_hours'] = (float)($validated['sunday_hours'] ?? 0);
 
         // Recalcul du total d'heures
         $totalHours = array_sum([
@@ -138,11 +156,20 @@ class PlanningModelController extends Controller
 
     /**
      * Supprime un modèle de planning.
-     * Sécurité : empêche la suppression si le modèle est utilisé par des employés.
+     * Sécurité : empêche la suppression si le modèle est utilisé dans des affectations actives.
      */
     public function destroy(PlanningModel $planningModel)
     {
-        if ($planningModel->assignments()->exists()) {
+        // Vérifier uniquement les affectations actives (validées et non expirées)
+        $hasActiveAssignments = $planningModel->assignments()
+            ->where('status', 'validé')
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                      ->orWhere('end_date', '>=', today());
+            })
+            ->exists();
+
+        if ($hasActiveAssignments) {
             return back()->with('error', 'Ce modèle ne peut pas être supprimé car il est utilisé dans des affectations actives.');
         }
 

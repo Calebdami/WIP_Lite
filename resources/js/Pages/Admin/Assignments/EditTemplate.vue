@@ -53,7 +53,14 @@ const submit = () => {
         rejectClass: 'p-button-secondary p-button-outlined',
         acceptClass: 'p-button-primary',
         accept: () => {
-            form.patch(route('admin.assignments.schedules.update', props.model.id));
+            form.patch(route('admin.assignments.schedules.update', props.model.id), {
+                onSuccess: () => {
+                    toast.add({ severity: 'success', summary: 'Succès', detail: 'Modèle de planning mis à jour avec succès.', life: 3000 });
+                },
+                onError: () => {
+                    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la modification du modèle.', life: 5000 });
+                }
+            });
         }
     });
 };

@@ -15,31 +15,6 @@ const props = defineProps({
     }
 });
 
-<<<<<<< HEAD
-const search = ref(props.filters.search || '');
-const status = ref(props.filters.status || 'all');
-const model_id = ref(props.filters.model_id || 'all');
-
-// Debounce pour la recherche et les filtres
-let timeout;
-const updateFilters = () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-        router.get(route('admin.assignments.history'), { 
-            search: search.value,
-            status: status.value,
-            model_id: model_id.value
-        }, {
-            preserveState: true,
-            replace: true
-        });
-    }, 300);
-};
-
-watch([search, status, model_id], () => {
-    updateFilters();
-});
-=======
 const page = usePage();
 
 // Custom debounce function
@@ -107,7 +82,6 @@ const getStatusSeverity = (status) => {
         default: return 'secondary';
     }
 };
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
 
 const getStatusClass = (status) => {
     if (!status) return 'bg-gray-100 text-gray-600';
@@ -194,7 +168,6 @@ const formatTime = (dateString) => {
             </div>
         </div>
 
-<<<<<<< HEAD
         <!-- Explanatory Note -->
         <div class="bg-pearl-50 border border-pearl-200 rounded-xl p-4 mb-8 flex items-start gap-4">
             <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pearl-400 shadow-sm flex-shrink-0">
@@ -250,20 +223,7 @@ const formatTime = (dateString) => {
                             <th class="px-6 py-4">Par</th>
                             <th class="px-6 py-4">Raison</th>
                             <th class="px-6 py-4 text-right">Date & Heure</th>
-=======
-        <div class="bg-white rounded-3xl border border-pearl-100 shadow-premium overflow-hidden">
-            <div v-if="history.data && history.data.length > 0" class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-pearl-50 border-b border-pearl-200">
-                        <tr>
-                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Employé</th>
-                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Planning</th>
-                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Transition Statut</th>
-                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Validé par</th>
-                            <th class="py-4 px-6 text-left font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Raison</th>
-                            <th class="py-4 px-6 text-right font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Date & Heure</th>
-                            <th class="py-4 px-6 text-center font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Actions</th>
->>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
+                            <th class="px-6 py-4 text-center font-black text-charcoal-700 uppercase text-[10px] tracking-widest">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-pearl-50">
@@ -330,7 +290,7 @@ const formatTime = (dateString) => {
                 </table>
             </div>
             
-            <div v-else class="text-center py-16 text-charcoal-400">
+            <div v-if="!history.data || history.data.length === 0" class="text-center py-16 text-charcoal-400">
                 <i class="pi pi-inbox text-6xl mb-6 opacity-20"></i>
                 <p class="text-lg italic">Aucun historique trouvé.</p>
             </div>

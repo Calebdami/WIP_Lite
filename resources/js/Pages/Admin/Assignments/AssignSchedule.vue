@@ -8,13 +8,21 @@ const confirm = useConfirm();
 
 const props = defineProps({
     supervisors: Array,
+    teleconsultants: Array,
     models: Array,
-    campaigns: Array
+    campaigns: Array,
+    supervisorsList: Array,
+    assignType: {
+        type: String,
+        default: 'sup' // 'sup' pour superviseurs, 'tc' pour téléconseillers
+    }
 });
 
 const searchQuery = ref('');
 const selectedCampaign = ref('all');
+const selectedSupervisorFilter = ref('all');
 const searchQueryModel = ref('');
+const selectedEmployees = ref([]); // Pour sélection multiple des TC
 
 // Pagination Superviseurs
 const currentPageSup = ref(1);
@@ -26,13 +34,14 @@ const pageSizeModel = 4;
 
 const form = useForm({
     employee_id: null,
+    employee_ids: [], // Pour affectation multiple des TC
     planning_model_id: null,
     start_date: '',
     end_date: ''
 });
 
 const filteredSupervisors = computed(() => {
-    let list = props.supervisors;
+    let list = props.supervisors || [];
 
     // Filtre par campagne
     if (selectedCampaign.value !== 'all') {
@@ -49,8 +58,31 @@ const filteredSupervisors = computed(() => {
     return list;
 });
 
+const filteredTeleconsultants = computed(() => {
+    let list = props.teleconsultants || [];
+
+    // Filtre par campagne
+    if (selectedCampaign.value !== 'all') {
+        list = list.filter(t => t.campaign === selectedCampaign.value);
+    }
+
+    // Filtre par superviseur
+    if (selectedSupervisorFilter.value !== 'all') {
+        list = list.filter(t => t.supervisor === selectedSupervisorFilter.value);
+    }
+
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        list = list.filter(t => 
+            t.name.toLowerCase().includes(query) || 
+            t.campaign.toLowerCase().includes(query)
+        );
+    }
+    return list;
+});
+
 const filteredModels = computed(() => {
-    let list = props.models;
+    let list = props.models || [];
     if (searchQueryModel.value) {
         const query = searchQueryModel.value.toLowerCase();
         list = list.filter(m => 
@@ -68,6 +100,17 @@ const paginatedSupervisors = computed(() => {
 
 const totalPagesSup = computed(() => Math.ceil(filteredSupervisors.value.length / pageSizeSup));
 
+// Pagination TC
+const currentPageTC = ref(1);
+const pageSizeTC = 6; 
+
+const paginatedTeleconsultants = computed(() => {
+    const start = (currentPageTC.value - 1) * pageSizeTC;
+    return filteredTeleconsultants.value.slice(start, start + pageSizeTC);
+});
+
+const totalPagesTC = computed(() => Math.ceil(filteredTeleconsultants.value.length / pageSizeTC));
+
 const paginatedModels = computed(() => {
     const start = (currentPageModel.value - 1) * pageSizeModel;
     return filteredModels.value.slice(start, start + pageSizeModel);
@@ -76,16 +119,41 @@ const paginatedModels = computed(() => {
 const totalPagesModel = computed(() => Math.ceil(filteredModels.value.length / pageSizeModel));
 
 const selectedSupervisor = computed(() => {
+    if (!props.supervisors) return null;
     return props.supervisors.find(s => s.id === form.employee_id);
 });
 
 const selectedModel = computed(() => {
+    if (!props.models) return null;
     return props.models.find(m => m.id === form.planning_model_id);
 });
 
+const pageTitle = computed(() => {
+    return props.assignType === 'tc' 
+        ? 'Affecter un planning aux téléconseillers' 
+        : 'Affecter un planning à un superviseur';
+});
+
+const submitMessage = computed(() => {
+    if (props.assignType === 'tc') {
+        const count = selectedEmployees.value.length;
+        return `Voulez-vous vraiment affecter le modèle "${selectedModel.value?.name}" à ${count} téléconseiller(s) ?`;
+    }
+    return `Voulez-vous vraiment affecter le modèle "${selectedModel.value?.name}" à ${selectedSupervisor.value?.name} ?`;
+});
+
+const toggleEmployeeSelection = (employeeId) => {
+    const index = selectedEmployees.value.indexOf(employeeId);
+    if (index > -1) {
+        selectedEmployees.value.splice(index, 1);
+    } else {
+        selectedEmployees.value.push(employeeId);
+    }
+};
+
 const submit = () => {
     confirm.require({
-        message: `Voulez-vous vraiment affecter le modèle "${selectedModel.value.name}" à ${selectedSupervisor.value.name} ?`,
+        message: submitMessage.value,
         header: 'Confirmation d\'affectation',
         icon: 'pi pi-calendar-plus',
         rejectLabel: 'Annuler',
@@ -93,28 +161,35 @@ const submit = () => {
         rejectClass: 'p-button-secondary p-button-outlined',
         acceptClass: 'p-button-primary',
         accept: () => {
-            form.post(route('admin.assignments.schedules.assign.store'));
+            if (props.assignType === 'tc') {
+                // Affectation multiple TC
+                form.employee_ids = selectedEmployees.value;
+                form.post(route('admin.assignments.schedules.assign-tc.store'));
+            } else {
+                // Affectation simple SUP
+                form.post(route('admin.assignments.schedules.assign.store'));
+            }
         }
     });
 };
 </script>
 
 <template>
-    <Head title="Affecter un Planning — Admin" />
+    <Head :title="pageTitle + ' — Admin'" />
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Affecter un planning à un superviseur</h1>
+                    <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">{{ pageTitle }}</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Assignation d'un modèle de planning</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <Link :href="route('admin.assignments.schedules')" class="px-4 py-2 bg-white border border-pearl-200 rounded-lg text-xs font-bold text-charcoal-600 hover:bg-pearl-50 hover:border-pearl-300 hover:shadow-sm transition-all active:scale-95">
                         Annuler
                     </Link>
-                    <button 
+                    <button
                         @click="submit"
-                        :disabled="form.processing || !form.employee_id || !form.planning_model_id || !form.start_date"
+                        :disabled="form.processing || !form.planning_model_id || !form.start_date || (props.assignType === 'sup' && !form.employee_id) || (props.assignType === 'tc' && selectedEmployees.length === 0)"
                         class="px-4 py-2 bg-gold-gradient rounded-lg text-xs font-bold text-white hover:opacity-90 transition-all shadow-gold disabled:opacity-50"
                     >
                         Valider l'affectation
@@ -128,12 +203,12 @@ const submit = () => {
             
             <!-- Colonne Gauche : Configuration -->
             <div class="space-y-6">
-                <!-- Étape 1 : Superviseur -->
+                <!-- Étape 1 : Sélection des employés -->
                 <div class="bg-white rounded-xl border border-pearl-200 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-pearl-100 flex items-center justify-between gap-3 bg-white">
                         <h2 class="text-sm font-bold text-charcoal-700 flex items-center gap-3">
                             <svg class="w-4 h-4 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            Sélection du superviseur
+                            {{ props.assignType === 'tc' ? 'Sélection des téléconseillers' : 'Sélection du superviseur' }}
                         </h2>
                         <div class="flex items-center gap-2">
                             <select 
@@ -149,50 +224,97 @@ const submit = () => {
                                 placeholder="Rechercher..."
                                 class="w-32 bg-pearl-50 border border-pearl-200 rounded-lg px-3 py-1.5 text-[11px] text-charcoal-700 outline-none focus:border-gold-400 transition-all"
                             />
+                            <select 
+                                v-if="props.assignType === 'tc'"
+                                v-model="selectedSupervisorFilter"
+                                class="bg-pearl-50 border border-pearl-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-charcoal-700 outline-none focus:border-gold-400 transition-all"
+                            >
+                                <option value="all">Tous les superviseurs</option>
+                                <option v-for="s in supervisorsList" :key="s" :value="s">{{ s }}</option>
+                            </select>
                         </div>
                     </div>
                     
                     <div class="p-6 space-y-3">
-                        <div 
-                            v-for="sup in paginatedSupervisors" 
-                            :key="sup.id"
-                            @click="!sup.has_active_planning && (form.employee_id = sup.id)"
-                            class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5 group"
-                            :class="[
-                                form.employee_id === sup.id ? 'border-gold-400 bg-gold-50/20 shadow-sm' : 'bg-white',
-                                sup.has_active_planning ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' : 'cursor-pointer'
-                            ]"
-                        >
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <div class="flex items-center gap-3">
-                                        <h3 class="font-bold text-sm text-charcoal-700">{{ sup.name }}</h3>
-                                        <span v-if="sup.has_active_planning" class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[9px] font-bold">Planning actif</span>
-                                    </div>
-                                    <div class="flex items-center gap-4 mt-1.5 text-[10px] uppercase tracking-wider font-medium">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-charcoal-500">Campagne:</span>
-                                            <span :class="sup.campaign === 'Aucune campagne' ? 'text-charcoal-100 font-medium italic' : 'text-gold-600'">{{ sup.campaign }}</span>
-                                        </div>
-                                        <div class="flex items-center gap-1.5 border-l border-pearl-100 pl-4">
-                                            <span class="text-charcoal-300">Équipe:</span>
-                                            <span :class="sup.team_count === 0 ? 'text-charcoal-300' : 'text-charcoal-700'">{{ sup.team_count }} TC</span>
+                        <!-- Affichage des superviseurs -->
+                        <template v-if="props.assignType === 'sup'">
+                            <div 
+                                v-for="sup in paginatedSupervisors" 
+                                :key="sup.id"
+                                @click="!sup.has_active_planning && (form.employee_id = sup.id)"
+                                class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5 group"
+                                :class="[
+                                    form.employee_id === sup.id ? 'border-gold-400 bg-gold-50/20 shadow-sm' : 'bg-white',
+                                    sup.has_active_planning ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' : 'cursor-pointer'
+                                ]"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-3">
+                                            <h3 class="font-bold text-sm text-charcoal-700">{{ sup.name }}</h3>
+                                            <span v-if="sup.has_active_planning" class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[9px] font-bold">Planning actif</span>
                                         </div>
                                     </div>
-                                </div>
-                                <div v-if="form.employee_id === sup.id" class="w-5 h-5 rounded-full bg-gold-400 flex items-center justify-center">
-                                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <div v-if="form.employee_id === sup.id" class="w-5 h-5 rounded-full bg-gold-400 flex items-center justify-center">
+                                        <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div v-if="totalPagesSup > 1" class="flex items-center justify-between pt-4 mt-2">
-                            <span class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">Page {{ currentPageSup }} / {{ totalPagesSup }}</span>
-                            <div class="flex gap-2">
-                                <button @click="currentPageSup--" :disabled="currentPageSup === 1" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
-                                <button @click="currentPageSup++" :disabled="currentPageSup === totalPagesSup" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                            <!-- Pagination Superviseurs -->
+                            <div v-if="props.assignType === 'sup' && totalPagesSup > 1" class="flex items-center justify-between pt-4 mt-2">
+                                <span class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">Page {{ currentPageSup }} / {{ totalPagesSup }}</span>
+                                <div class="flex gap-2">
+                                    <button @click="currentPageSup--" :disabled="currentPageSup === 1" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                                    <button @click="currentPageSup++" :disabled="currentPageSup === totalPagesSup" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                                </div>
                             </div>
-                        </div>
+                        </template>
+                        
+                        <!-- Affichage des Téléconseillers -->
+                        <template v-if="props.assignType === 'tc'">
+                            <div 
+                                v-for="tc in paginatedTeleconsultants" 
+                                :key="tc.id"
+                                @click="!tc.has_active_planning && toggleEmployeeSelection(tc.id)"
+                                class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5 group"
+                                :class="[
+                                    selectedEmployees.includes(tc.id) ? 'border-gold-400 bg-gold-50/20 shadow-sm' : 'bg-white',
+                                    tc.has_active_planning ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' : 'cursor-pointer'
+                                ]"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-3">
+                                            <h3 class="font-bold text-sm text-charcoal-700">{{ tc.name }}</h3>
+                                            <span v-if="tc.has_active_planning" class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[9px] font-bold">Planning actif</span>
+                                        </div>
+                                        <div class="flex items-center gap-4 mt-1.5 text-[10px] uppercase tracking-wider font-medium">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-charcoal-500">Campagne:</span>
+                                                <span :class="tc.campaign === 'Aucune campagne' ? 'text-charcoal-100 font-medium italic' : 'text-gold-600'">{{ tc.campaign }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 border-l border-pearl-100 pl-4">
+                                                <span class="text-charcoal-300">Superviseur:</span>
+                                                <span :class="tc.supervisor === 'Aucun' ? 'text-charcoal-100 font-medium italic' : 'text-charcoal-700'">{{ tc.supervisor }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="selectedEmployees.includes(tc.id)" class="w-5 h-5 rounded-full bg-gold-400 flex items-center justify-center">
+                                        <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pagination TC -->
+                            <div v-if="totalPagesTC > 1" class="flex items-center justify-between pt-4 mt-2">
+                                <span class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">Page {{ currentPageTC }} / {{ totalPagesTC }}</span>
+                                <div class="flex gap-2">
+                                    <button @click="currentPageTC--" :disabled="currentPageTC === 1" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                                    <button @click="currentPageTC++" :disabled="currentPageTC === totalPagesTC" class="p-1.5 rounded-lg border border-pearl-100 disabled:opacity-30 hover:bg-white hover:border-gold-300 hover:shadow-sm transition-all active:scale-90"><svg class="w-4 h-4 text-charcoal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -203,10 +325,10 @@ const submit = () => {
                             <svg class="w-4 h-4 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Étape 2 : Modèle de planning
                         </h2>
-                        <input 
+                        <input
                             v-model="searchQueryModel"
-                            type="text" 
-                            :disabled="!form.employee_id"
+                            type="text"
+                            :disabled="props.assignType === 'sup' ? !form.employee_id : selectedEmployees.length === 0"
                             placeholder="Rechercher..."
                             class="w-40 bg-pearl-50 border border-pearl-200 rounded-lg px-3 py-1.5 text-[11px] text-charcoal-700 outline-none focus:border-gold-400 transition-all disabled:opacity-40"
                         />
@@ -214,14 +336,14 @@ const submit = () => {
 
                     <div class="p-6 space-y-3">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div 
-                                v-for="model in paginatedModels" 
+                            <div
+                                v-for="model in paginatedModels"
                                 :key="model.id"
-                                @click="form.employee_id && (form.planning_model_id = model.id)"
+                                @click="(props.assignType === 'sup' ? form.employee_id : selectedEmployees.length > 0) && (form.planning_model_id = model.id)"
                                 class="p-4 rounded-xl border border-pearl-100 transition-all duration-300 relative group overflow-hidden"
                                 :class="[
                                     form.planning_model_id === model.id ? 'border-gold-400 bg-gold-50/20 shadow-sm' : 'bg-white',
-                                    !form.employee_id ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5'
+                                    (props.assignType === 'sup' ? !form.employee_id : selectedEmployees.length === 0) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-gold-300 hover:shadow-md hover:-translate-y-0.5'
                                 ]"
                             >
                                 <div class="flex items-center justify-between mb-2">
@@ -276,9 +398,14 @@ const submit = () => {
                     
                     <div class="p-8 space-y-8">
                         <div class="pb-6 border-b border-pearl-50">
-                            <div class="text-[11px] font-bold text-charcoal-400 uppercase tracking-[0.1em] mb-2">Superviseur</div>
-                            <div class="text-sm font-bold transition-all" :class="selectedSupervisor ? 'text-charcoal-700' : 'text-charcoal-300 italic font-medium'">
-                                {{ selectedSupervisor ? selectedSupervisor.name : 'Non sélectionné' }}
+                            <div class="text-[11px] font-bold text-charcoal-400 uppercase tracking-[0.1em] mb-2">{{ props.assignType === 'tc' ? 'Téléconseillers' : 'Superviseur' }}</div>
+                            <div class="text-sm font-bold transition-all" :class="(props.assignType === 'tc' ? selectedEmployees.length > 0 : selectedSupervisor) ? 'text-charcoal-700' : 'text-charcoal-300 italic font-medium'">
+                                <template v-if="props.assignType === 'tc'">
+                                    {{ selectedEmployees.length > 0 ? `${selectedEmployees.length} téléconseiller(s) sélectionné(s)` : 'Aucun sélectionné' }}
+                                </template>
+                                <template v-else>
+                                    {{ selectedSupervisor ? selectedSupervisor.name : 'Non sélectionné' }}
+                                </template>
                             </div>
                         </div>
                         

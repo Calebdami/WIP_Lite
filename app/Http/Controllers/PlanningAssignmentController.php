@@ -80,6 +80,55 @@ class PlanningAssignmentController extends Controller
     }
 
     /**
+     * Affiche l'écran d'affectation pour les Téléconseillers (TC) - Version Admin.
+     * Permet à l'admin d'affecter des plannings aux TC sans restriction de périmètre.
+     */
+    public function assignTCAdmin()
+    {
+        $tcsQuery = Employee::whereHas('position', function($q) {
+            $q->where('code', 'TC');
+        })->whereHas('assignments', function($q) {
+            // Le TC doit avoir un superviseur assigné et une campagne active
+            $q->where('status', 'active')
+              ->whereNotNull('manager_id')
+              ->whereNotNull('campaign_id');
+        });
+
+        $tcs = $tcsQuery->with(['assignments' => function($q) {
+            $q->where('status', 'active')->with(['campaign', 'manager']);
+        }])->get()->map(function($emp) {
+            $activeAssignment = $emp->assignments->first();
+            
+            $hasActivePlanning = PlanningAssignment::where('employee_id', $emp->id)
+                ->where('status', 'validé')
+                ->where(function($q) {
+                    $q->whereNull('end_date')
+                      ->orWhere('end_date', '>=', today());
+                })->exists();
+
+            return [
+                'id' => $emp->id,
+                'name' => $emp->first_name . ' ' . $emp->last_name,
+                'campaign' => $activeAssignment?->campaign?->name ?? 'Aucune campagne',
+                'supervisor' => $activeAssignment?->manager ? ($activeAssignment->manager->first_name . ' ' . $activeAssignment->manager->last_name) : 'Aucun',
+                'has_active_planning' => $hasActivePlanning
+            ];
+        });
+
+        $models = PlanningModel::orderBy('name', 'asc')->get();
+        $campaigns = $tcs->pluck('campaign')->unique()->values()->all();
+        $supervisorsList = $tcs->pluck('supervisor')->unique()->values()->all();
+
+        return Inertia::render('Admin/Assignments/AssignSchedule', [
+            'teleconsultants' => $tcs,
+            'models' => $models,
+            'campaigns' => $campaigns,
+            'supervisorsList' => $supervisorsList,
+            'assignType' => 'tc' // Indique que c'est une affectation TC
+        ]);
+    }
+
+    /**
      * Affiche l'écran d'affectation massive pour les Téléconseillers (TC).
      * Réservé aux CP (Chef de Plateau) pour gérer les équipes de leurs superviseurs.
      */
@@ -198,6 +247,8 @@ class PlanningAssignmentController extends Controller
         $cpEmployeeId = $isCp ? Employee::where('user_id', $user->id)->first()?->id : null;
 
         $query = PlanningAssignment::with(['employee.position', 'planningModel', 'validator']);
+
+        $allManagedIds = null; // Initialiser la variable
 
         if ($isCp && $cpEmployeeId) {
             // Un CP ne peut valider que pour son propre périmètre (ses SUPs et les TCs rattachés à ses SUPs)
