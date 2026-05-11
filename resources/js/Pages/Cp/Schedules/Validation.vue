@@ -40,46 +40,151 @@ const toggleSelectAll = () => {
 };
 
 const updateStatus = (id, status, reason = '') => {
-    const isCritical = status === 'suspendu';
-    
-    const action = () => {
-        router.patch(route('admin.assignments.validation.status', id), {
-            status,
-            reason
-        }, {
-            onSuccess: () => {
-                selectedIds.value = selectedIds.value.filter(sid => sid !== id);
-            }
-        });
+    const statusMessages = {
+        'validé': {
+            title: 'Valider l\'affectation',
+            message: 'Êtes-vous sûr de vouloir valider cette affectation ?',
+            acceptClass: 'bg-gold-gradient text-charcoal-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-gold hover:opacity-90 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        },
+        'suspendu': {
+            title: 'Suspendre l\'affectation',
+            message: 'Êtes-vous sûr de vouloir suspendre cette affectation ?',
+            acceptClass: 'bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-700 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        },
+        'en attente': {
+            title: 'Réactiver l\'affectation',
+            message: 'Êtes-vous sûr de vouloir réactiver cette affectation ?',
+            acceptClass: 'bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        }
     };
 
-    if (isCritical) {
-        confirm.require({
-            message: 'Êtes-vous sûr de vouloir suspendre ce planning ?',
-            header: 'Confirmation de suspension',
-            icon: 'pi pi-exclamation-circle',
-            rejectLabel: 'Annuler',
-            acceptLabel: 'Suspendre',
-            rejectClass: 'p-button-secondary p-button-outlined',
-            acceptClass: 'p-button-danger',
-            accept: action
-        });
-    } else {
-        action();
-    }
+    const config = statusMessages[status] || statusMessages['en attente'];
+
+    confirm.require({
+        message: config.message,
+        header: config.title,
+        icon: config.icon,
+        acceptClass: config.acceptClass,
+        rejectClass: config.rejectClass,
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        breakpoints: {
+            '960px': '340px'
+        },
+        style: {
+            width: '32rem',
+            borderRadius: '1rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            backgroundColor: 'white',
+            border: '1px solid rgb(229 231 235)',
+            backdropFilter: 'blur(8px)'
+        },
+        maskStyle: {
+            backgroundColor: 'rgba(30, 41, 59, 0.8)',
+            backdropFilter: 'blur(4px)'
+        },
+        headerStyle: {
+            backgroundColor: 'rgb(249 250 251)',
+            borderBottom: '1px solid rgb(229 231 235)',
+            padding: '1rem 1.5rem',
+            borderRadius: '1rem 1rem 0 0'
+        },
+        contentStyle: {
+            padding: '1.5rem',
+            fontSize: '0.875rem',
+            color: 'rgb(30, 41, 59)'
+        },
+        footerStyle: {
+            padding: '1rem 1.5rem',
+            borderTop: '1px solid rgb(229 231 235)',
+            borderRadius: '0 0 1rem 1rem'
+        },
+        accept: () => {
+            router.patch(route('cp.schedules.validation.status', id), {
+                status,
+                reason
+            }, {
+                onSuccess: () => {
+                    selectedIds.value = selectedIds.value.filter(sid => sid !== id);
+                }
+            });
+        }
+    });
 };
 
 const bulkUpdate = (status) => {
     if (selectedIds.value.length === 0) return;
     
+    const statusMessages = {
+        'validé': {
+            title: 'Validation en masse',
+            message: `Voulez-vous vraiment valider ${selectedIds.value.length} affectation(s) ?`,
+            icon: 'pi-check-circle',
+            acceptClass: 'bg-gold-gradient text-charcoal-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-gold hover:opacity-90 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        },
+        'suspendu': {
+            title: 'Suspension en masse',
+            message: `Voulez-vous vraiment suspendre ${selectedIds.value.length} affectation(s) ?`,
+            icon: 'pi-times-circle',
+            acceptClass: 'bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-700 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        },
+        'en attente': {
+            title: 'Réactivation en masse',
+            message: `Voulez-vous vraiment réactiver ${selectedIds.value.length} affectation(s) ?`,
+            icon: 'pi-refresh',
+            acceptClass: 'bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all',
+            rejectClass: 'px-4 py-2 text-[10px] font-black uppercase tracking-widest text-charcoal-400 hover:text-charcoal-600 transition-colors'
+        }
+    };
+
+    const config = statusMessages[status] || statusMessages['en attente'];
+
     confirm.require({
-        message: `Voulez-vous vraiment changer le statut de ${selectedIds.value.length} affectation(s) vers "${status}" ?`,
-        header: 'Confirmation de mise à jour',
-        icon: 'pi-exclamation-triangle',
-        acceptClass: 'p-button-success',
-        rejectClass: 'p-button-secondary p-button-outlined',
+        message: config.message,
+        header: config.title,
+        icon: config.icon,
+        acceptClass: config.acceptClass,
+        rejectClass: config.rejectClass,
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        breakpoints: {
+            '960px': '340px'
+        },
+        style: {
+            width: '32rem',
+            borderRadius: '1rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            backgroundColor: 'white',
+            border: '1px solid rgb(229 231 235)',
+            backdropFilter: 'blur(8px)'
+        },
+        maskStyle: {
+            backgroundColor: 'rgba(30, 41, 59, 0.8)',
+            backdropFilter: 'blur(4px)'
+        },
+        headerStyle: {
+            backgroundColor: 'rgb(249 250 251)',
+            borderBottom: '1px solid rgb(229 231 235)',
+            padding: '1rem 1.5rem',
+            borderRadius: '1rem 1rem 0 0'
+        },
+        contentStyle: {
+            padding: '1.5rem',
+            fontSize: '0.875rem',
+            color: 'rgb(30, 41, 59)'
+        },
+        footerStyle: {
+            padding: '1rem 1.5rem',
+            borderTop: '1px solid rgb(229 231 235)',
+            borderRadius: '0 0 1rem 1rem'
+        },
         accept: () => {
-            router.patch(route('admin.assignments.validation.bulk'), {
+            router.patch(route('cp.schedules.validation.bulk'), {
                 ids: selectedIds.value,
                 status: status
             }, {
@@ -114,6 +219,7 @@ const getRoleClass = (code) => {
 <template>
     <Head title="Validation des Plannings — CP" />
     <CpLayout>
+        <ConfirmDialog />
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
@@ -334,5 +440,8 @@ const getRoleClass = (code) => {
 }
 .shadow-gold {
     box-shadow: 0 4px 15px -3px rgba(212, 160, 23, 0.4);
+}
+.shadow-gold-sm {
+    box-shadow: 0 2px 8px -2px rgba(212, 160, 23, 0.3);
 }
 </style>

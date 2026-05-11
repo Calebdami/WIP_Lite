@@ -59,4 +59,22 @@ class Employee extends Model
     {
         return $this->hasMany(Timesheet::class, 'validated_by');
     }
+
+    /**
+     * Vérifie si l'employé est un superviseur.
+     */
+    public function isSupervisor(): bool
+    {
+        return $this->position && $this->position->code === 'SUP';
+    }
+
+    /**
+     * Récupère les employés (TC) gérés par ce superviseur.
+     */
+    public function managedEmployees()
+    {
+        return Employee::whereHas('assignments', function($q) {
+            $q->where('manager_id', $this->id)->where('status', 'active');
+        })->get();
+    }
 }

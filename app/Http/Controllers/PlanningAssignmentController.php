@@ -215,7 +215,7 @@ class PlanningAssignmentController extends Controller
                     'status' => 'en attente'
                 ]);
 
-                // Journalisation de l'action dans l'historique de planning
+                // Journalisation de l'action
                 PlanningHistorys::create([
                     'planning_assignment_id' => $assignment->id,
                     'old_status' => null,
@@ -224,6 +224,31 @@ class PlanningAssignmentController extends Controller
                     'reason' => 'Création de l\'affectation',
                     'created_at' => now()
                 ]);
+
+                // AUTOMATISATION : Si l'employé est un SUP, on affecte aussi ses TCs
+                $employee = Employee::find($id);
+                if ($employee && $employee->isSupervisor()) {
+                    $managedTcs = $employee->managedEmployees();
+                    foreach ($managedTcs as $tc) {
+                        // On crée la même affectation pour chaque TC
+                        $tcAssignment = PlanningAssignment::create([
+                            'planning_model_id' => $validated['planning_model_id'],
+                            'employee_id' => $tc->id,
+                            'start_date' => $validated['start_date'],
+                            'end_date' => $validated['end_date'] ?? null,
+                            'status' => 'en attente'
+                        ]);
+
+                        PlanningHistorys::create([
+                            'planning_assignment_id' => $tcAssignment->id,
+                            'old_status' => null,
+                            'new_status' => 'en attente',
+                            'changed_by' => Auth::id(),
+                            'reason' => 'Affectation automatique via superviseur (' . $employee->first_name . ')',
+                            'created_at' => now()
+                        ]);
+                    }
+                }
             }
         });
         
@@ -378,5 +403,31 @@ class PlanningAssignmentController extends Controller
             'reason' => $reason ?? 'Mise à jour du statut',
             'created_at' => now()
         ]);
+
+        // AUTOMATISATION : Si c'est un SUP, on répercute sur les plannings de ses TCs (même période/modèle)
+        $employee = $assignment->employee;
+        if ($employee && $employee->isSupervisor() && in_array($status, ['validé', 'suspendu'])) {
+            $managedTcIds = $employee->managedEmployees()->pluck('id');
+            
+            $relatedAssignments = PlanningAssignment::whereIn('employee_id', $managedTcIds)
+                ->where('planning_model_id', $assignment->planning_model_id)
+                ->where('start_date', $assignment->start_date)
+                ->where('status', '!=', $status)
+                ->get();
+
+            foreach ($relatedAssignments as $tcAssignment) {
+                $tcOldStatus = $tcAssignment->status;
+                $tcAssignment->update($updateData);
+
+                PlanningHistorys::create([
+                    'planning_assignment_id' => $tcAssignment->id,
+                    'old_status' => $tcOldStatus,
+                    'new_status' => $status,
+                    'changed_by' => Auth::id(),
+                    'reason' => 'Mise à jour automatique via superviseur (' . $employee->first_name . ')',
+                    'created_at' => now()
+                ]);
+            }
+        }
     }
 }

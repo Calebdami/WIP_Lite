@@ -128,6 +128,6 @@ class Timesheet extends Model
      */
     public function scopeValidated($query)
     {
-        return $query->where('status', 'validé');
+        return $query->where('status', 'valide');
     }
 }

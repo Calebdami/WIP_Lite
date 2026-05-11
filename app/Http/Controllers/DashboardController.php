@@ -46,15 +46,24 @@ class DashboardController extends Controller
         $assignedEmployeesCount = PlanningAssignment::distinct('employee_id')->count();
         $assignmentRate = $totalEmployees > 0 ? round(($assignedEmployeesCount / $totalEmployees) * 100) : 0;
 
-        $recentActivities = PlanningHistorys::with(['assignment.employee', 'author'])
+        $recentActivities = PlanningHistorys::with(['assignment.employee', 'author.employee'])
             ->latest('id')
             ->take(5)
             ->get()
             ->map(function ($log) {
+                $authorName = 'Système';
+                if ($log->author) {
+                    if ($log->author->employee) {
+                        $authorName = $log->author->employee->first_name . ' ' . $log->author->employee->last_name;
+                    } else {
+                        $authorName = explode('@', $log->author->email)[0];
+                    }
+                }
+
                 return [
                     'time' => $log->created_at ? Carbon::parse($log->created_at)->format('H:i') : '--:--',
                     'action' => $log->new_status ? "Statut passé à: " . ucfirst($log->new_status) : "Action planning",
-                    'user' => $log->author?->name ?? ($log->author?->email ? explode('@', $log->author->email)[0] : 'Système'),
+                    'user' => $authorName,
                     'badge' => $this->getBadgeType($log->new_status)
                 ];
             });

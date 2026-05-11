@@ -18,9 +18,9 @@ const props = defineProps({
 });
 
 const showModal = ref(false);
-const showDeleteModal = ref(false);
+const showArchiveModal = ref(false);
 const editingCampaign = ref(null);
-const campaignToDelete = ref(null);
+const campaignToArchive = ref(null);
 
 const form = useForm({
     name: '',
@@ -48,17 +48,17 @@ const openEditModal = (campaign) => {
     showModal.value = true;
 };
 
-const confirmDelete = (campaign) => {
-    campaignToDelete.value = campaign;
-    showDeleteModal.value = true;
+const confirmArchive = (campaign) => {
+    campaignToArchive.value = campaign;
+    showArchiveModal.value = true;
 };
 
-const handleDelete = () => {
-    if (!campaignToDelete.value) return;
-    router.delete(route('admin.campaigns.destroy', campaignToDelete.value.id), {
+const handleArchive = () => {
+    if (!campaignToArchive.value) return;
+    router.delete(route('admin.campaigns.destroy', campaignToArchive.value.id), {
         onSuccess: () => {
-            showDeleteModal.value = false;
-            campaignToDelete.value = null;
+            showArchiveModal.value = false;
+            campaignToArchive.value = null;
         }
     });
 };
@@ -149,10 +149,16 @@ const getStatusLabel = (status) => {
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Gestion des Campagnes</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Pilotez le cycle de vie de vos opérations commerciales</p>
                 </div>
-                <Button label="Nouvelle Campagne" icon="pi pi-plus" 
-                    severity="primary" 
-                    @click="openCreateModal"
-                    class="px-4 py-2 text-xs font-bold shadow-gold-premium" />
+                <div class="flex gap-3">
+                    <Link :href="route('admin.campaigns.archived')" class="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-600 hover:text-white transition-all border border-amber-200 rounded-lg bg-amber-50 shadow-sm">
+                        <i class="pi pi-archive"></i>
+                        Voir les Archives
+                    </Link>
+                    <Button label="Nouvelle Campagne" icon="pi pi-plus" 
+                        severity="primary" 
+                        @click="openCreateModal"
+                        class="px-4 py-2 text-xs font-bold shadow-gold-premium" />
+                </div>
             </div>
         </template>
 
@@ -229,7 +235,8 @@ const getStatusLabel = (status) => {
                     <template #body="{ data }">
                         <div class="flex justify-end gap-1">
                             <Button icon="pi pi-pencil" text severity="secondary" rounded @click="openEditModal(data)" title="Modifier" />
-                            <Button icon="pi pi-trash" text severity="danger" rounded @click="confirmDelete(data)" title="Supprimer" />
+                            <Button icon="pi pi-archive" rounded @click="confirmArchive(data)" title="Archiver" 
+                                    class="w-8 h-8 p-0 bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all shadow-sm" />
                         </div>
                     </template>
                 </Column>
@@ -311,24 +318,29 @@ const getStatusLabel = (status) => {
             </form>
         </Dialog>
 
-        <!-- Delete Confirmation Modal -->
+        <!-- Archive Confirmation Modal -->
         <ConfirmDialogBox
-            v-model="showDeleteModal"
-            title="Confirmation de suppression"
-            confirmLabel="Confirmer la suppression"
+            v-model="showArchiveModal"
+            title="Confirmation d'archivage"
+            confirmLabel="Confirmer l'archivage"
             cancelLabel="Annuler"
-            confirmSeverity="danger"
-            icon="pi pi-exclamation-triangle"
-            iconBgClass="bg-rose-50"
-            iconTextClass="text-rose-500"
+            confirmSeverity="warn"
+            icon="pi pi-archive"
+            iconBgClass="bg-amber-50"
+            iconTextClass="text-amber-500"
             width="450px"
             :closable="false"
             className="max-w-md"
-            @confirm="handleDelete"
-            @cancel="showDeleteModal = false"
+            @confirm="handleArchive"
+            @cancel="showArchiveModal = false"
         >
-            <p class="text-xs text-charcoal-500 mt-2 leading-relaxed px-4">
-                Attention : cette action est irréversible. La campagne <span class="font-bold text-rose-600">"{{ campaignToDelete?.name }}"</span> sera supprimée et <span class="font-bold">tous les employés affectés seront automatiquement libérés</span>.
+            <p class="text-xs text-charcoal-500 mt-2 leading-relaxed px-4 text-center">
+                Voulez-vous vraiment archiver la campagne <span class="font-bold text-charcoal-800">"{{ campaignToArchive?.name }}"</span> ?
+                <br /><br />
+                <span class="text-[10px] bg-amber-50 text-amber-700 p-2 rounded block border border-amber-100">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    Tous les collaborateurs affectés à cette campagne seront <strong>automatiquement libérés</strong>. La campagne ne sera plus visible dans la liste active mais pourra être consultée dans les archives.
+                </span>
             </p>
         </ConfirmDialogBox>
     </AdminLayout>

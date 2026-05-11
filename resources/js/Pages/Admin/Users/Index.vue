@@ -140,6 +140,12 @@ const handleToggleStatus = () => {
 const getStatusSeverity = (status) => {
     return status === 'actif' ? 'success' : 'danger';
 };
+
+const passwordConfirmClass = computed(() => {
+    if (!createForm.password_confirmation) return 'w-full text-xs';
+    const isMatch = createForm.password === createForm.password_confirmation;
+    return `w-full text-xs transition-all duration-300 ${isMatch ? '!border-green-500 !bg-green-50 !text-green-700' : '!border-red-500 !bg-red-50 !text-red-700'}`;
+});
 </script>
 
 <template>
@@ -317,7 +323,8 @@ const getStatusSeverity = (status) => {
                 </div>
                 <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-black text-charcoal-400 uppercase">Confirmation</label>
-                    <Password v-model="createForm.password_confirmation" :feedback="false" toggleMask class="w-full" inputClass="w-full text-xs" />
+                    <Password v-model="createForm.password_confirmation" :feedback="false" toggleMask class="w-full" :inputClass="passwordConfirmClass" />
+                    <small v-if="createForm.password_confirmation && createForm.password !== createForm.password_confirmation" class="text-red-500 text-[9px] font-bold">Les mots de passe ne correspondent pas</small>
                 </div>
                 <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-pearl-100">
                     <Button label="Annuler" text severity="secondary" @click="showCreateModal = false" class="text-[10px] uppercase font-black" />

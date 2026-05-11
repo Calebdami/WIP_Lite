@@ -63,8 +63,8 @@ const navItems = [
         label: 'Saisie & Validation',
         key: 'tracking',
         children: [
-            { label: 'Saisie des Heures SUP', href: route('cp.time-tracking.supervisors') },
-            { label: 'Validation des Heures TC', href: route('cp.time-tracking.validate-tc') },
+            { label: 'Saisie des Heures', href: route('cp.time-tracking.supervisors') },
+            { label: 'Validation des Heures', href: route('cp.time-tracking.validate-tc') },
             { label: 'Analyse des Écarts', href: route('cp.time-tracking.discrepancies') },
         ],
     },

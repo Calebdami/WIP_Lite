@@ -62,6 +62,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Campagnes
+    Route::get('/campaigns/archived', [App\Http\Controllers\Admin\CampaignController::class, 'archived'])->name('campaigns.archived');
     Route::resource('campaigns', App\Http\Controllers\Admin\CampaignController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Affectations
@@ -198,6 +199,8 @@ Route::middleware(['auth', 'role:cp'])->prefix('cp')->name('cp.')->group(functio
         Route::get('/assign', [PlanningAssignmentController::class, 'assignTC'])->name('assign');
         Route::get('/assign-sup', [PlanningAssignmentController::class, 'create'])->name('assign-sup');
         Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');
+        Route::patch('/validation/bulk', [PlanningAssignmentController::class, 'bulkUpdateStatus'])->name('validation.bulk');
+        Route::patch('/validation/{assignment}/status', [PlanningAssignmentController::class, 'updateStatus'])->name('validation.status');
         Route::get('/history', [PlanningHistoryController::class, 'index'])->name('history');
     });
 

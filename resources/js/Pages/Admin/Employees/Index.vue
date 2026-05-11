@@ -448,7 +448,7 @@ const getStatusSeverity = (status) => {
                         </div>
                         <div>
                             <p class="text-[9px] text-charcoal-400 uppercase font-bold">Salaire de base</p>
-                            <p class="text-sm font-black text-gold-600">{{ selectedEmployee?.salary_base ? selectedEmployee.salary_base + ' €' : '-' }}</p>
+                            <p class="text-sm font-black text-gold-600">{{ selectedEmployee?.salary_base ? selectedEmployee.salary_base + ' FCFA' : '-' }}</p>
                         </div>
                     </div>
                 </div>

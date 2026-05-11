@@ -20,7 +20,7 @@ class PlanningHistoryController extends Controller
         $cpEmployeeId = $isCp ? \App\Models\Employee::where('user_id', $user->id)->first()?->id : null;
 
         // Requête de base avec chargement des relations nécessaires (affectation, employé, auteur de la modif)
-        $query = PlanningHistorys::with(['assignment.employee', 'assignment.planningModel', 'author']);
+        $query = PlanningHistorys::with(['assignment.employee', 'assignment.planningModel', 'author.employee']);
 
         if ($isCp && $cpEmployeeId) {
             // Filtrage : Le CP ne voit que l'historique concernant ses équipes (SUP et TC)
@@ -100,9 +100,15 @@ class PlanningHistoryController extends Controller
     public function showByAssignment($assignmentId)
     {
         $history = PlanningHistorys::where('planning_assignment_id', $assignmentId)
-            ->with('author')
+            ->with('author.employee')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function($log) {
+                $log->changed_by_name = $log->author && $log->author->employee 
+                    ? $log->author->employee->first_name . ' ' . $log->author->employee->last_name 
+                    : ($log->author->email ?? 'Admin');
+                return $log;
+            });
 
         return response()->json($history);
     }

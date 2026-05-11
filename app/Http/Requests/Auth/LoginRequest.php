@@ -42,26 +42,39 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // Tentative d'authentification avec les identifiants fournis
+        $email = $this->string('email');
+
+        // 1. Vérification dans la table des employés
+        $employeeExists = \App\Models\Employee::where('email', $email)->exists();
+        $user = \App\Models\User::where('email', $email)->first();
+
+        // Cas : Existe en tant qu'employé mais pas d'utilisateur créé
+        if ($employeeExists && !$user) {
+            throw ValidationException::withMessages([
+                'email' => "Pas encore de compte créé, veuillez contacter l'administrateur pour qu'il vous crée votre compte.",
+            ]);
+        }
+
+        // Cas : N'existe nulle part
+        if (!$employeeExists && !$user) {
+            throw ValidationException::withMessages([
+                'email' => "Cet e-mail n'est pas reconnu dans notre système.",
+            ]);
+        }
+
+        // Cas : Existe en tant qu'utilisateur mais compte désactivé
+        if ($user && $user->status !== 'actif') {
+            throw ValidationException::withMessages([
+                'email' => "Votre compte est désactivé ou suspendu. Veuillez contacter l'administrateur pour plus d'informations.",
+            ]);
+        }
+
+        // 2. Tentative d'authentification (vérification du mot de passe)
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
-        }
-
-        // Récupération de l'utilisateur authentifié
-        $user = Auth::user();
-
-        // Vérification du statut du compte (doit être 'actif')
-        if ($user->status !== 'actif') {
-            // Déconnexion immédiate si le compte est désactivé
-            Auth::logout();
-
-            // Levée d'une exception de validation avec le message personnalisé
-            throw ValidationException::withMessages([
-                'email' => 'Accès interdit, vous avez été désactivé.',
+                'password' => "Mot de passe incorrect.",
             ]);
         }
 

@@ -65,8 +65,12 @@ class TcPlanningController extends Controller
         if ($activePlanning) {
             $planningHistory = DB::table('planning_histories')
                 ->where('planning_assignment_id', $activePlanning->id)
-                ->join('users', 'planning_histories.changed_by', '=', 'users.id')
-                ->select('planning_histories.*', 'users.name as changed_by_name')
+                ->leftJoin('users', 'planning_histories.changed_by', '=', 'users.id')
+                ->leftJoin('employees', 'users.id', '=', 'employees.user_id')
+                ->select(
+                    'planning_histories.*',
+                    DB::raw("CONCAT(employees.first_name, ' ', employees.last_name) as changed_by_name")
+                )
                 ->orderBy('created_at', 'asc')
                 ->get();
         }

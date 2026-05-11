@@ -229,13 +229,19 @@ class TimesheetController extends Controller
         $hasEntries = $timesheet->entries()
             ->where(function ($q) {
                 $q->where('total_hours', '>', 0)
-                  ->orWhereNotNull('absence_type');
+                  ->orWhere('management_hours', '>', 0)
+                  ->orWhere('on_call_hours', '>', 0)
+                  ->orWhere('training_hours', '>', 0)
+                  ->orWhere(function($sub) {
+                      $sub->whereNotNull('absence_type')
+                          ->where('absence_type', '!=', '');
+                  });
             })
             ->exists();
 
         if (!$hasEntries) {
             return response()->json([
-                'message' => 'Impossible de soumettre : aucune heure saisie ou absence renseignée.'
+                'message' => 'Impossible de soumettre : aucune heure (travail, management, astreinte, formation) ou absence renseignée.'
             ], 422);
         }
 
@@ -261,7 +267,7 @@ class TimesheetController extends Controller
      */
     public function validate_timesheet(Request $request, Timesheet $timesheet): JsonResponse
     {
-        // On autorise la validation si la feuille est 'soumis' OU 'brouillon' (cas de la saisie directe par Admin/CP)
+        // On permet la validation depuis soumis, brouillon ou rejeté pour plus de souplesse pour le CP
         if (!in_array($timesheet->status, ['soumis', 'brouillon', 'rejete'])) {
             return response()->json([
                 'message' => 'Cette feuille de temps ne peut pas être validée dans son état actuel.'
@@ -463,7 +469,7 @@ class TimesheetController extends Controller
             ]);
 
             // Recalcul du total des heures
-            $timesheet->calculateTotalHours();
+            // $timesheet->calculateTotalHours(); // Supprimé car total_hours est un accesseur calculé
 
             // Log dans l'historique
             TimesheetHistory::create([
@@ -506,7 +512,8 @@ class TimesheetController extends Controller
         $employee = $request->user()->employee;
         
         if (!$employee) {
-            $firstEmployee = \App\Models\Employee::first();
+            $firstEmployee = \App\Models\Employee::where('user_id', $request->user()->id)->first() 
+                            ?? \App\Models\Employee::first();
             return $firstEmployee ? $firstEmployee->id : 1;
         }
 

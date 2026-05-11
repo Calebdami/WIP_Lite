@@ -56,8 +56,11 @@ class TimesheetEntryController extends Controller
                 $rawMinutes = $end->diffInMinutes($start);
                 $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
             } catch (\Exception $e) {
-                // En cas d'erreur de parsing, on garde la valeur actuelle
+                // En cas d'erreur de parsing, on garde 0 si c'était vide
+                $totalHours = 0;
             }
+        } else {
+            $totalHours = 0;
         }
 
         // Calcul automatique des heures supplémentaires
@@ -121,15 +124,15 @@ class TimesheetEntryController extends Controller
             $breakDuration = $data['break_duration'] ?? $entry->break_duration ?? 0;
 
             // Calcul automatique
-            $totalHours = $entry->total_hours;
-            if ($checkIn && $checkOut) {
+            $totalHours = 0;
+            if (!empty($checkIn) && !empty($checkOut)) {
                 try {
                     $start = \Carbon\Carbon::parse($checkIn);
                     $end = \Carbon\Carbon::parse($checkOut);
                     $rawMinutes = $end->diffInMinutes($start);
                     $totalHours = round(max(0, ($rawMinutes - $breakDuration) / 60), 2);
                 } catch (\Exception $e) {
-                    // Ignorer les erreurs de format
+                    $totalHours = 0;
                 }
             }
 
@@ -143,8 +146,8 @@ class TimesheetEntryController extends Controller
             }
 
             $entry->update([
-                'check_in'       => $data['check_in'] ?? $entry->check_in,
-                'check_out'      => $data['check_out'] ?? $entry->check_out,
+                'check_in'       => !empty($data['check_in']) ? $data['check_in'] : null,
+                'check_out'      => !empty($data['check_out']) ? $data['check_out'] : null,
                 'break_duration' => $breakDuration,
                 'planned_hours'  => $plannedHours,
                 'total_hours'    => $totalHours,

@@ -11,7 +11,7 @@ class CampaignController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Campaign::query();
+        $query = Campaign::query()->where('status', '!=', 'archived');
 
         if ($request->search) {
             $query->where('name', 'like', "%{$request->search}%");
@@ -24,6 +24,20 @@ class CampaignController extends Controller
         return Inertia::render('Admin/Campaigns/Index', [
             'campaigns' => $query->latest()->paginate(10)->withQueryString(),
             'filters' => $request->only(['search', 'status']),
+        ]);
+    }
+
+    public function archived(Request $request)
+    {
+        $query = Campaign::query()->where('status', 'archived');
+
+        if ($request->search) {
+            $query->where('name', 'like', "%{$request->search}%");
+        }
+
+        return Inertia::render('Admin/Campaigns/Archived', [
+            'campaigns' => $query->latest('archived_at')->paginate(10)->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -69,13 +83,18 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
+        // On libère tous les collaborateurs
         $campaign->assignments()->update([
             'status' => 'terminated',
             'end_date' => now()
         ]);
 
-        $campaign->delete();
+        // On archive la campagne au lieu de la supprimer
+        $campaign->update([
+            'status' => 'archived',
+            'archived_at' => now()
+        ]);
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campagne supprimée et tous les employés ont été désaffectés.');
+        return redirect()->route('admin.campaigns.index')->with('success', 'Campagne archivée et tous les employés ont été désaffectés.');
     }
 }

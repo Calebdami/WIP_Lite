@@ -422,11 +422,11 @@ const getStatusSeverity = (status) => {
         <Dialog v-model:visible="displayCreateDialog" header="Nouvelle Feuille (SUP)" :style="{ width: '450px' }" modal>
             <div class="flex flex-col gap-4 mt-2">
                 <div class="flex flex-col gap-2">
-                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Superviseur</label>
+                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Superviseur <span class="text-red-500">*</span></label>
                     <Select v-model="newTimesheet.employee_id" :options="supervisors" optionLabel="name" optionValue="id" placeholder="Choisir un superviseur" class="w-full rounded-xl border-pearl-200" />
                 </div>
                 <div class="flex flex-col gap-2">
-                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Période (Semaine)</label>
+                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Période (Semaine) <span class="text-red-500">*</span></label>
                     <DatePicker v-model="newTimesheet.period" selectionMode="range" :manualInput="false" showIcon placeholder="Sélectionnez l'intervalle" class="w-full rounded-xl" />
                 </div>
             </div>
@@ -447,11 +447,11 @@ const getStatusSeverity = (status) => {
             <div class="flex flex-col gap-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure d'arrivée</label>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure d'arrivée *</label>
                         <InputText v-model="batchSchedule.check_in" placeholder="09:00" class="w-full rounded-xl font-mono" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure de départ</label>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-charcoal-400">Heure de départ *</label>
                         <InputText v-model="batchSchedule.check_out" placeholder="17:00" class="w-full rounded-xl font-mono" />
                     </div>
                 </div>
@@ -558,12 +558,12 @@ const getStatusSeverity = (status) => {
                         </div>
                     </template>
                 </Column>
-                <Column header="Arrivée" headerClass="w-28">
+                <Column header="Arrivée *" headerClass="w-28">
                     <template #body="{ data }">
                         <InputText v-model="data.check_in" placeholder="09:00" class="w-full text-center font-mono text-sm" />
                     </template>
                 </Column>
-                <Column header="Départ" headerClass="w-28">
+                <Column header="Départ *" headerClass="w-28">
                     <template #body="{ data }">
                         <InputText v-model="data.check_out" placeholder="17:00" class="w-full text-center font-mono text-sm" />
                     </template>

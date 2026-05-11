@@ -83,7 +83,7 @@ const createTimesheet = async () => {
 
     try {
         await axios.post('/api/timesheets', {
-            employee_id: currentUser.value.id,
+            employee_id: currentUser.value.employee?.id || currentUser.value.id,
             period_start: formatDate(newPeriod.value[0]),
             period_end: formatDate(newPeriod.value[1]),
         });
@@ -244,7 +244,7 @@ const formatDateTime = (dateStr) => {
         <Dialog v-model:visible="displayCreateDialog" header="Nouvelle feuille de temps" :style="{ width: '480px' }" modal>
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
-                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Période</label>
+                    <label class="text-xs font-black uppercase tracking-widest text-charcoal-400">Période <span class="text-red-500">*</span></label>
                     <DatePicker v-model="newPeriod" selectionMode="range" :manualInput="false" showIcon placeholder="Sélectionnez la période" class="w-full rounded-xl" />
                 </div>
             </div>
@@ -276,12 +276,12 @@ const formatDateTime = (dateStr) => {
                         <span class="font-bold text-charcoal-700">{{ data.date }}</span>
                     </template>
                 </Column>
-                <Column header="Arrivée" headerClass="w-28">
+                <Column header="Arrivée *" headerClass="w-28">
                     <template #body="{ data }">
                         <InputText v-model="data.check_in" placeholder="09:00" class="w-full text-center font-mono text-sm" :disabled="!isEditable(currentTimesheet.status)" />
                     </template>
                 </Column>
-                <Column header="Départ" headerClass="w-28">
+                <Column header="Départ *" headerClass="w-28">
                     <template #body="{ data }">
                         <InputText v-model="data.check_out" placeholder="17:00" class="w-full text-center font-mono text-sm" :disabled="!isEditable(currentTimesheet.status)" />
                     </template>
