@@ -163,7 +163,6 @@ const getStatusSeverity = (status) => {
             <div class="flex flex-col gap-1.5">
                 <label class="text-[9px] font-black text-charcoal-400 uppercase tracking-widest">Rechercher</label>
                 <span class="p-input-icon-left w-full relative">
-                    <i class="pi pi-search text-charcoal-300 ml-3" />
                     <InputText v-model="searchQuery" placeholder="Nom ou email..." 
                         @keydown="handleSearchKeydown"
                         class="w-full pl-10 pr-20 text-xs border-pearl-300 focus:border-gold outline-none" />
