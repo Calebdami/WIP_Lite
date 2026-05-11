@@ -84,7 +84,7 @@ const navItems = [
         children: [
             { label: 'Modèles de planning', href: route('admin.assignments.schedules') },
             { label: 'Validation Plannings', href: route('admin.assignments.validation') },
-            { label: 'Historique plannings', href: route('admin.assignments.history') },
+            { label: 'Historique plannings', href: route('admin.assignments.planning-history') },
         ],
     }
 ];

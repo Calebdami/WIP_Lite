@@ -86,7 +86,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/schedules/assign-tc', [PlanningAssignmentController::class, 'assignTCAdmin'])->name('schedules.assign-tc');
         Route::post('/schedules/assign-tc', [PlanningAssignmentController::class, 'store'])->name('schedules.assign-tc.store');
         Route::get('/resources', [App\Http\Controllers\Admin\AssignmentController::class, 'resources'])->name('resources');
-        Route::get('/history', [App\Http\Controllers\Admin\AssignmentController::class, 'history'])->name('history');
         Route::get('/affectation-history', [App\Http\Controllers\Admin\AssignmentController::class, 'affectationHistory'])->name('affectation-history');
         Route::get('/tracking', fn () => Inertia::render('Admin/Assignments/Tracking'))->name('tracking');
         Route::get('/validation', [PlanningAssignmentController::class, 'validationIndex'])->name('validation');

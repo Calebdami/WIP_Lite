@@ -230,9 +230,9 @@ const getEmployeeStatusClass = (employee) => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
-                        <input v-model="search" type="text" placeholder="Rechercher une ressource..."
+                        <input v-model="search" type="text" placeholder="Rechercher"
                             @keydown="handleSearchKeydown"
-                            class="block w-full pl-12 pr-20 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
+                            class="block w-full pl-12 pr-20 py-1 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
                         <button @click="triggerSearch"
                             class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -389,10 +389,12 @@ const getEmployeeStatusClass = (employee) => {
                                         </svg>
                                     </span>
                                     <input v-model="campaignSearch" type="text" placeholder="Filtrer les campagnes..."
-                                        class="w-full border border-pearl-200 rounded-lg pl-9 pr-3 py-2 text-[10px] focus:ring-gold-500 focus:border-gold-500 italic">
+                                        :disabled="!!props.campaign_id"
+                                        class="w-full border border-pearl-200 rounded-lg pl-9 pr-3 py-2 text-[10px] focus:ring-gold-500 focus:border-gold-500 italic disabled:bg-pearl-100 disabled:cursor-not-allowed">
                                 </div>
                                 <select v-model="form.campaign_id"
-                                    class="mt-2 w-full border border-pearl-200 rounded-lg px-3 py-2 text-xs focus:ring-gold-500 focus:border-gold-500">
+                                    :disabled="!!props.campaign_id"
+                                    class="mt-2 w-full border border-pearl-200 rounded-lg px-3 py-2 text-xs focus:ring-gold-500 focus:border-gold-500 disabled:bg-pearl-100 disabled:cursor-not-allowed">
                                     <option value="">Sélectionner une campagne...</option>
                                     <option v-for="campaign in filteredCampaigns" :key="campaign.id" :value="campaign.id">
                                         {{ campaign.name }}
@@ -414,10 +416,12 @@ const getEmployeeStatusClass = (employee) => {
                                         </svg>
                                     </span>
                                     <input v-model="managerSearch" type="text" placeholder="Filtrer les responsables..."
-                                        class="w-full border border-pearl-200 rounded-lg pl-9 pr-3 py-2 text-[10px] focus:ring-gold-500 focus:border-gold-500 italic">
+                                        :disabled="!!props.manager_assignment_id"
+                                        class="w-full border border-pearl-200 rounded-lg pl-9 pr-3 py-2 text-[10px] focus:ring-gold-500 focus:border-gold-500 italic disabled:bg-pearl-100 disabled:cursor-not-allowed">
                                 </div>
                                 <select v-model="form.manager_id"
-                                    class="mt-2 w-full border border-pearl-200 rounded-lg px-3 py-2 text-xs focus:ring-gold-500 focus:border-gold-500">
+                                    :disabled="!!props.manager_assignment_id"
+                                    class="mt-2 w-full border border-pearl-200 rounded-lg px-3 py-2 text-xs focus:ring-gold-500 focus:border-gold-500 disabled:bg-pearl-100 disabled:cursor-not-allowed">
                                     <option value="">Sélectionner un responsable...</option>
                                     <option v-for="manager in availableManagers" :key="manager.id" :value="manager.id">
                                         {{ manager.employee?.first_name }} {{ manager.employee?.last_name }} -

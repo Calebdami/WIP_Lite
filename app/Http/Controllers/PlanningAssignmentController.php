@@ -247,7 +247,10 @@ class PlanningAssignmentController extends Controller
         $isCp = $user->role->name === 'cp';
         $cpEmployeeId = $isCp ? Employee::where('user_id', $user->id)->first()?->id : null;
 
-        $query = PlanningAssignment::with(['employee.position', 'planningModel', 'validator']);
+        $query = PlanningAssignment::with(['employee.position', 'planningModel', 'validator'])
+            ->whereHas('employee.position', function($q) {
+                $q->where('code', 'SUP');
+            });
 
         $allManagedIds = null; // Initialiser la variable
 

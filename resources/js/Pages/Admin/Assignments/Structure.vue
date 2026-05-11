@@ -240,9 +240,9 @@ const campaignsStructure = computed(() => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
-                        <input v-model="search" type="text" placeholder="Rechercher une ressource..."
+                        <input v-model="search" type="text" placeholder="Rechercher"
                             @keydown="handleSearchKeydown"
-                            class="block w-full pl-12 pr-20 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
+                            class="block w-full pl-12 pr-20 py-1 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
                         <button @click="triggerSearch"
                             class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl hover:bg-gold-700 transition-all">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -286,8 +286,17 @@ const campaignsStructure = computed(() => {
                         <h2 class="text-sm font-black text-white uppercase tracking-widest">{{ struct.campaign.name }}
                         </h2>
                     </div>
-                    <span class="text-[10px] text-pearl-400 font-bold uppercase">{{ struct.cps.length }} CP(s)
-                        affectés</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] text-pearl-400 font-bold uppercase">{{ struct.cps.length }} CP(s) affectés</span>
+                        <button 
+                            @click="setPendingContext({ campaign_id: campaignId, position_code: 'CP' })"
+                            class="p-1.5 bg-charcoal-800 text-gold-500 rounded-lg hover:bg-charcoal-700 transition-all border border-charcoal-700 shadow-sm"
+                            title="Ajouter un Chef de Plateau">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-6">
@@ -322,9 +331,9 @@ const campaignsStructure = computed(() => {
                             </div>
                             <div class="flex items-center gap-2">
                                 <button
-                                    @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: cp.id, position_code: 'SUP' })"
+                                    @click="setPendingContext({ campaign_id: campaignId, position_code: 'CP' })"
                                     class="p-1.5 bg-white border border-gold-200 text-gold-600 rounded-lg hover:bg-gold-50 transition-all shadow-sm"
-                                    title="Ajouter un Superviseur">
+                                    title="Ajouter un autre Chef de Plateau">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -358,10 +367,10 @@ const campaignsStructure = computed(() => {
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <button
-                                            @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: sup.id, position_code: 'TC' })"
+                                            @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: cp.id, position_code: 'SUP' })"
                                             class="p-1 bg-pearl-50 border border-pearl-200 text-charcoal-500 rounded hover:bg-pearl-100 transition-all"
-                                            title="Ajouter un TC">
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            title="Ajouter un autre Superviseur">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                             </svg>
@@ -392,6 +401,15 @@ const campaignsStructure = computed(() => {
                                             </svg>
                                         </button>
                                     </div>
+                                    <!-- Add TC Button -->
+                                    <button 
+                                        @click="setPendingContext({ campaign_id: campaignId, manager_assignment_id: sup.id, position_code: 'TC' })"
+                                        class="flex items-center justify-center bg-white border border-pearl-100 border-dashed rounded-lg p-2 text-pearl-400 hover:text-gold-500 hover:border-gold-300 transition-all shadow-sm group">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        <span class="text-[8px] font-black uppercase tracking-widest">Ajouter TC</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

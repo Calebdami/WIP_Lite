@@ -1,7 +1,9 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
+import Dialog from 'primevue/dialog';
+import Tag from 'primevue/tag';
 
 // Components simplifiés
 
@@ -30,45 +32,29 @@ const debounce = (fn, delay) => {
 
 // Search & Filtering
 const search = ref(props.filters?.search || '');
+const status = ref(props.filters?.status || 'all');
+const model_id = ref(props.filters?.model_id || 'all');
+
+// Modal state
+const detailVisible = ref(false);
+const selectedHistory = ref(null);
 
 // Manual search functions
 const triggerSearch = () => {
-    const currentUrl = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-    
-    if (search.value) {
-        params.set('search', search.value);
-    } else {
-        params.delete('search');
-    }
-    
-    const newUrl = currentUrl + (params.toString() ? '?' + params.toString() : '');
-    window.location.href = newUrl;
-};
-
-// Handle Enter key press
-const handleSearchKeydown = (event) => {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        triggerSearch();
-    }
+    router.get(route('admin.assignments.planning-history'), {
+        search: search.value,
+        status: status.value,
+        model_id: model_id.value
+    }, {
+        preserveState: true,
+        preserveScroll: true
+    });
 };
 
 // Afficher les détails
 const showDetails = (historyItem) => {
-    // Créer un message détaillé pour l'instant
-    const details = `
-        ID: ${historyItem.id}
-        Employé: ${historyItem.assignment?.employee?.first_name} ${historyItem.assignment?.employee?.last_name}
-        Matricule: ${historyItem.assignment?.employee?.matricule}
-        Ancien statut: ${historyItem.old_status}
-        Nouveau statut: ${historyItem.new_status}
-        Raison: ${historyItem.reason || 'Aucune raison'}
-        Validé par: ${historyItem.author?.email || 'Système'}
-        Date: ${formatDate(historyItem.created_at)} ${formatTime(historyItem.created_at)}
-    `;
-    
-    alert(details.trim());
+    selectedHistory.value = historyItem;
+    detailVisible.value = true;
 };
 
 const getStatusSeverity = (status) => {
@@ -127,25 +113,6 @@ const formatTime = (dateString) => {
                     <h1 class="text-xl font-bold text-charcoal-700 tracking-tight">Historique des Plannings</h1>
                     <p class="text-xs text-charcoal-400 mt-0.5">Suivi chronologique des changements d'états et affectations</p>
                 </div>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-charcoal-400">
-                        <i class="pi pi-search text-xs"></i>
-                    </span>
-                    <input 
-                        v-model="search"
-                        type="text" 
-                        placeholder="Rechercher (Nom, matricule, raison...)" 
-                        @keydown="handleSearchKeydown"
-                        class="block w-full pl-10 pr-20 py-3 bg-pearl-50 border-pearl-200 rounded-xl text-sm transition-all duration-200 focus:border-gold-500 focus:ring-4 focus:ring-gold-500/15 focus:bg-white outline-none"
-                    />
-                    <button @click="triggerSearch"
-                        class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-xl font-black text-xs uppercase tracking-widest shadow-gold-premium hover:opacity-90 transition-all duration-200">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
-                </div>
             </div>
         </template>
 
@@ -187,6 +154,7 @@ const formatTime = (dateString) => {
                         v-model="search"
                         type="text" 
                         placeholder="Rechercher un employé ou une raison..."
+                        @keydown.enter="triggerSearch"
                         class="w-full bg-pearl-50 border border-pearl-200 rounded-lg pl-10 pr-4 py-2 text-sm text-charcoal-700 focus:border-gold-400 outline-none transition-all"
                     />
                     <svg class="w-4 h-4 text-charcoal-300 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -210,6 +178,14 @@ const formatTime = (dateString) => {
                         <option value="all">Tous les modèles</option>
                         <option v-for="m in planningModels" :key="m.id" :value="m.id">{{ m.name }}</option>
                     </select>
+
+                    <button 
+                        @click="triggerSearch"
+                        class="bg-gold-gradient text-white px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-md"
+                    >
+                        <i class="pi pi-filter mr-2"></i>
+                        Filtrer
+                    </button>
                 </div>
             </div>
 
@@ -324,6 +300,108 @@ const formatTime = (dateString) => {
                 Chaque action effectuée sur une affectation de planning (création, validation, suspension, réactivation) est archivée dans cette table. Cela permet de garantir une traçabilité totale des changements d'état et des interventions des administrateurs ou chefs de plateau sur les ressources de l'entreprise.
             </div>
         </div>
+
+        <!-- Détails de l'Historique Modal -->
+        <Dialog v-model:visible="detailVisible" modal :style="{ width: '50vw' }" class="p-0 overflow-hidden border-none" :showHeader="false">
+            <div v-if="selectedHistory" class="bg-white rounded-3xl overflow-hidden">
+                <!-- Custom Header -->
+                <div class="bg-charcoal-900 px-8 py-6 flex items-center justify-between border-b border-charcoal-800">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gold-gradient flex items-center justify-center text-white shadow-gold-premium">
+                            <i class="pi pi-history text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-white tracking-tight leading-none uppercase">Détails de l'événement</h3>
+                            <p class="text-[10px] text-gold-500 font-black uppercase tracking-[0.2em] mt-1.5 opacity-80">Audit Trail #{{ selectedHistory.id }}</p>
+                        </div>
+                    </div>
+                    <button @click="detailVisible = false" class="w-10 h-10 rounded-xl bg-charcoal-800 text-charcoal-400 hover:text-white hover:bg-charcoal-700 transition-premium flex items-center justify-center">
+                        <i class="pi pi-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-8 space-y-8">
+                    <!-- Section Employé -->
+                    <div class="bg-pearl-50/50 p-6 rounded-[2rem] border border-pearl-100 flex items-center gap-6 shadow-sm">
+                        <div class="w-20 h-20 rounded-[1.5rem] bg-white border border-pearl-100 flex items-center justify-center text-3xl font-black text-charcoal-900 shadow-premium">
+                            {{ selectedHistory.assignment?.employee?.first_name?.charAt(0) }}{{ selectedHistory.assignment?.employee?.last_name?.charAt(0) }}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xl font-black text-charcoal-900 uppercase tracking-tight">
+                                    {{ selectedHistory.assignment?.employee?.first_name }} {{ selectedHistory.assignment?.employee?.last_name }}
+                                </h4>
+                                <span class="px-4 py-1.5 bg-gold-500 text-charcoal-900 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-gold-sm">
+                                    {{ selectedHistory.assignment?.employee?.matricule }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2">
+                                <i class="pi pi-calendar text-gold-600 text-xs"></i>
+                                <span class="text-sm font-bold text-charcoal-400">
+                                    Modèle : {{ selectedHistory.assignment?.planning_model?.name || 'Standard' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Transition -->
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Flux d'état</label>
+                            <div class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-pearl-100 shadow-sm h-16">
+                                <Tag :value="formatStatus(selectedHistory.old_status)" :severity="getStatusSeverity(selectedHistory.old_status)" class="font-black px-4 py-2" />
+                                <i class="pi pi-arrow-right text-xs text-charcoal-300"></i>
+                                <Tag :value="formatStatus(selectedHistory.new_status)" :severity="getStatusSeverity(selectedHistory.new_status)" class="font-black px-4 py-2" />
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Horodatage</label>
+                            <div class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-pearl-100 shadow-sm h-16">
+                                <div class="w-10 h-10 rounded-xl bg-pearl-50 flex items-center justify-center text-gold-600">
+                                    <i class="pi pi-clock"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-black text-charcoal-900">{{ formatDate(selectedHistory.created_at) }}</div>
+                                    <div class="text-[10px] font-bold text-charcoal-400 uppercase tracking-tighter">à {{ formatTime(selectedHistory.created_at) }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Auteur -->
+                        <div class="col-span-2 space-y-3">
+                            <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Effectué par</label>
+                            <div class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-pearl-100 shadow-sm">
+                                <div class="w-10 h-10 rounded-xl bg-charcoal-900 flex items-center justify-center text-[10px] font-black text-gold-500 uppercase">
+                                    {{ selectedHistory.author?.email?.charAt(0) || 'S' }}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-black text-charcoal-900">{{ selectedHistory.author?.email || 'Système automatique' }}</span>
+                                    <span class="text-[10px] font-bold text-charcoal-400 uppercase tracking-widest">Administrateur / CP</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Raison -->
+                        <div class="col-span-2 space-y-3">
+                            <label class="text-[10px] font-black text-charcoal-400 uppercase tracking-widest block ml-1">Motif du changement</label>
+                            <div class="bg-pearl-50 p-6 rounded-3xl border border-pearl-100 italic text-charcoal-600 text-sm leading-relaxed relative">
+                                <i class="pi pi-quote-left absolute -top-2 -left-2 text-gold-500/20 text-4xl"></i>
+                                "{{ selectedHistory.reason || 'Aucune raison spécifiée pour cette action.' }}"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-pearl-50/50 px-8 py-6 border-t border-pearl-100 flex justify-end">
+                    <button @click="detailVisible = false" 
+                        class="px-10 py-3.5 bg-charcoal-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-charcoal-800 transition-premium shadow-premium">
+                        Fermer le rapport
+                    </button>
+                </div>
+            </div>
+        </Dialog>
     </AdminLayout>
 </template>
 

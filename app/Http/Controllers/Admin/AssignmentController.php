@@ -241,6 +241,12 @@ class AssignmentController extends Controller
             });
         }
 
+        if ($request->position_code) {
+            $query->whereHas('position', function($q) use ($request) {
+                $q->where('code', $request->position_code);
+            });
+        }
+
         if ($request->status === 'assigned') {
             $query->whereHas('assignments', function($q) {
                 $q->where('status', 'active');
@@ -253,7 +259,18 @@ class AssignmentController extends Controller
 
         return Inertia::render('Admin/Assignments/Resources', [
             'employees' => $query->paginate(200)->withQueryString(),
+            'allCampaigns' => Campaign::where('status', 'active')->get(),
+            'allManagers' => Assignment::where('status', 'active')
+                ->whereHas('position', function($q) {
+                    $q->whereIn('code', ['CP', 'SUP']);
+                })
+                ->with(['employee', 'campaign', 'position'])
+                ->get(),
+            'positions' => Position::all(),
             'filters' => $request->only(['search', 'status']),
+            'campaign_id' => $request->campaign_id,
+            'manager_assignment_id' => $request->manager_assignment_id,
+            'position_code' => $request->position_code,
         ]);
     }
 

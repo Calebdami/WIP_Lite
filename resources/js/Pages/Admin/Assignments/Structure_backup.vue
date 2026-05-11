@@ -246,8 +246,8 @@ const campaignsStructure = computed(() => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
-                        <input v-model="search" type="text" placeholder="Rechercher une ressource..."
-                            class="block w-full pl-12 pr-4 py-3 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
+                        <input v-model="search" type="text" placeholder="Rechercher"
+                            class="block w-full pl-12 pr-4 py-1 border border-pearl-200 rounded-xl text-sm focus:ring-gold-500 focus:border-gold-500 bg-white placeholder-charcoal-400" />
                     </div>
 
                     <!-- Bulk Assign Button -->

@@ -1,7 +1,7 @@
 <script setup>
 import CpLayout from '@/Layouts/CpLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 
 const confirm = useConfirm();
@@ -21,20 +21,15 @@ const search = ref((props.filters || {}).search || '');
 const statusFilter = ref((props.filters || {}).status || 'all');
 const selectedIds = ref([]);
 
-// Debounce pour la recherche
-let timeout;
-watch([search, statusFilter], ([newSearch, newStatus]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-        router.get(route('cp.schedules.validation'), { 
-            search: newSearch, 
-            status: newStatus 
-        }, {
-            preserveState: true,
-            replace: true
-        });
-    }, 300);
-});
+const triggerSearch = () => {
+    router.get(route('cp.schedules.validation'), { 
+        search: search.value, 
+        status: statusFilter.value 
+    }, {
+        preserveState: true,
+        preserveScroll: true
+    });
+};
 
 const toggleSelectAll = () => {
     if (selectedIds.value.length === assignmentsData.value.length) {
@@ -167,6 +162,7 @@ const getRoleClass = (code) => {
                         v-model="search"
                         type="text" 
                         placeholder="Rechercher par employé ou modèle..."
+                        @keydown.enter="triggerSearch"
                         class="w-full bg-pearl-50 border border-pearl-200 rounded-lg pl-10 pr-4 py-2 text-sm text-charcoal-700 focus:border-gold-400 outline-none transition-all"
                     />
                     <svg class="w-4 h-4 text-charcoal-300 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -181,6 +177,14 @@ const getRoleClass = (code) => {
                         <option value="validé">Validé</option>
                         <option value="suspendu">Suspendu</option>
                     </select>
+
+                    <button 
+                        @click="triggerSearch"
+                        class="bg-gold-gradient text-charcoal-900 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-gold-sm"
+                    >
+                        <i class="pi pi-filter mr-2"></i>
+                        Filtrer
+                    </button>
                     
                     <button 
                         @click="toggleSelectAll"
