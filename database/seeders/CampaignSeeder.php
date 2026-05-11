@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Campaign;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class CampaignSeeder extends Seeder
 {
@@ -12,53 +13,57 @@ class CampaignSeeder extends Seeder
      */
     public function run(): void
     {
-        // Créer les 3 campagnes de base
-        Campaign::create([
-            'name' => 'Campagne Marketing 2026',
-            'description' => 'Promotion des nouveaux produits 2026',
-            'start_date' => '2026-01-01',
-            'end_date' => '2026-03-31',
-            'status' => 'active',
-        ]);
-
-        Campaign::create([
-            'name' => 'Campagne Recrutement IT',
-            'description' => 'Recrutement de développeurs Laravel et Vue',
-            'start_date' => '2026-02-01',
-            'end_date' => null,
-            'status' => 'inactive',
-        ]);
-
-        Campaign::create([
-            'name' => 'Campagne Fidélisation Clients',
-            'description' => 'Programme de fidélité et réduction',
-            'start_date' => '2025-10-01',
-            'end_date' => '2025-12-31',
-            'status' => 'finished',
-        ]);
-
-        // Générer 247 campagnes supplémentaires
-        $campaignTypes = [
-            'Marketing', 'Recrutement', 'Ventes', 'Communication', 'Formation', 
-            'Lancement Produit', 'Fidélisation', 'Acquisition', 'Rétention', 'Notoriété'
-        ];
+        // Créer 15 campagnes : 10 actives, 4 finies et 1 inactive
         
-        $statuses = ['active', 'inactive', 'finished'];
+        // Campagnes actives (10)
+        $activeCampaigns = [
+            ['Campagne Marketing Printemps', 'Promotion produits saisonniers', '2026-03-01', '2026-05-31'],
+            ['Campagne Vente Été', 'Soldes estivales', '2026-06-01', '2026-08-31'],
+            ['Campagne Rentrée Scolaire', 'Promotion back-to-school', '2026-08-15', '2026-10-15'],
+            ['Campagne Fêtes de Fin d\'Année', 'Promotions de fin d\'année', '2026-11-01', '2026-12-31'],
+            ['Campagne Recrutement IT', 'Recrutement développeurs', '2026-02-01', '2026-06-30'],
+            ['Campagne Service Client', 'Amélioration satisfaction client', '2026-04-01', '2026-07-31'],
+            ['Campagne Digital Transformation', 'Migration vers le digital', '2026-05-01', '2026-09-30'],
+            ['Campagne Formation Continue', 'Programmes de formation', '2026-03-15', '2026-08-15'],
+            ['Campagne Innovation Tech', 'Nouvelles technologies', '2026-07-01', '2026-11-30'],
+            ['Campagne Développement Durable', 'Initiatives écologiques', '2026-09-01', '2027-02-28'],
+        ];
 
-        for ($i = 4; $i <= 250; $i++) {
-            $type = $campaignTypes[array_rand($campaignTypes)];
-            $status = $statuses[array_rand($statuses)];
-            $startDate = now()->subDays(rand(0, 365));
-            $endDate = $status === 'finished' ? $startDate->copy()->addDays(rand(30, 180)) : 
-                      ($status === 'active' ? null : $startDate->copy()->addDays(rand(60, 365)));
-
+        foreach ($activeCampaigns as $i => $campaign) {
             Campaign::create([
-                'name' => "Campagne {$type} {$i}",
-                'description' => "Description de la campagne {$type} numéro {$i} générée automatiquement",
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate ? $endDate->format('Y-m-d') : null,
-                'status' => $status,
+                'name' => $campaign[0],
+                'description' => $campaign[1],
+                'start_date' => $campaign[2],
+                'end_date' => $campaign[3],
+                'status' => 'active',
             ]);
         }
+
+        // Campagnes finies (4)
+        $finishedCampaigns = [
+            ['Campagne Hiver 2025', 'Promotions hivernales', '2025-11-01', '2026-02-28'],
+            ['Campagne Saint-Valentin', 'Promotions romantiques', '2026-01-20', '2026-02-14'],
+            ['Campagne Soldes d\'Hiver', 'Réductions hivernales', '2025-12-01', '2026-01-31'],
+            ['Campagne Lancement Produit', 'Nouveaux produits Q4', '2025-10-01', '2025-12-15'],
+        ];
+
+        foreach ($finishedCampaigns as $campaign) {
+            Campaign::create([
+                'name' => $campaign[0],
+                'description' => $campaign[1],
+                'start_date' => $campaign[2],
+                'end_date' => $campaign[3],
+                'status' => 'finished',
+            ]);
+        }
+
+        // Campagne inactive (1)
+        Campaign::create([
+            'name' => 'Campagne Test En Attente',
+            'description' => 'Campagne en attente de validation',
+            'start_date' => '2026-12-01',
+            'end_date' => '2027-03-01',
+            'status' => 'inactive',
+        ]);
     }
 }

@@ -20,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Employee::observe(\App\Observers\EmployeeObserver::class);
         Vite::prefetch(concurrency: 3);
     }
 }

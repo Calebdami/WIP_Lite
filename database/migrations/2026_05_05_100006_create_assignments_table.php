@@ -21,6 +21,7 @@ return new class extends Migration
 
         // Campagne liée
         $table->foreignId('campaign_id')
+            ->nullable()
             ->constrained()
             ->cascadeOnDelete();
 

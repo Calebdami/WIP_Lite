@@ -3,18 +3,35 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\PlanningModel;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PlanningModelsSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
-        // Créer les 3 modèles de base
-        DB::table('planning_models')->insert([
+        // Créer des modèles de planning de base
+        $planningModels = [
             [
-                'name' => 'Semaine 35h',
-                'description' => 'Planning classique 7h par jour du lundi au vendredi',
+                'name' => 'Planning Standard 40h',
+                'description' => 'Planning hebdomadaire standard de 8 heures par jour',
+                'monday_hours' => 8,
+                'tuesday_hours' => 8,
+                'wednesday_hours' => 8,
+                'thursday_hours' => 8,
+                'friday_hours' => 8,
+                'saturday_hours' => 0,
+                'sunday_hours' => 0,
+                'total_hours' => 40,
+            ],
+            [
+                'name' => 'Planning Partiel 35h',
+                'description' => 'Planning hebdomadaire de 35 heures par jour',
                 'monday_hours' => 7,
                 'tuesday_hours' => 7,
                 'wednesday_hours' => 7,
@@ -23,20 +40,10 @@ class PlanningModelsSeeder extends Seeder
                 'saturday_hours' => 0,
                 'sunday_hours' => 0,
                 'total_hours' => 35,
-                'created_by' => 1,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
             ],
             [
-                'name' => 'Semaine 40h',
-                'description' => 'Planning 8h par jour du lundi au vendredi',
-                'monday_hours' => 8,
-                'tuesday_hours' => 8,
-                'wednesday_hours' => 8,
-                'thursday_hours' => 8,
-                'friday_hours' => 8,
-                'saturday_hours' => 0,
-                'sunday_hours' => 0,
+                'name' => 'Planning Weekend',
+                'description' => 'Planning spécifique pour le week-end',
                 'total_hours' => 40,
                 'created_by' => 1,
                 'created_at' => Carbon::now(),
@@ -57,7 +64,7 @@ class PlanningModelsSeeder extends Seeder
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
-        ]);
+        ]   ;
 
         // Générer 247 planning models supplémentaires avec des heures variées
         for ($i = 4; $i <= 250; $i++) {

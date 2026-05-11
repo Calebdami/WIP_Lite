@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\TimesheetEntry;
+use App\Models\Timesheet;
+use App\Models\Employee;
+use Carbon\Carbon;
 
 class TimesheetEntrySeeder extends Seeder
 {
@@ -13,52 +16,69 @@ class TimesheetEntrySeeder extends Seeder
      */
     public function run(): void
     {
-        // Créer quelques entrées de timesheet de base
-        TimesheetEntry::create([
-            'timesheet_id' => 1,
-            'employee_id' => 1,
-            'date' => '2026-05-05',
-            'start_time' => '08:00',
-            'end_time' => '17:00',
-            'hours_worked' => 8.00,
-            'description' => 'Travail sur projet A',
-            'project_code' => 'PROJ001',
-        ]);
+        $timesheets = Timesheet::all();
+        $employees = Employee::all();
+        
+        if ($timesheets->isEmpty()) {
+            return;
+        }
 
-        TimesheetEntry::create([
-            'timesheet_id' => 1,
-            'employee_id' => 1,
-            'date' => '2026-05-06',
-            'start_time' => '08:30',
-            'end_time' => '17:30',
-            'hours_worked' => 8.00,
-            'description' => 'Travail sur projet B',
-            'project_code' => 'PROJ002',
-        ]);
+        // Créer des entrées pour chaque feuille de temps des téléconseillers
+        $tcEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'TC';
+        });
 
-        // Générer 248 entrées supplémentaires
-        for ($i = 3; $i <= 250; $i++) {
-            $timesheetId = rand(1, 250);
-            $employeeId = rand(1, 300);
-            $date = now()->subDays(rand(0, 365))->format('Y-m-d');
-            $startTime = rand(8, 10) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT);
-            $endTime = rand(16, 19) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT);
+        foreach ($tcEmployees as $tc) {
+            // Récupérer les feuilles de temps de ce téléconseiller
+            $tcTimesheets = $timesheets->where('employee_id', $tc->id);
             
-            // Calculer les heures travaillées
-            $start = strtotime($startTime);
-            $end = strtotime($endTime);
-            $hoursWorked = round(($end - $start) / 3600, 2);
+            foreach ($tcTimesheets as $timesheet) {
+                // Créer une entrée pour chaque jour de la semaine (lundi-vendredi)
+                $startDate = Carbon::parse($timesheet->period_start);
+                
+                for ($day = 0; $day < 5; $day++) {
+                    $currentDate = $startDate->copy()->addDays($day);
+                    
+                    TimesheetEntry::create([
+                        'timesheet_id' => $timesheet->id,
+                        'date' => $currentDate->format('Y-m-d'),
+                        'check_in' => '08:30',
+                        'check_out' => '17:30',
+                        'total_hours' => 8.00,
+                        'planned_hours' => 8.00,
+                        'comment' => 'Travail sur campagne ' . $currentDate->format('d/m/Y'),
+                    ]);
+                }
+            }
+        }
 
-            TimesheetEntry::create([
-                'timesheet_id' => $timesheetId,
-                'employee_id' => $employeeId,
-                'date' => $date,
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'hours_worked' => $hoursWorked,
-                'description' => 'Description de la tâche ' . $i,
-                'project_code' => 'PROJ' . str_pad($i, 3, '0', STR_PAD_LEFT),
-            ]);
+        // Créer des entrées pour les superviseurs
+        $supEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'SUP';
+        });
+
+        foreach ($supEmployees as $sup) {
+            // Récupérer les feuilles de temps de ce superviseur
+            $supTimesheets = $timesheets->where('employee_id', $sup->id);
+            
+            foreach ($supTimesheets as $timesheet) {
+                // Créer une entrée pour chaque jour de la semaine (lundi-vendredi)
+                $startDate = Carbon::parse($timesheet->period_start);
+                
+                for ($day = 0; $day < 5; $day++) {
+                    $currentDate = $startDate->copy()->addDays($day);
+                    
+                    TimesheetEntry::create([
+                        'timesheet_id' => $timesheet->id,
+                        'date' => $currentDate->format('Y-m-d'),
+                        'check_in' => '08:00',
+                        'check_out' => '18:00',
+                        'total_hours' => 9.00,
+                        'planned_hours' => 8.00,
+                        'comment' => 'Supervision équipe ' . $currentDate->format('d/m/Y'),
+                    ]);
+                }
+            }
         }
     }
 }

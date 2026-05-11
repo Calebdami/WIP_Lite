@@ -13,19 +13,41 @@ return new class extends Migration
     {
         Schema::create('timesheet_entries', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('timesheet_id')->constrained('timesheets')->onDelete('cascade');
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            
+
+            // Référence à la feuille de temps parente
+            $table->foreignId('timesheet_id')
+                ->constrained('timesheets')
+                ->onDelete('cascade');
+
+            // Jour concerné
             $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->decimal('hours_worked', 4, 2);
-            
-            $table->text('description')->nullable();
-            $table->string('project_code')->nullable();
-            
+
+            // Heures d'arrivée et de départ
+            $table->time('check_in')->nullable();
+            $table->time('check_out')->nullable();
+
+            // Durée de pause effective (en minutes)
+            $table->unsignedSmallInteger('break_duration')->default(0);
+
+            // Heures réellement travaillées ce jour (calculées)
+            $table->decimal('total_hours', 5, 2)->default(0);
+
+            // Heures prévues ce jour (copiées du planning)
+            $table->decimal('planned_hours', 5, 2)->default(0);
+
+            // Heures supplémentaires (calculées : total_hours - planned_hours si positif)
+            $table->decimal('overtime_hours', 5, 2)->default(0);
+
+            // Type d'absence éventuelle (maladie, congé, etc.)
+            $table->string('absence_type')->nullable();
+
+            // Commentaire / remarque du superviseur
+            $table->text('comment')->nullable();
+
             $table->timestamps();
+
+            // Unicité : une seule entrée par jour et par feuille de temps
+            $table->unique(['timesheet_id', 'date']);
         });
     }
 

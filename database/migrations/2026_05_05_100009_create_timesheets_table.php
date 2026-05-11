@@ -13,18 +13,32 @@ return new class extends Migration
     {
         Schema::create('timesheets', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            
+
+            // Employé concerné par la feuille de temps
+            $table->foreignId('employee_id')
+                ->constrained('employees')
+                ->onDelete('cascade');
+
+            // Période couverte (généralement une semaine : lundi → dimanche)
             $table->date('period_start');
             $table->date('period_end');
-            
-            $table->enum('status', ['brouillon', 'soumis', 'validé', 'rejeté'])->default('brouillon');
-            
-            $table->foreignId('validated_by')->nullable()->constrained('users');
+
+            // Statut du workflow de validation
+            $table->enum('status', ['brouillon', 'soumis', 'valide', 'rejete'])
+                ->default('brouillon');
+
+            // Validation par le Chef de Plateau (référence employees)
+            $table->foreignId('validated_by')
+                ->nullable()
+                ->constrained('employees')
+                ->nullOnDelete();
             $table->timestamp('validated_at')->nullable();
-            
+
             $table->timestamps();
+
+            // Index pour les recherches fréquentes par période
+            $table->index(['period_start', 'period_end']);
+            $table->index(['employee_id', 'status']);
         });
     }
 

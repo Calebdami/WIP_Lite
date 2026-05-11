@@ -7,6 +7,7 @@ use App\Models\Assignment;
 use App\Models\Employee;
 use App\Models\Campaign;
 use App\Models\Position;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class AssignmentSeeder extends Seeder
 {
@@ -23,27 +24,44 @@ class AssignmentSeeder extends Seeder
             return;
         }
 
-        // créer 250 assignments fake
-        for ($i = 0; $i < 250; $i++) {
-
-            $employee = $employees->random();
-            $campaign = $campaigns->random();
-            $position = $positions->random();
-            $manager = $employees->random();
-            $status = rand(0, 10) > 2 ? 'active' : (rand(0, 1) ? 'terminated' : 'suspended');
-            $startDate = now()->subDays(rand(1, 365));
-            $endDate = $status === 'terminated' ? $startDate->copy()->addDays(rand(30, 180)) : 
-                      ($status === 'suspended' ? $startDate->copy()->addDays(rand(1, 29)) : null);
-
-            Assignment::create([
-                'employee_id' => $employee->id,
-                'campaign_id' => $campaign->id,
-                'manager_id' => $manager->id,
-                'position_id' => $position->id,
-                'status' => $status,
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate ? $endDate->format('Y-m-d') : null,
-            ]);
+        // Affectations des Chefs de Plateau (CP) aux campagnes
+        $cpEmployees = $employees->filter(function($emp) {
+            return $emp->position->code === 'CP';
+        });
+        
+        // Créer 2 CP par campagne active
+        $activeCampaigns = $campaigns->where('status', 'active');
+        $cpIndex = 0;
+        
+        foreach ($activeCampaigns as $campaign) {
+            // Assigner 2 CP à cette campagne
+            for ($i = 0; $i < 2; $i++) {
+                if ($cpIndex < $cpEmployees->count()) {
+                    $cp = $cpEmployees->get($cpIndex);
+                    
+                    if ($cp) {
+                        Assignment::create([
+                            'employee_id' => $cp->id,
+                            'campaign_id' => $campaign->id,
+                            'position_id' => $positions->where('code', 'CP')->first()->id,
+                            'manager_id' => null, // CP n'a pas de manager
+                            'status' => 'active',
+                            'start_date' => now()->subDays(rand(30, 180))->format('Y-m-d'),
+                            'end_date' => null,
+                        ]);
+                    }
+                    
+                    $cpIndex++;
+                }
+            }
         }
+
+        // Aucune affectation pour les Superviseurs (SUP) - ils doivent être disponibles
+        // Les superviseurs ne sont pas affectés automatiquement dans le seeder
+        // Ils seront disponibles pour l'affectation multiple
+
+        // Aucune affectation pour les Téléconseillers (TC) - ils doivent être disponibles
+        // Les téléconseillers ne sont pas affectés automatiquement dans le seeder
+        // Ils seront disponibles pour l'affectation multiple
     }
 }

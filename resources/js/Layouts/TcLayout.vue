@@ -2,12 +2,38 @@
 import { ref, computed, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
+<<<<<<< HEAD
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useToast } from 'primevue/usetoast';
+=======
+import { useToast } from 'primevue/usetoast';
+import ConfirmDialog from 'primevue/confirmdialog';
+>>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
 
 const page = usePage();
 const toast = useToast();
 const user = computed(() => page.props.auth?.user);
+const flash = computed(() => page.props.flash);
+
+// Watch for flash messages
+watch(flash, (newFlash) => {
+    if (newFlash?.success) {
+        toast.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: newFlash.success,
+            life: 3000
+        });
+    }
+    if (newFlash?.error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: newFlash.error,
+            life: 5000
+        });
+    }
+}, { deep: true, immediate: true });
 
 // Surveillance des messages Flash d'Inertia
 watch(() => page.props.flash, (flash) => {
@@ -46,43 +72,38 @@ const navItems = [
         active: route().current('tc.schedule'),
     },
     {
-        label: 'Mes Heures Validées',
+        label: 'Mes Heures',
         href: route('tc.hours'),
         active: route().current('tc.hours'),
-    },
-    {
-        label: 'Mon Profil',
-        href: route('tc.profile'),
-        active: route().current('tc.profile'),
     },
 ];
 </script>
 
 <template>
-    <div class="min-h-screen bg-pearl-100 font-sans">
+    <div class="h-screen flex flex-col bg-pearl-100 font-sans selection:bg-gold-200 selection:text-gold-900">
         <!-- Navbar -->
-        <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-charcoal border-b border-charcoal-700">
-            <div class="flex items-center h-14 px-4">
+        <nav class="fixed top-0 left-0 right-0 z-50 bg-charcoal-900 shadow-premium border-b border-charcoal-800 backdrop-blur-md bg-charcoal-900/95">
+            <div class="flex items-center h-16 px-6">
                 <!-- Logo -->
-                <Link :href="route('tc.dashboard')" class="flex items-center gap-3 min-w-[200px] border-r border-charcoal-700 pr-5 mr-2 h-full" @click="closeMenus">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-gold-gradient shadow-gold">
-                        <span class="text-charcoal-900 font-black text-sm">W</span>
+                <Link :href="route('tc.dashboard')" class="flex items-center gap-4 min-w-[220px] border-r border-charcoal-800 pr-8 mr-4 h-full group" @click="closeMenus">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gold-gradient shadow-gold-premium group-hover:scale-105 transition-premium">
+                        <span class="text-charcoal-900 font-black text-lg">W</span>
                     </div>
                     <div class="flex flex-col leading-tight">
-                        <span class="text-white font-bold text-sm tracking-wide">WIP Lite</span>
-                        <span class="text-charcoal-400 text-[10px] font-medium tracking-widest uppercase">Téléconseiller</span>
+                        <span class="text-white font-black text-base tracking-tight">WIP Lite</span>
+                        <span class="text-gold-500 text-[9px] font-black tracking-[0.2em] uppercase opacity-80">Téléconseiller</span>
                     </div>
                 </Link>
 
                 <!-- Nav Items -->
-                <div class="flex items-center flex-1 h-full ml-4">
+                <div class="flex items-center flex-1 h-full ml-2 gap-1">
                     <template v-for="item in navItems" :key="item.label">
                         <Link
                             :href="item.href"
-                            class="flex items-center gap-1.5 h-full px-4 text-xs font-medium whitespace-nowrap transition-all duration-150"
+                            class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
                             :class="item.active
-                                ? 'text-gold-400 border-b-2 border-gold-400 bg-charcoal-800'
-                                : 'text-charcoal-400 hover:text-white hover:bg-charcoal-800'"
+                                ? 'text-gold-400 bg-charcoal-800 shadow-inner'
+                                : 'text-charcoal-400 hover:text-white hover:bg-charcoal-800/50'"
                             @click="closeMenus"
                         >
                             {{ item.label }}
@@ -91,39 +112,37 @@ const navItems = [
                 </div>
 
                 <!-- User Dropdown -->
-                <div class="relative ml-2 pl-3 border-l border-charcoal-700 flex items-center h-full">
-                    <button @click="toggleMenu('user')" class="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-150 hover:bg-charcoal-800">
-                        <div class="w-7 h-7 rounded-full bg-gold-gradient flex items-center justify-center text-charcoal-900 font-bold text-xs shadow-gold flex-shrink-0">
-                            {{ user?.name?.charAt(0)?.toUpperCase() }}
+                <div class="relative ml-4 pl-6 border-l border-charcoal-800 flex items-center h-full">
+                    <button @click="toggleMenu('user')" class="flex items-center gap-3 px-3 py-2 rounded-2xl transition-premium hover:bg-charcoal-800 group">
+                        <div class="w-9 h-9 rounded-full bg-gold-gradient flex items-center justify-center text-charcoal-900 font-black text-sm shadow-gold-premium group-hover:rotate-12 transition-premium flex-shrink-0">
+                            {{ (user?.name || user?.email || 'U').charAt(0).toUpperCase() }}
                         </div>
-                        <div class="text-left hidden md:block">
-                            <div class="text-white text-xs font-semibold leading-tight">{{ user?.name }}</div>
-                            <div class="text-charcoal-400 text-[10px] leading-tight">Téléconseiller</div>
+                        <div class="text-left hidden lg:block">
+                            <div class="text-white text-xs font-black leading-tight">{{ user?.name || user?.email || 'Utilisateur' }}</div>
+                            <div class="text-charcoal-400 text-[10px] font-bold uppercase tracking-tighter opacity-60">Session active</div>
                         </div>
-                        <svg class="w-3 h-3 text-charcoal-400 transition-transform duration-200" :class="openMenu === 'user' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                        <i class="pi pi-chevron-down text-[10px] text-charcoal-500 transition-premium" :class="openMenu === 'user' ? 'rotate-180 text-gold-400' : ''"></i>
                     </button>
 
                     <Transition
-                        enter-active-class="transition ease-out duration-150"
-                        enter-from-class="opacity-0 translate-y-1"
-                        enter-to-class="opacity-100 translate-y-0"
-                        leave-active-class="transition ease-in duration-100"
-                        leave-from-class="opacity-100 translate-y-0"
-                        leave-to-class="opacity-0 translate-y-1"
+                        enter-active-class="transition ease-out duration-200"
+                        enter-from-class="opacity-0 translate-y-2 scale-95"
+                        enter-to-class="opacity-100 translate-y-0 scale-100"
+                        leave-active-class="transition ease-in duration-150"
+                        leave-from-class="opacity-100 translate-y-0 scale-100"
+                        leave-to-class="opacity-0 translate-y-2 scale-95"
                     >
-                        <div v-if="openMenu === 'user'" class="absolute top-full right-0 mt-0 w-48 bg-white rounded-b-lg shadow-lg border border-pearl-200 overflow-hidden z-50">
-                            <div class="px-4 py-3 border-b border-pearl-200 bg-pearl-50">
-                                <div class="text-xs font-bold text-charcoal-700">{{ user?.name }}</div>
-                                <div class="text-[11px] text-charcoal-400 truncate">{{ user?.email }}</div>
+                        <div v-if="openMenu === 'user'" class="absolute top-[calc(100%-8px)] right-0 w-56 bg-white rounded-2xl shadow-premium border border-pearl-100 overflow-hidden z-50">
+                            <div class="px-5 py-4 border-b border-pearl-50 bg-pearl-50/50">
+                                <div class="text-xs font-black text-charcoal-900">{{ user?.name }}</div>
+                                <div class="text-[10px] text-charcoal-400 font-medium truncate mt-0.5">{{ user?.email }}</div>
                             </div>
-                            <Link :href="route('profile.edit')" class="flex items-center gap-2 px-4 py-2.5 text-xs text-charcoal-600 hover:bg-pearl-100 hover:text-gold-600 transition-colors border-b border-pearl-200" @click="closeMenus">
-                                Profil
-                            </Link>
-                            <Link :href="route('logout')" method="post" as="button" class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors" @click="closeMenus">
-                                Déconnexion
-                            </Link>
+                            <div class="p-2">
+                                <Link :href="route('logout')" method="post" as="button" replace class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-premium" @click="closeMenus">
+                                    <i class="pi pi-power-off text-sm opacity-60"></i>
+                                    Déconnexion
+                                </Link>
+                            </div>
                         </div>
                     </Transition>
                 </div>
@@ -131,20 +150,26 @@ const navItems = [
         </nav>
 
         <!-- Backdrop -->
-        <div v-if="openMenu" class="fixed inset-0 z-40" @click="closeMenus"></div>
+        <div v-if="openMenu" class="fixed inset-0 z-40 bg-charcoal-900/10 backdrop-blur-[2px]" @click="closeMenus"></div>
 
         <!-- Main Content -->
-        <main class="pt-14 min-h-screen bg-pearl-100">
-            <div v-if="$slots.header" class="bg-white border-b border-pearl-200 px-6 py-4 shadow-sm">
-                <slot name="header" />
+        <main class="flex-1 overflow-y-auto pt-16 bg-pearl-100">
+            <div v-if="$slots.header" class="bg-white border-b border-pearl-100 px-8 py-6 shadow-sm sticky top-0 z-10">
+                <div class="max-w-7xl mx-auto">
+                    <slot name="header" />
+                </div>
             </div>
-            <div class="p-6">
+            <div class="p-8 max-w-7xl mx-auto">
                 <slot />
             </div>
         </main>
+<<<<<<< HEAD
 
         <!-- PrimeVue Components -->
         <Toast />
+=======
+        <Toast position="top-right" />
+>>>>>>> 066ee8dd877db529905e99abcffdfd45e18d8587
         <ConfirmDialog />
     </div>
 </template>

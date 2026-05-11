@@ -1,6 +1,7 @@
 <script setup>
 import SupLayout from '@/Layouts/SupLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import { formatHours, formatHoursShort } from '@/Utils/formatHours';
 
 const props = defineProps({
     currentSupervisor: Object,
@@ -136,7 +137,7 @@ const formatDate = (date) => {
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xl font-bold text-gray-800">{{ stats?.total_hours }}h</p>
+                        <p class="text-xl font-bold text-gray-800">{{ formatHours(stats?.total_hours || 0) }}</p>
                         <p class="text-[11px] text-gray-400 font-medium">Volume total</p>
                     </div>
                 </div>

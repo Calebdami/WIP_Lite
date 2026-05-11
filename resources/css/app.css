@@ -1,3 +1,144 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --charcoal-900: #111827;
+        --charcoal-800: #1F2937;
+        --charcoal-700: #374151;
+        --charcoal-400: #9CA3AF;
+        --gold-500: #D4A017;
+        --gold-400: #FBBF24;
+        --pearl-100: #F3F4F6;
+        --pearl-200: #E5E7EB;
+    }
+
+    html, body {
+        @apply h-full overflow-hidden;
+    }
+}
+
+@layer utilities {
+    .shadow-premium {
+        @apply shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)];
+    }
+    
+    .shadow-gold-premium {
+        @apply shadow-[0_10px_30px_-5px_rgba(212,160,23,0.3)];
+    }
+
+    .bg-gold-gradient {
+        background: linear-gradient(135deg, #D4A017 0%, #8B6914 100%);
+    }
+
+    .bg-glass {
+        @apply bg-white/80 backdrop-blur-md border border-white/20;
+    }
+
+    .transition-premium {
+        /* @apply transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1); */
+    }
+}
+
+/* Customizing PrimeVue Components to match the premium theme */
+.p-button {
+    @apply transition-all duration-200 rounded-xl font-black text-xs uppercase tracking-widest !important;
+}
+
+.p-button-primary {
+    @apply bg-gold-gradient border-none shadow-gold-premium text-charcoal-900 hover:opacity-90 !important;
+}
+
+.p-button-secondary.p-button-text {
+    @apply text-charcoal-500 hover:bg-pearl-100 hover:text-charcoal-900 !important;
+}
+
+.p-button-success.p-button-text {
+    @apply text-emerald-600 hover:bg-emerald-50 !important;
+}
+
+.p-button-danger.p-button-text {
+    @apply text-red-600 hover:bg-red-50 !important;
+}
+
+.p-button-info.p-button-text {
+    @apply text-blue-600 hover:bg-blue-50 !important;
+}
+
+/* Ensure Icons have a minimum size in icon-only buttons */
+.p-button-icon-only {
+    @apply w-10 h-10 flex items-center justify-center !important;
+}
+
+.p-button-icon {
+    @apply text-base !important;
+}
+
+.p-datatable {
+    @apply border-none bg-transparent !important;
+}
+
+.p-datatable-thead > tr > th {
+    @apply bg-pearl-50 text-charcoal-700 font-black uppercase text-[10px] tracking-widest border-b border-pearl-200 py-4 px-6 !important;
+}
+
+.p-datatable-tbody > tr > td {
+    @apply py-4 px-6 border-b border-pearl-50 text-sm text-charcoal-600 !important;
+}
+
+.p-dialog {
+    @apply rounded-3xl shadow-premium border border-pearl-100 bg-white overflow-hidden !important;
+}
+
+/* Premium Confirmation Dialog */
+.p-confirm-dialog .p-dialog-content {
+    padding: 2.5rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.p-confirm-dialog .p-confirm-dialog-icon {
+    @apply text-5xl mb-6 p-6 rounded-full bg-amber-50 text-gold-500 !important;
+}
+
+.p-confirm-dialog .p-confirm-dialog-message {
+    @apply font-black text-charcoal-900 text-xl leading-relaxed !important;
+}
+
+.p-confirm-dialog .p-dialog-footer {
+    @apply flex justify-center gap-4 px-10 pb-10 border-none !important;
+}
+
+/* Premium Forms & Inputs */
+.p-inputtext, .p-inputnumber-input, .p-select, .p-datepicker-input {
+    @apply bg-pearl-50 border-pearl-200 rounded-xl px-4 py-3 text-sm transition-all duration-200 !important;
+}
+
+.p-inputtext:focus, .p-inputnumber-input:focus, .p-select:focus, .p-datepicker-input:focus {
+    @apply border-gold-500 ring-4 ring-gold-500/15 bg-white !important;
+}
+
+/* Inertia Progress Bar Customization */
+#nprogress .bar {
+    background: linear-gradient(to right, #D4A017, #FBBF24) !important;
+    height: 4px !important;
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.6) !important;
+    z-index: 99999 !important;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 15px #D4A017, 0 0 8px #D4A017 !important;
+}
+
+#nprogress .spinner {
+    z-index: 99999 !important;
+}
+
+#nprogress .spinner-icon {
+    border-top-color: #D4A017 !important;
+    border-left-color: #D4A017 !important;
+    border-width: 3px !important;
+}

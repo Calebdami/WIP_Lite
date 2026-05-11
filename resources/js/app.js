@@ -1,5 +1,6 @@
 import '../css/app.css';
 import './bootstrap';
+import 'primeicons/primeicons.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -45,6 +46,8 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#4B5563',
+        color: '#D4A017',
+        showSpinner: true,
+        includeCSS: true,
     },
 });
