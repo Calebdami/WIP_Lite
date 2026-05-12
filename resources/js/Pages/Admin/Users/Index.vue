@@ -234,7 +234,7 @@ const passwordConfirmClass = computed(() => {
                         <Tag :value="data.status.toUpperCase()" :severity="getStatusSeverity(data.status)" class="text-[9px]" />
                     </template>
                 </Column>
-                <Column header="Actions" class="text-right">
+                <Column header="Actions" class="text-right" headerClass="flex justify-center">
                     <template #body="{ data }">
                         <div class="flex justify-end gap-3">
                             <button @click="openEdit(data)" class="text-charcoal-900 font-black text-[10px] uppercase hover:underline">Modifier</button>
