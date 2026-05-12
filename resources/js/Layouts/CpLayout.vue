@@ -73,6 +73,11 @@ const navItems = [
         href: route('cp.hours'),
         active: route().current('cp.hours'),
     },
+    {
+        label: 'Reporting',
+        href: route('cp.reports.index'),
+        active: route().current('cp.reports.index'),
+    },
 ];
 </script>
 

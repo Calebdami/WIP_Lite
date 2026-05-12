@@ -133,6 +133,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Maintenance
     Route::get('/maintenance', fn () => Inertia::render('Admin/Maintenance/Index'))->name('maintenance');
 
+    // Reporting
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::get('/dashboard', [App\Http\Controllers\ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [App\Http\Controllers\ReportController::class, 'export'])->name('export');
+    });
+
     // API Routes for Maintenance
     Route::prefix('maintenance')->name('maintenance.')->group(function () {
         // System Health
@@ -213,6 +220,14 @@ Route::middleware(['auth', 'role:cp'])->prefix('cp')->name('cp.')->group(functio
 
     // Mes Heures (Consultation)
     Route::get('/my-hours', fn () => Inertia::render('Cp/Hours/Index'))->name('hours');
+
+    // Reporting
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\ReportController::class, 'store'])->name('store');
+        Route::get('/dashboard', [App\Http\Controllers\ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [App\Http\Controllers\ReportController::class, 'export'])->name('export');
+    });
 });
 
 use App\Http\Controllers\Sup\TeamController;
@@ -224,6 +239,14 @@ Route::middleware(['auth', 'role:sup'])->prefix('sup')->name('sup.')->group(func
     Route::get('/schedule', [App\Http\Controllers\SupPlanningController::class, 'index'])->name('schedule');
     Route::get('/time-tracking', fn () => Inertia::render('Sup/TimeTracking/Index'))->name('time-tracking');
     Route::get('/my-hours', fn () => Inertia::render('Sup/Hours/Index'))->name('hours');
+
+    // Reporting
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\ReportController::class, 'store'])->name('store');
+        Route::get('/dashboard', [App\Http\Controllers\ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [App\Http\Controllers\ReportController::class, 'export'])->name('export');
+    });
 });
 
 // ─── Technicien (TC) ──────────────────────────────────────────────────────────
@@ -232,6 +255,14 @@ Route::middleware(['auth', 'role:tc'])->prefix('tc')->name('tc.')->group(functio
     Route::get('/my-schedule', [App\Http\Controllers\TcPlanningController::class, 'index'])->name('schedule');
     Route::get('/my-hours', fn () => Inertia::render('Tc/Hours/Index'))->name('hours');
     Route::get('/my-profile', fn () => Inertia::render('Tc/Profile/Index'))->name('profile');
+
+    // Reporting
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\ReportController::class, 'store'])->name('store');
+        Route::get('/dashboard', [App\Http\Controllers\ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [App\Http\Controllers\ReportController::class, 'export'])->name('export');
+    });
 });
 
 // ─── API Feuilles de temps ────────────────────────────────────────────────────

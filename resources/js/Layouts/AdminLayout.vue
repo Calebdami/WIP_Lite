@@ -86,6 +86,13 @@ const navItems = [
             { label: 'Validation Plannings', href: route('admin.assignments.validation') },
             { label: 'Historique plannings', href: route('admin.assignments.planning-history') },
         ],
+    },
+    {
+        label: 'Console des Rapports',
+        icon: '',
+        key: 'reporting',
+        href: route('admin.reports.index'),
+        active: route().current('admin.reports.index'),
     }
 ];
 </script>
@@ -106,10 +113,7 @@ const navItems = [
                     </div>
                     <div class="flex flex-col leading-tight">
                         <span class="text-white font-black text-base tracking-tight">Administration</span>
-                        <span class="text-gold-500 text-[9px] font-black tracking-[0.2em] uppercase opacity-80">Console
-                            de Gestion</span>
-                        <span
-                            class="text-gold-500 text-[9px] font-black tracking-[0.2em] uppercase opacity-80">Console</span>
+                        
                     </div>
                 </Link>
 

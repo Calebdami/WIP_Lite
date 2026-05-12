@@ -55,6 +55,11 @@ const navItems = [
         href: route('tc.hours'),
         active: route().current('tc.hours'),
     },
+    {
+        label: 'Reporting',
+        href: route('tc.reports.index'),
+        active: route().current('tc.reports.index'),
+    },
 ];
 </script>
 
@@ -77,16 +82,54 @@ const navItems = [
                 <!-- Nav Items -->
                 <div class="flex items-center flex-1 h-full ml-2 gap-1">
                     <template v-for="item in navItems" :key="item.label">
-                        <Link
-                            :href="item.href"
-                            class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
-                            :class="item.active
-                                ? 'text-gold-400 bg-charcoal-800 shadow-inner'
-                                : 'text-charcoal-400 hover:text-white hover:bg-charcoal-800/50'"
-                            @click="closeMenus"
-                        >
-                            {{ item.label }}
-                        </Link>
+                        <!-- Simple Link -->
+                        <template v-if="!item.children">
+                            <Link
+                                :href="item.href"
+                                class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
+                                :class="item.active
+                                    ? 'text-gold-400 bg-charcoal-800 shadow-inner'
+                                    : 'text-white hover:text-gold-400 hover:bg-charcoal-800/50'"
+                                @click="closeMenus"
+                            >
+                                {{ item.label }}
+                            </Link>
+                        </template>
+
+                        <!-- Dropdown -->
+                        <div v-else class="relative h-full flex items-center">
+                            <button
+                                @click="toggleMenu(item.key)"
+                                class="flex items-center gap-2 h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-premium whitespace-nowrap"
+                                :class="openMenu === item.key
+                                    ? 'text-gold-400 bg-charcoal-800 shadow-inner'
+                                    : 'text-white hover:text-gold-400 hover:bg-charcoal-800/50'"
+                            >
+                                {{ item.label }}
+                                <i class="pi pi-chevron-down text-[10px] transition-premium" :class="openMenu === item.key ? 'rotate-180 text-gold-400' : ''"></i>
+                            </button>
+
+                            <Transition
+                                enter-active-class="transition ease-out duration-200"
+                                enter-from-class="opacity-0 translate-y-2 scale-95"
+                                enter-to-class="opacity-100 translate-y-0 scale-100"
+                                leave-active-class="transition ease-in duration-150"
+                                leave-from-class="opacity-100 translate-y-0 scale-100"
+                                leave-to-class="opacity-0 translate-y-2 scale-95"
+                            >
+                                <div v-if="openMenu === item.key" class="absolute top-[calc(100%-8px)] left-0 w-64 bg-white rounded-2xl shadow-premium border border-pearl-100 overflow-hidden z-50 p-2">
+                                    <Link
+                                        v-for="child in item.children"
+                                        :key="child.label"
+                                        :href="child.href"
+                                        class="block px-4 py-2.5 rounded-xl text-xs font-bold text-charcoal-600 hover:bg-pearl-50 hover:text-gold-600 transition-premium border-b border-pearl-50 last:border-0"
+                                        @click="closeMenus"
+                                    >
+                                        {{ child.label }}
+                                    </Link>
+                                </div>
+                            </Transition>
+                        </div>
                     </template>
                 </div>
 
