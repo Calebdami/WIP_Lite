@@ -150,7 +150,7 @@ const getStatusLabel = (status) => {
                     <p class="text-xs text-charcoal-400 mt-0.5">Pilotez le cycle de vie de vos opérations commerciales</p>
                 </div>
                 <div class="flex gap-3">
-                    <Link :href="route('admin.campaigns.archived')" class="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-600 hover:text-white transition-all border border-amber-200 rounded-lg bg-amber-50 shadow-sm">
+                    <Link :href="route('admin.campaigns.archived')" class="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-gold-500 hover:text-white transition-all border border-amber-200 rounded-lg bg-amber-50 shadow-sm">
                         <i class="pi pi-archive"></i>
                         Voir les Archives
                     </Link>
@@ -186,7 +186,7 @@ const getStatusLabel = (status) => {
                 </div>
                 <select 
                     v-model="statusFilter"
-                    class="border border-pearl-200 rounded-lg text-xs px-3 py-2 focus:ring-gold-500 focus:border-gold-500 text-charcoal-600"
+                    class="border border-pearl-200 rounded-lg text-xs px-7 py-2 focus:ring-gold-500 focus:border-gold-500 text-charcoal-600"
                 >
                     <option value="">Tous les statuts</option>
                     <option value="active">Active</option>

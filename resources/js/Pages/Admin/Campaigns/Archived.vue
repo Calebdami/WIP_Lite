@@ -79,7 +79,7 @@ const formatDate = (dateString, includeTime = false) => {
                     class="block w-full pl-10 pr-20 py-2 border border-pearl-200 rounded-lg text-xs focus:ring-amber-500 focus:border-amber-500"
                 />
                 <button @click="triggerSearch"
-                    class="absolute inset-y-0 right-0 px-4 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600 transition-all">
+                    class="absolute inset-y-0 right-0 px-4 bg-gold-gradient text-white rounded-r-lg hover:bg-gold-700 transition-all">
                     <i class="pi pi-search text-xs"></i>
                 </button>
             </div>
